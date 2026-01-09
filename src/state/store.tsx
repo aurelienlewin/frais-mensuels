@@ -83,6 +83,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const saveTimer = useRef<number | null>(null);
   const pendingSummaryRef = useRef<{ count: number; last: string } | null>(null);
 
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return;
+    const storage = navigator.storage;
+    if (!storage || typeof storage.persist !== 'function' || typeof storage.persisted !== 'function') return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const already = await storage.persisted();
+        if (cancelled || already) return;
+        await storage.persist();
+      } catch {
+        // ignore
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const dispatch = useMemo<React.Dispatch<Action>>(() => {
     return (action) => {
       const summary = actionSummary(action);

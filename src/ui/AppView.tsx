@@ -93,10 +93,10 @@ export function AppView({ initialYm }: { initialYm: YM }) {
           <div
             key={toast.id}
             className={cx(
-              'motion-pop mx-auto w-fit rounded-2xl border px-4 py-2 text-[12px] font-semibold shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]',
+              'motion-pop mx-auto w-fit rounded-2xl border bg-ink-950/95 px-4 py-2 text-[12px] font-semibold shadow-[0_20px_80px_-40px_rgba(0,0,0,0.95)]',
               toast.tone === 'error'
-                ? 'border-rose-200/25 bg-rose-400/10 text-rose-50'
-                : 'border-emerald-200/25 bg-emerald-400/10 text-emerald-50',
+                ? 'border-rose-200/35 text-rose-50'
+                : 'border-emerald-200/35 text-emerald-50',
             )}
             aria-hidden="true"
           >
