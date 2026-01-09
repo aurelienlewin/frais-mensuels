@@ -12,13 +12,16 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   const modelById = useMemo(() => new Map(state.budgets.map((b) => [b.id, b])), [state.budgets]);
 
   return (
-    <section className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]">
-      <div className="border-b border-white/15 px-6 py-5">
+    <section
+      data-tour="budgets"
+      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
+    >
+      <div className="border-b border-white/15 px-4 py-4 sm:px-6 sm:py-5">
         <div className="text-sm text-slate-300">Enveloppes</div>
         <h2 className="mt-1 text-xl font-semibold tracking-tight">Budgets & dépenses</h2>
       </div>
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 sm:p-6">
         {budgets.map((b) => (
           <BudgetCard key={b.id} ym={ym} budget={b} model={modelById.get(b.id) ?? null} archived={archived} />
         ))}
@@ -61,6 +64,7 @@ function BudgetCard({
     <div className="motion-hover rounded-3xl border border-white/15 bg-ink-950/45 p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-[220px] flex-1">
+          <div className="text-xs text-slate-400 sm:hidden">Enveloppe</div>
           <InlineTextInput
             ariaLabel="Nom du budget"
             value={budget.name}
@@ -103,7 +107,7 @@ function BudgetCard({
         <div className="text-sm font-medium text-slate-200">Dépenses</div>
 
         <div className="mt-3 grid gap-2 rounded-2xl border border-white/15 bg-ink-950/45 p-3">
-          <div className="grid grid-cols-[140px_1fr_140px_96px] gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
             <input
               className="h-9 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
               type="date"
@@ -160,7 +164,7 @@ function BudgetCard({
           <div className="text-xs text-slate-500">Les montants sont des dépenses (ex: 10€ = -10€).</div>
         </div>
 
-        <div className="mt-3 overflow-hidden rounded-2xl border border-white/15">
+        <div className="mt-3 overflow-x-auto overflow-y-hidden rounded-2xl border border-white/15 sm:overflow-hidden">
           <table className="min-w-full">
             <thead className="bg-ink-950/50 text-left text-xs text-slate-400">
               <tr>

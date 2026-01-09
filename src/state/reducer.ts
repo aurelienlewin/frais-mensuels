@@ -5,6 +5,7 @@ import type { Account, AppState, Budget, BudgetExpense, Charge, MonthData } from
 export type Action =
   | { type: 'HYDRATE'; state: AppState }
   | { type: 'SET_SALARY'; salaryCents: number }
+  | { type: 'SET_UI'; patch: NonNullable<AppState['ui']> }
   | { type: 'UPDATE_ACCOUNT'; accountId: Account['id']; patch: Partial<Omit<Account, 'id'>> }
   | { type: 'REMOVE_ACCOUNT'; accountId: Account['id']; moveToAccountId: Account['id'] }
   | { type: 'ENSURE_MONTH'; ym: MonthData['ym'] }
@@ -62,6 +63,8 @@ export function reducer(state: AppState, action: Action): AppState {
         return action.state;
       case 'SET_SALARY':
         return { ...state, salaryCents: action.salaryCents };
+      case 'SET_UI':
+        return { ...state, ui: { ...state.ui, ...action.patch } };
       case 'UPDATE_ACCOUNT':
         return {
           ...state,

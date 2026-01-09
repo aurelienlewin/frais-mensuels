@@ -48,8 +48,8 @@ const PREFIX = 'fm:sync:';
 const CHUNK_SIZE = 700; // keep /set/<key>/<value> URLs safely below common limits
 
 function kvEnv() {
-  const url = (process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL ?? '').trim();
-  const token = (process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN ?? '').trim();
+  const url = (process.env.SYNC_REDIS_REST_URL ?? process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL ?? '').trim();
+  const token = (process.env.SYNC_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN ?? '').trim();
   if (!url || !token) return null;
   return { url: url.replace(/\/+$/g, ''), token };
 }
@@ -89,7 +89,8 @@ export default async function handler(req: any, res: any) {
     return json(res, 501, {
       ok: false,
       error: 'KV_NOT_CONFIGURED',
-      message: 'Vercel KV is not configured for this deployment.',
+      message:
+        'Redis not configured for this deployment. Set SYNC_REDIS_REST_URL + SYNC_REDIS_REST_TOKEN (recommended), or KV_REST_API_URL + KV_REST_API_TOKEN (Vercel KV), or UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (Upstash). Ensure the env vars are present for this environment (Production/Preview).',
     });
   }
 

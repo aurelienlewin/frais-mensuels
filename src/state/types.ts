@@ -1,12 +1,16 @@
 import type { YM } from '../lib/date';
 
-export type AccountId = 'BS_PERSO' | 'CA_PERSO' | 'LCL_PERSO' | 'CC_CA' | 'CC_LCL' | 'BS_HIDAYA' | 'BS_IMANI';
+export type AccountId = string;
 
 export type Account = {
   id: AccountId;
   name: string;
   kind: 'perso' | 'commun';
   active: boolean;
+};
+
+export type UiState = {
+  tourDismissed?: boolean;
 };
 
 export type ChargeScope = 'perso' | 'commun';
@@ -80,4 +84,5 @@ export type AppState = {
   charges: Charge[];
   budgets: Budget[];
   months: Record<YM, MonthData>;
+  ui?: UiState;
 };

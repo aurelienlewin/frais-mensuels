@@ -1,25 +1,152 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { monthLabelFr, monthLabelShortFr, ymAdd, ymFromDate, type YM } from '../lib/date';
 import { useStore } from '../state/store';
 import { ChargesTable } from './ChargesTable';
 import { BudgetsPanel } from './BudgetsPanel';
 import { SummaryPanel } from './SummaryPanel';
 import { QuickAddWidget } from './QuickAddWidget';
-import { SyncDialog } from './SyncDialog';
+import { Tour, type TourStep } from './Tour';
 import { cx } from './cx';
+import type { AuthUser } from '../lib/authApi';
 
-export function AppView({ initialYm }: { initialYm: YM }) {
-  const { saving, state, dispatch, exportJson, importJson, reset } = useStore();
+export function AppView({
+  initialYm,
+  user,
+  onLogout,
+}: {
+  initialYm: YM;
+  user: AuthUser;
+  onLogout: () => void | Promise<void>;
+}) {
+  const { saving, state, dispatch, exportJson, importJson, reset, cloud } = useStore();
   const [ym, setYm] = useState<YM>(initialYm);
   const [online, setOnline] = useState<boolean>(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
   const [toast, setToast] = useState<{ id: string; message: string; tone: 'success' | 'error' } | null>(null);
-  const [syncOpen, setSyncOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
   const menuRef = useRef<HTMLDetailsElement | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const monthButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const toastTimerRef = useRef<number | null>(null);
   const lastSaveAtRef = useRef<string | undefined>(undefined);
   const lastErrorStatusRef = useRef<boolean>(false);
+
+  const tourSteps = useMemo<TourStep[]>(() => {
+    const Example = ({ children }: { children: ReactNode }) => (
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-slate-200">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Exemple</div>
+        <div className="mt-1 font-mono text-[12px] text-slate-100">{children}</div>
+      </div>
+    );
+
+    return [
+      {
+        id: 'welcome',
+        title: 'Bienvenue',
+        body: (
+          <>
+            <p>
+              Cette app fonctionne comme un mini-tableur pour suivre tes charges mensuelles (perso + commun) et tes enveloppes.
+            </p>
+            <Example>Loyer · 1200€ · J05 · Commun · Auto · OK se coche après échéance</Example>
+            <p className="text-xs text-slate-400">
+              Le guide ne s’affiche qu’une fois (tu peux le relancer via le menu <span className="font-mono">⋯</span>).
+            </p>
+          </>
+        ),
+      },
+      {
+        id: 'charges',
+        title: 'Charges mensuelles',
+        anchor: 'charges',
+        body: (
+          <>
+            <p>
+              Chaque ligne est une charge récurrente du mois. Tu peux éditer le libellé, le jour, le montant, le type
+              (perso/commun), l’auto/manuel, et la provenance/destination.
+            </p>
+            <Example>Internet · 35.99€ · J12 · Commun (50/50) · Auto · JOINT_MAIN</Example>
+            <p className="text-xs text-slate-400">
+              Tip: coche <span className="font-mono">OK</span> quand c’est prélevé (auto se coche par défaut si la date est
+              passée).
+            </p>
+          </>
+        ),
+      },
+      {
+        id: 'add',
+        title: 'Ajouter une charge',
+        anchor: 'add-charge',
+        body: (
+          <>
+            <p>
+              Clique <span className="font-mono">+ Ajouter</span>, puis complète la ligne. Les modifications sont
+              instantanées et sauvegardées.
+            </p>
+            <Example>Assurance auto · 48€ · J03 · Perso · Auto · PERSONAL_MAIN</Example>
+            <p className="text-xs text-slate-400">
+              Tu peux réordonner les lignes via drag & drop (ou les flèches sur mobile).
+            </p>
+          </>
+        ),
+      },
+      {
+        id: 'budgets',
+        title: 'Enveloppes (budgets)',
+        anchor: 'budgets',
+        body: (
+          <>
+            <p>Une enveloppe te donne un montant réservé (ex: perso, essence) et un suivi des dépenses du mois.</p>
+            <Example>Budget perso · 200€ → resto 12€ / pharmacie 6€ → reste 182€</Example>
+            <p className="text-xs text-slate-400">Les dépenses sont enregistrées en positif (affichées en -€).</p>
+          </>
+        ),
+      },
+      {
+        id: 'quick-add',
+        title: 'Ajout rapide (mobile/desktop)',
+        anchor: 'quick-add',
+        body: (
+          <>
+            <p>
+              Utilise le widget d’ajout rapide pour saisir une dépense perso ou un plein d’essence en 2 champs.
+            </p>
+            <Example>⛽ Essence · 55€ (ajouté automatiquement à l’enveloppe)</Example>
+            <p className="text-xs text-slate-400">
+              Si aucun budget “perso/essence” n’est détecté, l’app te demandera de choisir une enveloppe cible.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: 'summary',
+        title: 'Résumé & reste à vivre',
+        anchor: 'summary',
+        body: (
+          <>
+            <p>La colonne Résumé agrège tout: charges (commun/perso), enveloppes, reste à vivre, et répartitions.</p>
+            <Example>Salaire 3000€ − charges (pour moi) − enveloppes = reste à vivre</Example>
+            <p className="text-xs text-slate-400">Tu peux aussi gérer tes comptes (activer/supprimer) depuis le résumé.</p>
+          </>
+        ),
+      },
+      {
+        id: 'sync',
+        title: 'Synchronisation multi-appareils',
+        anchor: 'menu',
+        body: (
+          <>
+            <p>
+              Les données sont sauvegardées sur l’appareil et synchronisées dans le cloud quand tu es en ligne.
+            </p>
+            <Example>Menu ⋯ → “Synchroniser (cloud)” → mêmes données sur iOS + desktop</Example>
+            <p className="text-xs text-slate-400">
+              Tu peux aussi exporter/importer un JSON depuis le menu pour une sauvegarde manuelle.
+            </p>
+          </>
+        ),
+      },
+    ];
+  }, []);
 
   const archived = state.months[ym]?.archived ?? false;
   const todayYm = useMemo(() => ymFromDate(new Date()), []);
@@ -68,7 +195,8 @@ export function AppView({ initialYm }: { initialYm: YM }) {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setToast({ id, message, tone });
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setToast(null), 1800);
+    const durationMs = tone === 'error' ? 3600 : 1800;
+    toastTimerRef.current = window.setTimeout(() => setToast(null), durationMs);
   };
 
   useEffect(() => {
@@ -88,8 +216,26 @@ export function AppView({ initialYm }: { initialYm: YM }) {
     lastErrorStatusRef.current = isError;
   }, [saving.status]);
 
+  useEffect(() => {
+    if (state.ui?.tourDismissed) return;
+    if (tourOpen) return;
+    const t = window.setTimeout(() => {
+      if (state.ui?.tourDismissed) return;
+      setTourOpen(true);
+    }, 350);
+    return () => window.clearTimeout(t);
+  }, [state.ui?.tourDismissed, tourOpen]);
+
   return (
     <div className="min-h-dvh">
+      <Tour
+        open={tourOpen}
+        steps={tourSteps}
+        onDismiss={() => {
+          setTourOpen(false);
+          dispatch({ type: 'SET_UI', patch: { tourDismissed: true } });
+        }}
+      />
       {toast ? (
         <div className="pointer-events-none fixed left-1/2 top-16 z-[60] w-full -translate-x-1/2 px-4">
           <div
@@ -116,7 +262,7 @@ export function AppView({ initialYm }: { initialYm: YM }) {
         Aller au contenu
       </a>
       <header className="sticky top-0 z-10 border-b border-white/15 bg-ink-950/95">
-        <div className="mx-auto max-w-6xl px-6 py-4">
+        <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 sm:py-4">
           <div className="sr-only" aria-live="polite">
             {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
           </div>
@@ -175,14 +321,14 @@ export function AppView({ initialYm }: { initialYm: YM }) {
                 </option>
                 {archivedMonths.map((m) => (
                   <option key={m} value={m}>
-                    {monthLabelFr(m)}
-                  </option>
-                ))}
-	              </select>
-
-              <details
-                ref={menuRef}
-                className="relative"
+	                  {monthLabelFr(m)}
+	                </option>
+	              ))}
+		              </select>
+	
+	              <details
+	                ref={menuRef}
+	                className="relative"
                 onKeyDown={(e) => {
                   if (e.key !== 'Escape') return;
                   menuRef.current?.removeAttribute('open');
@@ -192,26 +338,56 @@ export function AppView({ initialYm }: { initialYm: YM }) {
                 <summary
                   aria-label="Menu"
                   className="list-none rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10"
+                  data-tour="menu"
                 >
                   ⋯
 	                </summary>
-	                <div className="absolute right-0 mt-2 w-[260px] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]">
-	                  <button
-	                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
-	                    onClick={() => {
-	                      setSyncOpen(true);
-	                      menuRef.current?.removeAttribute('open');
-	                    }}
-	                    type="button"
-	                  >
-	                    Sync (chiffré)…
-	                  </button>
-	
-	                  <div className="my-1 h-px bg-white/10" />
-	
-	                  <button
-	                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
-	                    onClick={() => {
+		                <div className="absolute right-0 mt-2 w-[280px] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]">
+		                  <div className="px-3 py-2 text-xs text-slate-400">
+		                    Connecté: <span className="font-mono text-slate-200">{user.email}</span>
+		                  </div>
+
+		                  <button
+		                    className={cx(
+		                      'w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10',
+		                      (!online || cloud.status === 'syncing') && 'opacity-50 hover:bg-transparent',
+		                    )}
+		                    disabled={!online || cloud.status === 'syncing'}
+		                    onClick={() => {
+		                      cloud.syncNow();
+		                      menuRef.current?.removeAttribute('open');
+		                    }}
+		                    type="button"
+		                  >
+		                    Synchroniser (cloud){cloud.status === 'syncing' ? '…' : ''}
+		                  </button>
+
+		                  <button
+		                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+		                    onClick={() => {
+		                      setTourOpen(true);
+		                      menuRef.current?.removeAttribute('open');
+		                    }}
+		                    type="button"
+		                  >
+		                    Guide (tour)
+		                  </button>
+
+		                  <button
+		                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-rose-400/10"
+		                    onClick={async () => {
+		                      await onLogout();
+		                      menuRef.current?.removeAttribute('open');
+		                    }}
+		                    type="button"
+		                  >
+		                    Se déconnecter
+		                  </button>
+
+		                  <div className="my-1 h-px bg-white/10" />
+		                  <button
+		                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+		                    onClick={() => {
                       const json = exportJson();
                       const blob = new Blob([json], { type: 'application/json' });
                       const url = URL.createObjectURL(blob);
@@ -339,8 +515,8 @@ export function AppView({ initialYm }: { initialYm: YM }) {
         </div>
       </header>
 
-      <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-6 pt-10 pb-28 sm:pb-10">
-        <div className="grid gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
+      <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-4 pt-6 pb-36 sm:px-6 sm:pt-10 sm:pb-10">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
           <SummaryPanel ym={ym} />
           <div className="space-y-6">
             <ChargesTable ym={ym} archived={archived} />
@@ -350,14 +526,6 @@ export function AppView({ initialYm }: { initialYm: YM }) {
       </main>
 
       <QuickAddWidget ym={ym} archived={archived} />
-      <SyncDialog
-        open={syncOpen}
-        online={online}
-        state={state}
-        dispatch={dispatch}
-        onClose={() => setSyncOpen(false)}
-        notify={showToast}
-      />
     </div>
   );
 }

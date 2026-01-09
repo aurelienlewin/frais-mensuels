@@ -82,10 +82,10 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
   const disabledAll = !canEdit || activeBudgets.length === 0;
   const position =
-    'fixed z-50 left-1/2 -translate-x-1/2 bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:translate-x-0 sm:bottom-6';
+    'fixed z-50 right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:right-6 sm:bottom-6';
 
   return (
-    <div className={position} onKeyDown={(e) => (e.key === 'Escape' ? setOpen(null) : null)}>
+    <div data-tour="quick-add" className={position} onKeyDown={(e) => (e.key === 'Escape' ? setOpen(null) : null)}>
       {open ? (
         <div className="mb-3 w-[min(92vw,420px)] rounded-3xl border border-white/15 bg-ink-950/95 p-4 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]">
           <div className="flex items-start justify-between gap-3">
@@ -183,26 +183,60 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
       <div
         className={cx(
-          'motion-hover motion-pop flex items-center gap-2 rounded-full border border-white/15 bg-ink-950/80 px-3 py-2 shadow-[0_10px_30px_-24px_rgba(0,0,0,0.85)]',
+          'motion-hover motion-pop relative h-44 w-44 select-none overflow-hidden rounded-tl-[999px] border border-white/15 bg-ink-950/80 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)] [clip-path:circle(100%_at_100%_100%)] sm:hidden',
           disabledAll && 'opacity-60',
         )}
       >
-	        <button
-	          type="button"
-	          className="rounded-full border border-emerald-200/25 bg-emerald-400/12 px-4 py-2 text-sm font-semibold text-emerald-100 transition-colors hover:bg-emerald-400/18 disabled:opacity-50"
-	          onClick={() => setOpen((v) => (v === 'perso' ? null : 'perso'))}
-	          disabled={disabledAll}
-	          aria-label="Ajouter une dépense perso"
-	        >
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-white/0 to-transparent"
+          aria-hidden="true"
+        />
+        <div className="absolute bottom-4 right-4 grid gap-2">
+          <button
+            type="button"
+            className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border border-emerald-200/25 bg-emerald-400/12 text-emerald-100 transition-colors active:bg-emerald-400/18 disabled:opacity-50"
+            onClick={() => setOpen((v) => (v === 'perso' ? null : 'perso'))}
+            disabled={disabledAll}
+            aria-label="Ajouter une dépense perso"
+          >
+            <span className="text-lg leading-none">+</span>
+            <span className="text-[10px] font-semibold leading-none">Perso</span>
+          </button>
+          <button
+            type="button"
+            className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border border-sky-200/25 bg-sky-400/12 text-sky-100 transition-colors active:bg-sky-400/18 disabled:opacity-50"
+            onClick={() => setOpen((v) => (v === 'essence' ? null : 'essence'))}
+            disabled={disabledAll}
+            aria-label="Ajouter un plein d’essence"
+          >
+            <span className="text-lg leading-none">⛽</span>
+            <span className="text-[10px] font-semibold leading-none">Essence</span>
+          </button>
+        </div>
+      </div>
+
+      <div
+        className={cx(
+          'motion-hover motion-pop hidden items-center gap-2 rounded-full border border-white/15 bg-ink-950/80 px-3 py-2 shadow-[0_10px_30px_-24px_rgba(0,0,0,0.85)] sm:flex',
+          disabledAll && 'opacity-60',
+        )}
+      >
+        <button
+          type="button"
+          className="rounded-full border border-emerald-200/25 bg-emerald-400/12 px-4 py-2 text-sm font-semibold text-emerald-100 transition-colors hover:bg-emerald-400/18 disabled:opacity-50"
+          onClick={() => setOpen((v) => (v === 'perso' ? null : 'perso'))}
+          disabled={disabledAll}
+          aria-label="Ajouter une dépense perso"
+        >
           + Perso
         </button>
-	        <button
-	          type="button"
-	          className="rounded-full border border-sky-200/25 bg-sky-400/12 px-4 py-2 text-sm font-semibold text-sky-100 transition-colors hover:bg-sky-400/18 disabled:opacity-50"
-	          onClick={() => setOpen((v) => (v === 'essence' ? null : 'essence'))}
-	          disabled={disabledAll}
-	          aria-label="Ajouter un plein d’essence"
-	        >
+        <button
+          type="button"
+          className="rounded-full border border-sky-200/25 bg-sky-400/12 px-4 py-2 text-sm font-semibold text-sky-100 transition-colors hover:bg-sky-400/18 disabled:opacity-50"
+          onClick={() => setOpen((v) => (v === 'essence' ? null : 'essence'))}
+          disabled={disabledAll}
+          aria-label="Ajouter un plein d’essence"
+        >
           ⛽ Essence
         </button>
       </div>

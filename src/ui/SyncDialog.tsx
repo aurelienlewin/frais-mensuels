@@ -21,6 +21,21 @@ function shortIso(iso: string) {
   }
 }
 
+export type SyncDialogControls = {
+  canQuickSync: boolean;
+  run: () => void;
+};
+
+function preferredSyncMode(): 'push' | 'pull' {
+  try {
+    if (typeof window === 'undefined') return 'push';
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    return mq.matches ? 'push' : 'pull';
+  } catch {
+    return 'push';
+  }
+}
+
 export function SyncDialog({
   open,
   online,
@@ -28,6 +43,7 @@ export function SyncDialog({
   dispatch,
   onClose,
   notify,
+  controlsRef,
 }: {
   open: boolean;
   online: boolean;
@@ -35,6 +51,7 @@ export function SyncDialog({
   dispatch: React.Dispatch<Action>;
   onClose: () => void;
   notify: (message: string, tone: 'success' | 'error') => void;
+  controlsRef?: React.MutableRefObject<SyncDialogControls | null>;
 }) {
   const passRef = useRef<HTMLInputElement | null>(null);
   const [passphrase, setPassphrase] = useState('');
@@ -45,6 +62,7 @@ export function SyncDialog({
 
   const localModifiedAt = state.modifiedAt ?? new Date().toISOString();
   const cryptoOk = isSyncCryptoSupported();
+  const mode = useMemo(() => preferredSyncMode(), [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -69,14 +87,14 @@ export function SyncDialog({
     if (!open) return null;
     if (!online) return { tone: 'warn' as const, text: 'Offline: sync indisponible.' };
     if (!cryptoOk) return { tone: 'warn' as const, text: 'WebCrypto indisponible sur ce navigateur.' };
-    return { tone: 'ok' as const, text: 'Chiffrement local (AES‑GCM) + stockage Vercel KV.' };
+    return { tone: 'ok' as const, text: 'Chiffrement local (AES‑GCM) + stockage Redis (Vercel KV / Upstash).' };
   }, [cryptoOk, online, open]);
 
-  if (!open) return null;
-
   const canSync = online && cryptoOk && !working && passphrase.trim().length >= 6;
+  const primaryLabel = mode === 'push' ? 'Exporter' : 'Récupérer';
 
   const runSync = async () => {
+    if (working) return;
     const pass = passphrase.trim();
     if (!pass) return;
     setWorking(true);
@@ -89,44 +107,48 @@ export function SyncDialog({
       const syncId = await deriveSyncId(pass);
 
       const remote = await getRemoteRecord(syncId);
-      if (!remote) {
-        const payload = await encryptState(state, pass);
-        const rec = await putRemoteRecord(syncId, localModifiedAt, payload);
-        setInfo(`Envoyé · cloud: ${shortIso(rec.updatedAt)}`);
-        notify('Sync · envoyé', 'success');
-        return;
-      }
 
-      const cmp = compareIso(remote.modifiedAt, localModifiedAt);
-      if (cmp === 0) {
-        setInfo(`Déjà à jour · cloud: ${shortIso(remote.updatedAt)}`);
-        notify('Sync · déjà à jour', 'success');
-        return;
-      }
-
-      if (cmp > 0) {
-        // Remote newer -> pull (keep an undo backup)
+      if (mode === 'pull') {
+        if (!remote) {
+          throw new Error("Aucune sauvegarde cloud. Fais d'abord « Exporter » depuis le desktop.");
+        }
         setUndoRaw(JSON.stringify(state));
         const remoteState = await decryptState(remote.payload, pass);
         dispatch({ type: 'HYDRATE', state: normalizeState(remoteState) });
-        setInfo(`Téléchargé · cloud: ${shortIso(remote.updatedAt)}`);
-        notify('Sync · téléchargé', 'success');
+        setInfo(`Récupéré · cloud: ${shortIso(remote.updatedAt)}`);
+        notify('Sync · récupéré', 'success');
         return;
       }
 
-      // Local newer -> push
+      if (remote && compareIso(remote.modifiedAt, localModifiedAt) > 0) {
+        const ok = window.confirm('Le cloud est plus récent que ce device. Écraser quand même ?');
+        if (!ok) {
+          setInfo(`Annulé · cloud: ${shortIso(remote.updatedAt)}`);
+          return;
+        }
+      }
+
       const payload = await encryptState(state, pass);
       const rec = await putRemoteRecord(syncId, localModifiedAt, payload);
-      setInfo(`Envoyé · cloud: ${shortIso(rec.updatedAt)}`);
-      notify('Sync · envoyé', 'success');
+      setInfo(`Exporté · cloud: ${shortIso(rec.updatedAt)}`);
+      notify('Sync · exporté', 'success');
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Sync impossible';
       setError(msg);
-      notify('Sync · erreur', 'error');
+      notify(`Sync · ${msg}`, 'error');
     } finally {
       setWorking(false);
     }
   };
+
+  if (controlsRef) {
+    controlsRef.current = {
+      canQuickSync: online && cryptoOk && !working && passphrase.trim().length >= 6,
+      run: runSync,
+    };
+  }
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 py-8">
@@ -141,7 +163,9 @@ export function SyncDialog({
           <div>
             <div className="text-sm text-slate-300">Sync (chiffré)</div>
             <div className="mt-1 text-lg font-semibold tracking-tight text-slate-100">iPhone ↔ Desktop</div>
-            <div className="mt-1 text-xs text-slate-400">Mot de passe identique sur chaque appareil. Pas de récupération.</div>
+            <div className="mt-1 text-xs text-slate-400">
+              {mode === 'push' ? 'Desktop: export vers le cloud.' : 'Mobile: récupération depuis le cloud.'} Mot de passe identique. Pas de récupération.
+            </div>
           </div>
           <button
             type="button"
@@ -176,6 +200,12 @@ export function SyncDialog({
               value={passphrase}
               placeholder="Minimum 6 caractères"
               onChange={(e) => setPassphrase(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                if (!canSync) return;
+                e.preventDefault();
+                runSync();
+              }}
             />
           </label>
 
@@ -228,11 +258,10 @@ export function SyncDialog({
             disabled={!canSync || working}
             onClick={runSync}
           >
-            {working ? 'Sync…' : 'Synchroniser'}
+            {working ? 'Sync…' : primaryLabel}
           </button>
         </div>
       </div>
     </div>
   );
 }
-

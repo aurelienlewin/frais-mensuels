@@ -1,15 +1,9 @@
 import type { Account, AppState, Charge, ChargeScope } from './types';
-import { eurosToCents } from '../lib/money';
-import { uid } from '../lib/id';
 
-const REQUIRED_ACCOUNTS: Account[] = [
-  { id: 'BS_PERSO', name: 'BS_PERSO', kind: 'perso', active: true },
-  { id: 'CA_PERSO', name: 'CA_PERSO', kind: 'perso', active: true },
-  { id: 'LCL_PERSO', name: 'LCL_PERSO', kind: 'perso', active: true },
-  { id: 'CC_CA', name: 'CC_CA', kind: 'commun', active: true },
-  { id: 'CC_LCL', name: 'CC_LCL', kind: 'commun', active: true },
-  { id: 'BS_HIDAYA', name: 'BS_HIDAYA', kind: 'perso', active: true },
-  { id: 'BS_IMANI', name: 'BS_IMANI', kind: 'perso', active: true },
+const DEFAULT_ACCOUNTS: Account[] = [
+  { id: 'PERSONAL_MAIN', name: 'PERSONAL_MAIN', kind: 'perso', active: true },
+  { id: 'PERSONAL_SAVINGS', name: 'PERSONAL_SAVINGS', kind: 'perso', active: true },
+  { id: 'JOINT_MAIN', name: 'JOINT_MAIN', kind: 'commun', active: true },
 ];
 
 export function normalizeState(state: AppState): AppState {
@@ -28,29 +22,38 @@ export function normalizeState(state: AppState): AppState {
     return candidates[candidates.length - 1] ?? new Date().toISOString();
   })();
 
-  // Salary (migrate old default)
-  const nextSalaryCents = state.salaryCents === eurosToCents(3400) ? eurosToCents(3968.79) : state.salaryCents;
+  const nextSalaryCents = Number.isFinite(state.salaryCents) ? state.salaryCents : 0;
   if (nextSalaryCents !== state.salaryCents) changed = true;
 
   // Accounts
-  const existing = new Set(state.accounts.map((a) => a.id));
-  const missing = REQUIRED_ACCOUNTS.filter((a) => !existing.has(a.id));
-  const withMissing = missing.length ? (changed = true, [...state.accounts, ...missing]) : state.accounts;
-  let accounts = withMissing.map((a) => {
+  const inputAccounts: Account[] = Array.isArray(state.accounts) ? (state.accounts as Account[]) : [];
+  const fallbackAccounts = inputAccounts.length ? inputAccounts : DEFAULT_ACCOUNTS;
+  if (!inputAccounts.length) changed = true;
+
+  let accounts = fallbackAccounts.map((a) => {
     const active = typeof (a as { active?: unknown }).active === 'boolean' ? a.active : true;
     const fixedName = a.id;
-    const changedThis = fixedName !== a.name || active !== (a as { active?: unknown }).active;
+    const kind: Account['kind'] = a.kind === 'commun' ? 'commun' : 'perso';
+    const changedThis =
+      fixedName !== a.name || active !== (a as { active?: unknown }).active || kind !== (a as { kind?: unknown }).kind;
     if (changedThis) changed = true;
-    return { ...a, name: fixedName, active };
+    return { ...a, name: fixedName, active, kind };
   });
   if (accounts.length && accounts.every((a) => !a.active)) {
     changed = true;
-    const idx = Math.max(
-      0,
-      accounts.findIndex((a) => a.id === 'BS_PERSO'),
-    );
-    accounts = accounts.map((a, i) => (i === idx ? { ...a, active: true } : a));
+    accounts = accounts.map((a, i) => (i === 0 ? { ...a, active: true } : a));
   }
+
+  // UI prefs (default to dismissed for existing datasets; seed sets false for new users)
+  const ui = (() => {
+    const raw = (state as { ui?: unknown }).ui;
+    const obj = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
+    const tourDismissed = typeof obj?.tourDismissed === 'boolean' ? obj.tourDismissed : true;
+    const hadUi = Boolean(obj);
+    const changedThis = !hadUi || tourDismissed !== obj?.tourDismissed;
+    if (changedThis) changed = true;
+    return { tourDismissed };
+  })();
 
   // Charges: ensure sortOrder exists (older saves won't have it)
   const chargesNeedSortOrder = state.charges.some((c) => typeof (c as Charge).sortOrder !== 'number');
@@ -69,61 +72,6 @@ export function normalizeState(state: AppState): AppState {
         return next.map((c) => ({ ...c, sortOrder: orderById.get(c.id) ?? 9999 }));
       })()
     : state.charges;
-
-  // Ensure key CA_PERSO charges exist (idempotent).
-  const ensureCharges = [
-    { name: 'Groupe', amountCents: eurosToCents(25), sortOrder: 25, dayOfMonth: 1 },
-    { name: 'Frais CA (perso)', amountCents: eurosToCents(7.1), sortOrder: 27, dayOfMonth: 5 },
-  ] as const;
-
-  const normalizeNameKey = (s: string) =>
-    s
-      .trim()
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-
-  let chargesChanged = false;
-  let nextCharges = charges;
-  for (const t of ensureCharges) {
-    const idx = nextCharges.findIndex(
-      (c) => c.scope === 'perso' && c.accountId === 'CA_PERSO' && normalizeNameKey(c.name) === normalizeNameKey(t.name),
-    );
-    if (idx === -1) {
-      chargesChanged = true;
-      nextCharges = [
-        ...nextCharges,
-        {
-          id: uid('chg'),
-          name: t.name,
-          amountCents: t.amountCents,
-          sortOrder: t.sortOrder,
-          dayOfMonth: t.dayOfMonth,
-          accountId: 'CA_PERSO',
-          scope: 'perso',
-          payment: 'auto',
-          active: true,
-        },
-      ];
-      continue;
-    }
-
-    const cur = nextCharges[idx]!;
-    const patch: Partial<Charge> = {};
-    if (cur.amountCents !== t.amountCents) patch.amountCents = t.amountCents;
-    if (cur.dayOfMonth !== t.dayOfMonth) patch.dayOfMonth = t.dayOfMonth;
-    if (cur.payment !== 'auto') patch.payment = 'auto';
-    if (cur.active !== true) patch.active = true;
-
-    if (Object.keys(patch).length) {
-      chargesChanged = true;
-      nextCharges = nextCharges.map((c, i) => (i === idx ? { ...c, ...patch } : c));
-    }
-  }
-  if (chargesChanged) {
-    changed = true;
-    charges = nextCharges;
-  }
 
   // Archived month snapshots: ensure snapshot.sortOrder exists for stable display.
   const chargeById = new Map<string, Charge>(charges.map((c) => [c.id, c]));
@@ -169,5 +117,6 @@ export function normalizeState(state: AppState): AppState {
     accounts,
     charges,
     months,
+    ui,
   };
 }

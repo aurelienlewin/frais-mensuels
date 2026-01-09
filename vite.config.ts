@@ -1,7 +1,53 @@
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
+import fs from 'node:fs';
+import path from 'node:path';
 
-export default defineConfig({
-  plugins: [react()],
+function vercelApiDevPlugin(): Plugin {
+  return {
+    name: 'vercel-api-dev',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const url = typeof req.url === 'string' ? req.url : '';
+        if (!url.startsWith('/api/')) return next();
+
+        const pathname = url.split('?')[0] ?? url;
+        let rel = pathname.replace(/^\/api\//, '');
+        if (!rel || rel.includes('..') || rel.includes('\\')) return next();
+        if (rel.endsWith('/')) rel = rel.slice(0, -1);
+        if (!rel) return next();
+
+        const root = server.config.root ?? process.cwd();
+        const fsPathTs = path.resolve(root, 'api', `${rel}.ts`);
+        const fsPathJs = path.resolve(root, 'api', `${rel}.js`);
+        const moduleId = fs.existsSync(fsPathTs) ? `/api/${rel}.ts` : fs.existsSync(fsPathJs) ? `/api/${rel}.js` : null;
+        if (!moduleId) return next();
+
+        try {
+          const mod = await server.ssrLoadModule(moduleId);
+          const handler = mod?.default;
+          if (typeof handler !== 'function') return next();
+          await handler(req, res);
+          return;
+        } catch (err) {
+          const e = err as Error;
+          server.ssrFixStacktrace(e);
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          res.end(`Local API error: ${e.message}`);
+        }
+      });
+    },
+  };
+}
+
+export default defineConfig(({ command, mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  for (const [k, v] of Object.entries(env)) {
+    if (!(k in process.env)) process.env[k] = v;
+  }
+
+  return {
+    plugins: [react(), command === 'serve' ? vercelApiDevPlugin() : null].filter(Boolean) as Plugin[],
+  };
 });
-

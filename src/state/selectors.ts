@@ -256,10 +256,11 @@ export function totalsByAccount(state: AppState, ym: YM) {
   const rows = chargesForMonth(state, ym);
   const byAccount = new Map<AccountId, { totalCents: number; paidCents: number }>();
   for (const r of rows) {
-    const prev = byAccount.get(r.accountId) ?? { totalCents: 0, paidCents: 0 };
+    const key: AccountId = r.destination?.kind === 'account' ? r.destination.accountId : r.accountId;
+    const prev = byAccount.get(key) ?? { totalCents: 0, paidCents: 0 };
     prev.totalCents += r.amountCents;
     if (r.paid) prev.paidCents += r.amountCents;
-    byAccount.set(r.accountId, prev);
+    byAccount.set(key, prev);
   }
 
   const order = state.accounts.map((a) => a.id);

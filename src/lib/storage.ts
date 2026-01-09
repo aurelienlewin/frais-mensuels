@@ -3,8 +3,10 @@ import type { AppState } from '../state/types';
 const DB_NAME = 'fraismensuels';
 const DB_VERSION = 1;
 const STORE = 'kv';
-const KEY_STATE = 'state';
-const LS_KEY_STATE = 'fraismensuels.state';
+const KEY_STATE_PREFIX = 'state:';
+const LS_KEY_STATE_PREFIX = 'fraismensuels.state:';
+const KEY_STATE_LEGACY = 'state';
+const LS_KEY_STATE_LEGACY = 'fraismensuels.state';
 
 type KVRecord = { key: string; value: unknown; updatedAt: string };
 
@@ -54,16 +56,43 @@ async function idbSet<T>(key: string, value: T): Promise<void> {
   });
 }
 
-export async function loadAppState(): Promise<AppState | null> {
+function keyFor(storageKey: string) {
+  const safe = storageKey.trim() || 'default';
+  return `${KEY_STATE_PREFIX}${safe}`;
+}
+
+function lsKeyFor(storageKey: string) {
+  const safe = storageKey.trim() || 'default';
+  return `${LS_KEY_STATE_PREFIX}${safe}`;
+}
+
+export async function loadAppState(storageKey: string): Promise<AppState | null> {
+  const idbKey = keyFor(storageKey);
+  const lsKey = lsKeyFor(storageKey);
   try {
-    const state = await idbGet<AppState>(KEY_STATE);
+    const state = await idbGet<AppState>(idbKey);
     if (state) return state;
   } catch {
     // fallthrough to localStorage
   }
 
   try {
-    const raw = localStorage.getItem(LS_KEY_STATE);
+    const raw = localStorage.getItem(lsKey);
+    if (!raw) return null;
+    return JSON.parse(raw) as AppState;
+  } catch {
+    // ignore
+  }
+
+  // Legacy fallback (single-user)
+  try {
+    const legacy = await idbGet<AppState>(KEY_STATE_LEGACY);
+    if (legacy) return legacy;
+  } catch {
+    // ignore
+  }
+  try {
+    const raw = localStorage.getItem(LS_KEY_STATE_LEGACY);
     if (!raw) return null;
     return JSON.parse(raw) as AppState;
   } catch {
@@ -71,18 +100,19 @@ export async function loadAppState(): Promise<AppState | null> {
   }
 }
 
-export async function saveAppState(state: AppState): Promise<void> {
+export async function saveAppState(storageKey: string, state: AppState): Promise<void> {
+  const idbKey = keyFor(storageKey);
+  const lsKey = lsKeyFor(storageKey);
   try {
-    await idbSet(KEY_STATE, state);
+    await idbSet(idbKey, state);
     return;
   } catch {
     // fallthrough to localStorage
   }
 
   try {
-    localStorage.setItem(LS_KEY_STATE, JSON.stringify(state));
+    localStorage.setItem(lsKey, JSON.stringify(state));
   } catch {
     // ignore
   }
 }
-

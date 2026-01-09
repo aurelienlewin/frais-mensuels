@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#0b1020",
   "theme_color": "#0b1020",
-  "description": "Saisie et suivi de charges mensuelles (perso + commun) hors-ligne.",
+  "description": "Saisie et suivi de charges mensuelles (perso + commun) et budgets.",
   "icons": [
     {
       "src": "/icon.svg",
@@ -16,4 +16,3 @@
     }
   ]
 }
-
