@@ -5,6 +5,7 @@ import { ChargesTable } from './ChargesTable';
 import { BudgetsPanel } from './BudgetsPanel';
 import { SummaryPanel } from './SummaryPanel';
 import { QuickAddWidget } from './QuickAddWidget';
+import { SyncDialog } from './SyncDialog';
 import { cx } from './cx';
 
 export function AppView({ initialYm }: { initialYm: YM }) {
@@ -12,6 +13,7 @@ export function AppView({ initialYm }: { initialYm: YM }) {
   const [ym, setYm] = useState<YM>(initialYm);
   const [online, setOnline] = useState<boolean>(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
   const [toast, setToast] = useState<{ id: string; message: string; tone: 'success' | 'error' } | null>(null);
+  const [syncOpen, setSyncOpen] = useState(false);
   const menuRef = useRef<HTMLDetailsElement | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const monthButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -192,11 +194,24 @@ export function AppView({ initialYm }: { initialYm: YM }) {
                   className="list-none rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10"
                 >
                   ⋯
-                </summary>
-                <div className="absolute right-0 mt-2 w-[260px] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]">
-                  <button
-                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
-                    onClick={() => {
+	                </summary>
+	                <div className="absolute right-0 mt-2 w-[260px] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]">
+	                  <button
+	                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+	                    onClick={() => {
+	                      setSyncOpen(true);
+	                      menuRef.current?.removeAttribute('open');
+	                    }}
+	                    type="button"
+	                  >
+	                    Sync (chiffré)…
+	                  </button>
+	
+	                  <div className="my-1 h-px bg-white/10" />
+	
+	                  <button
+	                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+	                    onClick={() => {
                       const json = exportJson();
                       const blob = new Blob([json], { type: 'application/json' });
                       const url = URL.createObjectURL(blob);
@@ -335,6 +350,14 @@ export function AppView({ initialYm }: { initialYm: YM }) {
       </main>
 
       <QuickAddWidget ym={ym} archived={archived} />
+      <SyncDialog
+        open={syncOpen}
+        online={online}
+        state={state}
+        dispatch={dispatch}
+        onClose={() => setSyncOpen(false)}
+        notify={showToast}
+      />
     </div>
   );
 }

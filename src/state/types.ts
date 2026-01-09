@@ -74,6 +74,7 @@ export type MonthData = {
 
 export type AppState = {
   version: 1;
+  modifiedAt?: string; // ISO string - updated on any change (used for sync/conflicts)
   salaryCents: number;
   accounts: Account[];
   charges: Charge[];

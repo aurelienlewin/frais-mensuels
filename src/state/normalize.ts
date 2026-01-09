@@ -15,6 +15,19 @@ const REQUIRED_ACCOUNTS: Account[] = [
 export function normalizeState(state: AppState): AppState {
   let changed = false;
 
+  const nextModifiedAt = (() => {
+    const current = typeof state.modifiedAt === 'string' ? state.modifiedAt : null;
+    if (current) return current;
+    changed = true;
+    const candidates: string[] = [];
+    for (const m of Object.values(state.months)) {
+      if (typeof (m as { updatedAt?: unknown }).updatedAt === 'string') candidates.push(m.updatedAt);
+      if (typeof (m as { createdAt?: unknown }).createdAt === 'string') candidates.push(m.createdAt);
+    }
+    candidates.sort();
+    return candidates[candidates.length - 1] ?? new Date().toISOString();
+  })();
+
   // Salary (migrate old default)
   const nextSalaryCents = state.salaryCents === eurosToCents(3400) ? eurosToCents(3968.79) : state.salaryCents;
   if (nextSalaryCents !== state.salaryCents) changed = true;
@@ -151,6 +164,7 @@ export function normalizeState(state: AppState): AppState {
   if (!changed) return state;
   return {
     ...state,
+    modifiedAt: nextModifiedAt,
     salaryCents: nextSalaryCents,
     accounts,
     charges,

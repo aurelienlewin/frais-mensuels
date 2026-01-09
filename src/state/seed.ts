@@ -4,6 +4,7 @@ import { uid } from '../lib/id';
 import type { Account, AppState, Budget, Charge } from './types';
 
 export function seedState(now = new Date()): AppState {
+  const nowIso = now.toISOString();
   const accounts: Account[] = [
     { id: 'BS_PERSO', name: 'BS_PERSO', kind: 'perso', active: true },
     { id: 'CA_PERSO', name: 'CA_PERSO', kind: 'perso', active: true },
@@ -334,6 +335,7 @@ export function seedState(now = new Date()): AppState {
 
   return {
     version: 1,
+    modifiedAt: nowIso,
     salaryCents: eurosToCents(3968.79),
     accounts,
     charges,
@@ -342,8 +344,8 @@ export function seedState(now = new Date()): AppState {
       [ym]: {
         ym,
         archived: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: nowIso,
+        updatedAt: nowIso,
         charges: {},
         budgets: {
           [budgets[0]!.id]: {
