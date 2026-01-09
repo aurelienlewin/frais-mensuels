@@ -1,6 +1,6 @@
-import { deleteSession, SESSION_COOKIE } from '../_auth';
-import { kvConfigured } from '../_kv';
-import { clearCookie, json, methodNotAllowed, parseCookies } from '../_http';
+import { deleteSession, SESSION_COOKIE } from '../_auth.js';
+import { kvConfigured } from '../_kv.js';
+import { clearCookie, json, methodNotAllowed, parseCookies } from '../_http.js';
 
 export default async function handler(req: any, res: any) {
   if (!kvConfigured()) {
@@ -22,4 +22,3 @@ export default async function handler(req: any, res: any) {
   clearCookie(res, SESSION_COOKIE);
   return json(res, 200, { ok: true });
 }
-

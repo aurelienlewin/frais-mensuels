@@ -3,6 +3,33 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 
+function apiJsToTsDevPlugin(): Plugin {
+  const root = process.cwd();
+
+  const toFsPath = (id: string) => {
+    const clean = id.split('?')[0] ?? id;
+    if (clean.startsWith('/@fs/')) return clean.slice('/@fs/'.length);
+    if (clean.startsWith('/')) return path.resolve(root, clean.slice(1));
+    return clean;
+  };
+
+  return {
+    name: 'api-js-to-ts-dev',
+    enforce: 'pre',
+    resolveId(source, importer) {
+      if (!importer) return null;
+      if (!source.startsWith('.') || !source.endsWith('.js')) return null;
+      const importerFs = toFsPath(importer);
+      if (!importerFs.includes(`${path.sep}api${path.sep}`)) return null;
+
+      const absJs = path.resolve(path.dirname(importerFs), source);
+      const absTs = absJs.replace(/\.js$/i, '.ts');
+      if (fs.existsSync(absTs)) return absTs;
+      return null;
+    },
+  };
+}
+
 function vercelApiDevPlugin(): Plugin {
   return {
     name: 'vercel-api-dev',
@@ -48,6 +75,8 @@ export default defineConfig(({ command, mode }) => {
   }
 
   return {
-    plugins: [react(), command === 'serve' ? vercelApiDevPlugin() : null].filter(Boolean) as Plugin[],
+    plugins: [react(), command === 'serve' ? apiJsToTsDevPlugin() : null, command === 'serve' ? vercelApiDevPlugin() : null].filter(
+      Boolean,
+    ) as Plugin[],
   };
 });

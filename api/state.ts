@@ -1,6 +1,6 @@
-import { getSession, getUserById, SESSION_COOKIE, touchSession } from './_auth';
-import { kvConfigured, kvGet, kvSet } from './_kv';
-import { badRequest, json, methodNotAllowed, parseCookies, readJsonBody, unauthorized } from './_http';
+import { getSession, getUserById, SESSION_COOKIE, touchSession } from './_auth.js';
+import { kvConfigured, kvGet, kvSet } from './_kv.js';
+import { badRequest, json, methodNotAllowed, parseCookies, readJsonBody, unauthorized } from './_http.js';
 
 const PREFIX = 'fm:state:';
 const CHUNK_SIZE = 700;

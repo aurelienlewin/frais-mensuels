@@ -1,4 +1,4 @@
-import { kvDel, kvExpire, kvGet, kvIncr, kvSet } from './_kv';
+import { kvDel, kvExpire, kvGet, kvIncr, kvSet } from './_kv.js';
 
 export const SESSION_COOKIE = 'fm_session';
 const PREFIX = 'fm:auth:';
@@ -242,4 +242,3 @@ export async function rateLimit(prefix: string, ip: string, max: number, windowS
   if (n === 1) await kvExpire(key, windowSeconds);
   return n <= max;
 }
-

@@ -1,6 +1,6 @@
-import { createSession, getUserByEmail, rateLimit, SESSION_COOKIE, verifyPassword } from '../_auth';
-import { kvConfigured } from '../_kv';
-import { badRequest, getClientIp, json, methodNotAllowed, readJsonBody, setCookie } from '../_http';
+import { createSession, getUserByEmail, rateLimit, SESSION_COOKIE, verifyPassword } from '../_auth.js';
+import { kvConfigured } from '../_kv.js';
+import { badRequest, getClientIp, json, methodNotAllowed, readJsonBody, setCookie } from '../_http.js';
 
 export default async function handler(req: any, res: any) {
   if (!kvConfigured()) {
@@ -38,4 +38,3 @@ export default async function handler(req: any, res: any) {
   setCookie(res, SESSION_COOKIE, token, { maxAgeSeconds: 60 * 60 * 24 * 30, httpOnly: true });
   return json(res, 200, { ok: true, user: { id: user.id, email: user.email } });
 }
-
