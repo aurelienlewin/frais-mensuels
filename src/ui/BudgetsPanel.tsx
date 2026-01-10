@@ -135,7 +135,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
         </button>
       </div>
 
-      <div className="mt-2 text-xs text-slate-500">
+      <div className="mt-2 text-xs text-slate-400">
         Astuce: pour l’ajout rapide, utilise un nom contenant <span className="font-mono">perso</span> ou <span className="font-mono">essence</span>.
       </div>
     </div>
@@ -282,7 +282,7 @@ function BudgetCard({
               Ajouter
             </button>
           </div>
-          <div className="text-xs text-slate-500">Les montants sont des dépenses (ex: 10€ = -10€).</div>
+          <div className="text-xs text-slate-400">Les montants sont des dépenses (ex: 10€ = -10€).</div>
         </div>
 
         <div className="mt-3 overflow-x-auto overscroll-x-contain overflow-y-hidden rounded-2xl border border-white/15 sm:overflow-hidden">

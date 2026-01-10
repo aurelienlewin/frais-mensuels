@@ -540,7 +540,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                            </span>
 		                          )}
 
-	                          <span className="select-none text-slate-500" aria-hidden="true">
+	                          <span className="select-none text-slate-400" aria-hidden="true">
                               →
                             </span>
 
@@ -620,7 +620,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                              {r.destinationLabel}
 	                            </span>
 	                          ) : (
-	                            <span className="text-[11px] text-slate-500">—</span>
+	                            <span className="text-[11px] text-slate-400">—</span>
 	                          )}
 	                        </div>
 
@@ -837,7 +837,7 @@ function MobileCard({
   const monthOnlyChip = 'border-fuchsia-200/25 bg-fuchsia-400/12 text-fuchsia-100';
 
   const chipBase =
-    'inline-flex h-7 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 text-[11px] font-semibold text-slate-200';
+    'inline-flex h-6 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 text-[10px] font-semibold text-slate-200';
 
   const metaSelect =
     'h-9 rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[12px] font-semibold text-slate-100 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
@@ -854,7 +854,7 @@ function MobileCard({
   return (
     <div
       className={cx(
-        'rounded-2xl border p-3 shadow-[0_14px_50px_-36px_rgba(0,0,0,0.85)] backdrop-blur',
+        'rounded-2xl border p-2.5 shadow-[0_12px_40px_-32px_rgba(0,0,0,0.85)] backdrop-blur',
         tint,
         paidFx,
       )}
@@ -891,7 +891,7 @@ function MobileCard({
             <button
               type="button"
               className={cx(
-                'flex-none rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-right transition-colors hover:bg-white/10',
+                'flex-none rounded-xl border border-white/10 bg-white/5 px-2.5 py-1 text-right transition-colors hover:bg-white/10',
                 !canEdit && 'opacity-50 hover:bg-white/5',
               )}
               disabled={!canEdit}
@@ -909,14 +909,14 @@ function MobileCard({
             </button>
           </div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <span title={r.dueDate} className={cx(chipBase, 'text-slate-300')}>
               J{pad2(r.dayOfMonth)}
             </span>
             <span className={cx(chipBase, typeChip)}>{r.scope === 'commun' ? 'Commun' : 'Perso'}</span>
             <span className={cx(chipBase, paymentChip)}>{r.payment === 'auto' ? 'Auto' : 'Manuel'}</span>
             {r.destinationLabel ? (
-              <span title={r.destinationLabel} className={cx(chipBase, 'max-w-[180px] truncate text-slate-300')}>
+              <span title={r.destinationLabel} className={cx(chipBase, 'max-w-[160px] truncate text-slate-300')}>
                 → {r.destinationLabel}
               </span>
             ) : null}
@@ -929,7 +929,7 @@ function MobileCard({
             <button
               type="button"
               className={cx(
-                'ml-auto inline-flex h-7 items-center rounded-full border border-white/10 bg-white/5 px-3 text-[11px] font-semibold text-slate-200 transition-colors hover:bg-white/10',
+                'ml-auto inline-flex h-6 items-center rounded-full border border-white/10 bg-white/5 px-2.5 text-[10px] font-semibold text-slate-200 transition-colors hover:bg-white/10',
                 expanded && 'bg-white/8',
                 !canEdit && 'opacity-50 hover:bg-white/5',
               )}

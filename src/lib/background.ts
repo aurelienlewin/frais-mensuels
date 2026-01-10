@@ -19,6 +19,9 @@ const THEMES: BgTheme[] = [
   { id: 'glacier', keywords: 'glacier,ice,mountains,landscape' },
 ];
 
+let requestSeq = 0;
+let activeRequest = 0;
+
 function readSaved(): SavedBgV1 | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -66,7 +69,8 @@ function applyBackgroundUrl(url: string) {
 function buildUnsplashUrl(theme: BgTheme, w: number, h: number) {
   // Unsplash "Source" (no API key): returns an image via redirect.
   // Note: this triggers a third-party request from the client.
-  return `https://source.unsplash.com/${w}x${h}/?${theme.keywords}`;
+  const sig = Math.floor(Math.random() * 1_000_000_000);
+  return `https://source.unsplash.com/${w}x${h}/?${theme.keywords}&sig=${sig}`;
 }
 
 export function initDynamicBackground(options?: { force?: boolean; ttlMs?: number }) {
@@ -91,18 +95,22 @@ export function initDynamicBackground(options?: { force?: boolean; ttlMs?: numbe
   const theme = pickTheme();
   const src = buildUnsplashUrl(theme, w, h);
 
+  const requestId = (requestSeq += 1);
+  activeRequest = requestId;
+
   const img = new Image();
   img.decoding = 'async';
   img.referrerPolicy = 'no-referrer';
   img.onload = () => {
+    if (activeRequest !== requestId) return;
     const finalUrl = img.currentSrc || img.src;
     if (!finalUrl) return;
     applyBackgroundUrl(finalUrl);
     save(finalUrl, ttlMs);
   };
   img.onerror = () => {
+    if (activeRequest !== requestId) return;
     // Keep the default local background from CSS.
   };
   img.src = src;
 }
-

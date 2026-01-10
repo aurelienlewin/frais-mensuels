@@ -5,6 +5,11 @@ import './styles.css';
 import { initDynamicBackground } from './lib/background';
 
 initDynamicBackground();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  initDynamicBackground();
+});
+window.addEventListener('pageshow', () => initDynamicBackground());
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

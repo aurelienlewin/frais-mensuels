@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { authLogin, authRegister, authResetPassword, type AuthUser } from '../lib/authApi';
 import { passwordPolicy, passwordScore } from '../lib/passwordPolicy';
 import { cx } from './cx';
@@ -12,6 +12,12 @@ export function AuthView({
   online: boolean;
   onAuthed: (user: AuthUser) => void;
 }) {
+  const tabOrder: Array<Extract<Mode, 'login' | 'register' | 'reset'>> = ['login', 'register', 'reset'];
+  const tabRefs = useRef<Record<(typeof tabOrder)[number], HTMLButtonElement | null>>({
+    login: null,
+    register: null,
+    reset: null,
+  });
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -73,6 +79,25 @@ export function AuthView({
     }
   };
 
+  const activeTab: (typeof tabOrder)[number] = mode === 'register' || mode === 'reset' ? mode : 'login';
+  const activeTabId = `auth-tab-${activeTab}`;
+
+  const moveTab = (dir: 'prev' | 'next' | 'first' | 'last') => {
+    const idx = tabOrder.indexOf(activeTab);
+    if (idx < 0) return;
+    const nextIdx =
+      dir === 'first'
+        ? 0
+        : dir === 'last'
+          ? tabOrder.length - 1
+          : dir === 'prev'
+            ? (idx + tabOrder.length - 1) % tabOrder.length
+            : (idx + 1) % tabOrder.length;
+    const next = tabOrder[nextIdx]!;
+    setMode(next);
+    tabRefs.current[next]?.focus();
+  };
+
   return (
     <div className="min-h-dvh px-4 py-10">
       <div className="mx-auto w-full max-w-md">
@@ -83,14 +108,53 @@ export function AuthView({
 
         <div className="motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/70 shadow-[0_20px_120px_-60px_rgba(0,0,0,0.9)]">
           <div className="border-b border-white/10 p-2">
-            <div className="grid grid-cols-3 gap-2">
-              <TabButton active={mode === 'login'} onClick={() => setMode('login')} label="Se connecter" />
-              <TabButton active={mode === 'register'} onClick={() => setMode('register')} label="Créer" />
-              <TabButton active={mode === 'reset'} onClick={() => setMode('reset')} label="Reset" />
-            </div>
+            {mode !== 'recovery' ? (
+              <div role="tablist" aria-label="Mode d’authentification" className="grid grid-cols-3 gap-2">
+                <TabButton
+                  id="auth-tab-login"
+                  buttonRef={(el) => {
+                    tabRefs.current.login = el;
+                  }}
+                  active={mode === 'login'}
+                  label="Se connecter"
+                  onSelect={() => setMode('login')}
+                  onMove={moveTab}
+                />
+                <TabButton
+                  id="auth-tab-register"
+                  buttonRef={(el) => {
+                    tabRefs.current.register = el;
+                  }}
+                  active={mode === 'register'}
+                  label="Créer"
+                  onSelect={() => setMode('register')}
+                  onMove={moveTab}
+                />
+                <TabButton
+                  id="auth-tab-reset"
+                  buttonRef={(el) => {
+                    tabRefs.current.reset = el;
+                  }}
+                  active={mode === 'reset'}
+                  label="Reset"
+                  onSelect={() => setMode('reset')}
+                  onMove={moveTab}
+                />
+              </div>
+            ) : (
+              <div className="px-4 py-2 text-sm font-semibold text-slate-200" role="heading" aria-level={2}>
+                Récupération
+              </div>
+            )}
           </div>
 
-          <div className="space-y-4 p-6">
+          <div
+            id="auth-panel"
+            role="tabpanel"
+            aria-labelledby={mode !== 'recovery' ? activeTabId : undefined}
+            aria-label={mode === 'recovery' ? 'Récupération du compte' : undefined}
+            className="space-y-4 p-6"
+          >
             {!online ? (
               <div
                 role="status"
@@ -258,21 +322,58 @@ export function AuthView({
   );
 }
 
-function TabButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+const TabButton = ({
+  id,
+  active,
+  label,
+  onSelect,
+  onMove,
+  buttonRef,
+}: {
+  id: string;
+  active: boolean;
+  label: string;
+  onSelect: () => void;
+  onMove: (dir: 'prev' | 'next' | 'first' | 'last') => void;
+  buttonRef: (el: HTMLButtonElement | null) => void;
+}) => {
   return (
     <button
+      id={id}
+      ref={buttonRef}
       type="button"
+      role="tab"
+      aria-selected={active}
+      aria-controls="auth-panel"
+      tabIndex={active ? 0 : -1}
       className={cx(
         'rounded-2xl px-3 py-2 text-sm font-semibold transition-colors',
         active ? 'bg-white/12 text-slate-100' : 'bg-white/5 text-slate-300 hover:bg-white/8',
       )}
-      onClick={onClick}
-      aria-pressed={active}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          onMove('prev');
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          onMove('next');
+        }
+        if (e.key === 'Home') {
+          e.preventDefault();
+          onMove('first');
+        }
+        if (e.key === 'End') {
+          e.preventDefault();
+          onMove('last');
+        }
+      }}
     >
       {label}
     </button>
   );
-}
+};
 
 function PasswordStrength({ score, reasons }: { score: number; reasons: string[] }) {
   const label = score >= 4 ? 'Fort' : score >= 3 ? 'OK' : score >= 2 ? 'Faible' : 'Trop faible';

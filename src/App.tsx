@@ -4,11 +4,13 @@ import { AuthView } from './ui/AuthView';
 import { authLogout, authMe, type AuthUser } from './lib/authApi';
 import { ymFromDate } from './lib/date';
 import { useEffect, useState } from 'react';
+import { clearCachedUser, readCachedUser, writeCachedUser } from './lib/authCache';
 
 export default function App() {
   const initialYm = ymFromDate(new Date());
   const [online, setOnline] = useState<boolean>(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [sessionUnverified, setSessionUnverified] = useState(false);
   const [boot, setBoot] = useState<'loading' | 'ready'>('loading');
   const [bootError, setBootError] = useState<string | null>(null);
 
@@ -26,14 +28,23 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const cached = readCachedUser();
       try {
         const u = await authMe();
         if (cancelled) return;
         setUser(u);
+        setSessionUnverified(false);
+        if (u) writeCachedUser(u);
+        else clearCachedUser();
       } catch (e) {
         if (cancelled) return;
-        const msg = e instanceof Error ? e.message : 'Erreur';
-        setBootError(msg);
+        if (cached) {
+          setUser(cached);
+          setSessionUnverified(true);
+        } else {
+          const msg = e instanceof Error ? e.message : 'Erreur';
+          setBootError(msg);
+        }
       } finally {
         if (!cancelled) setBoot('ready');
       }
@@ -64,6 +75,8 @@ export default function App() {
           onAuthed={(u) => {
             setBootError(null);
             setUser(u);
+            setSessionUnverified(false);
+            writeCachedUser(u);
           }}
         />
       </>
@@ -75,11 +88,14 @@ export default function App() {
       <AppView
         initialYm={initialYm}
         user={user}
+        sessionUnverified={sessionUnverified}
         onLogout={async () => {
           try {
             await authLogout();
           } finally {
+            clearCachedUser();
             setUser(null);
+            setSessionUnverified(false);
           }
         }}
       />

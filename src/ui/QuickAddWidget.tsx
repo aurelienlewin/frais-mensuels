@@ -92,7 +92,10 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
     const update = () => {
       raf = 0;
-      const y = typeof window !== 'undefined' ? window.scrollY : 0;
+      const y =
+        typeof window !== 'undefined'
+          ? window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
+          : 0;
       setShowTop(y > 160);
     };
 
@@ -146,7 +149,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
         />
       ) : null}
 
-      {showTop && !chooserOpen && !open ? (
+      {showTop && !open ? (
         <button
           type="button"
           className="motion-hover motion-pop flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-ink-950/85 text-[12px] font-semibold text-slate-200 shadow-[0_16px_50px_-36px_rgba(0,0,0,0.9)] backdrop-blur transition-colors hover:bg-ink-950/95"
@@ -292,7 +295,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
       <div className={cx('flex flex-col items-end gap-2 sm:hidden', disabledAll && 'opacity-60')}>
         {chooserOpen && !open ? (
-          <div className="motion-pop grid w-full max-w-[320px] gap-2 self-center">
+          <div className="motion-pop grid w-full max-w-[320px] gap-2 self-end">
             <button
               type="button"
               className="flex w-full items-center gap-3 rounded-full border border-white/15 bg-ink-950/95 px-4 py-3 text-left text-sm text-slate-100 shadow-[0_16px_50px_-32px_rgba(0,0,0,0.9)] backdrop-blur"
@@ -331,13 +334,36 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
                 <span className="block truncate text-[11px] text-slate-400">Ajouter un plein d’essence</span>
               </span>
             </button>
+            <button
+              type="button"
+              className={cx(
+                'flex w-full items-center gap-3 rounded-full border border-white/15 bg-ink-950/95 px-4 py-3 text-left text-sm text-slate-100 shadow-[0_16px_50px_-32px_rgba(0,0,0,0.9)] backdrop-blur',
+                !showTop && 'opacity-50',
+              )}
+              onClick={() => {
+                if (!showTop) return;
+                const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
+                window.scrollTo({ top: 0, behavior });
+                setChooserOpen(false);
+              }}
+              aria-label="Retour en haut"
+              disabled={!showTop}
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/7 text-base text-slate-100">
+                ↑
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">Haut</span>
+                <span className="block truncate text-[11px] text-slate-400">Revenir en haut de la page</span>
+              </span>
+            </button>
           </div>
         ) : null}
 
         <button
           type="button"
           className={cx(
-            'motion-hover motion-pop flex h-14 w-14 items-center justify-center rounded-full border bg-ink-950/95 text-fuchsia-100 shadow-[0_20px_70px_-42px_rgba(0,0,0,0.95)] backdrop-blur transition-colors',
+            'motion-hover motion-pop flex h-12 w-12 touch-manipulation items-center justify-center rounded-full border bg-ink-950/95 text-fuchsia-100 shadow-[0_20px_70px_-42px_rgba(0,0,0,0.95)] backdrop-blur transition-colors',
             disabledAll ? 'border-white/10 bg-white/5 text-slate-400' : 'border-fuchsia-200/35 hover:bg-ink-950/90',
           )}
           onClick={() => {
@@ -353,7 +379,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
           aria-expanded={chooserOpen}
           disabled={disabledAll}
         >
-          <span className={cx('text-3xl leading-none transition-transform duration-150', (chooserOpen || open) && 'rotate-45')}>+</span>
+          <span className={cx('text-2xl leading-none transition-transform duration-150', (chooserOpen || open) && 'rotate-45')}>+</span>
         </button>
       </div>
 

@@ -121,7 +121,7 @@ export function AccountsSetupPrompt() {
         </div>
       ) : null}
 
-      <div className="mt-3 text-[11px] text-slate-500">Astuce: espaces → “_”, tout est mis en majuscules.</div>
+      <div className="mt-3 text-[11px] text-slate-400">Astuce: espaces → “_”, tout est mis en majuscules.</div>
     </div>
   );
 }

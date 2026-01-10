@@ -9,14 +9,17 @@ import { Tour, type TourStep } from './Tour';
 import { AccountsSetupPrompt, EssentialBudgetsSetupPrompt } from './OnboardingSetup';
 import { cx } from './cx';
 import type { AuthUser } from '../lib/authApi';
+import { initDynamicBackground } from '../lib/background';
 
 export function AppView({
   initialYm,
   user,
+  sessionUnverified,
   onLogout,
 }: {
   initialYm: YM;
   user: AuthUser;
+  sessionUnverified: boolean;
   onLogout: () => void | Promise<void>;
 }) {
   const { saving, state, dispatch, exportJson, importJson, reset, cloud } = useStore();
@@ -410,6 +413,11 @@ export function AppView({
 		                  <div className="px-3 py-2 text-xs text-slate-400">
 		                    Connecté: <span className="font-mono text-slate-200">{user.email}</span>
 		                  </div>
+                      {sessionUnverified ? (
+                        <div className="px-3 pb-2 text-[11px] text-amber-200">
+                          Session locale (non vérifiée). Reconnexion automatique dès que possible.
+                        </div>
+                      ) : null}
 
 		                  <button
 		                    className={cx(
@@ -436,6 +444,21 @@ export function AppView({
 		                  >
 		                    Guide (tour)
 		                  </button>
+
+                      <button
+                        className={cx(
+                          'w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10',
+                          !online && 'opacity-50 hover:bg-transparent',
+                        )}
+                        disabled={!online}
+                        onClick={() => {
+                          initDynamicBackground({ force: true });
+                          menuRef.current?.removeAttribute('open');
+                        }}
+                        type="button"
+                      >
+                        Nouveau fond (random)
+                      </button>
 
 		                  <button
 		                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-rose-400/10"
@@ -591,7 +614,7 @@ export function AppView({
               );
             })}
           </nav>
-          <div className="text-xs text-slate-500">Fenêtre: 3 mois avant / 3 mois après (et le mois sélectionné s’il est hors fenêtre).</div>
+          <div className="text-xs text-slate-400">Fenêtre: 3 mois avant / 3 mois après (et le mois sélectionné s’il est hors fenêtre).</div>
         </div>
 	      </header>
 
@@ -608,7 +631,7 @@ export function AppView({
           </div>
         </div>
 
-        <footer className="mt-10 text-center text-[11px] text-slate-500">
+        <footer className="mt-10 text-center text-[11px] text-slate-400">
           Données synchronisées via{' '}
           <a
             href="https://vercel.com"

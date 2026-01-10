@@ -296,7 +296,7 @@ export function Tour({
             </div>
           </div>
 
-          <div className="mt-3 text-[11px] text-slate-500">
+          <div className="mt-3 text-[11px] text-slate-400">
             Raccourcis: <span className="font-mono">Esc</span> fermer · <span className="font-mono">←</span>/<span className="font-mono">→</span> naviguer
           </div>
         </div>

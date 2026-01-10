@@ -159,7 +159,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           </div>
           <div className="text-right">
             <div className="text-xs font-semibold tabular-nums text-slate-200">{formatEUR(repartition.baseCents)}</div>
-            <div className="text-[11px] text-slate-500">base</div>
+            <div className="text-[11px] text-slate-400">base</div>
           </div>
         </div>
 
@@ -284,7 +284,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             </button>
           </div>
         </div>
-        <div className="mt-2 text-[11px] text-slate-500">Astuce: espaces → “_”, tout est mis en majuscules.</div>
+        <div className="mt-2 text-[11px] text-slate-400">Astuce: espaces → “_”, tout est mis en majuscules.</div>
       </div>
 
 	      {activeAccounts.map((a) => {
@@ -295,7 +295,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 
 	        return (
 	          <div key={a.id} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-	            <div className="flex items-center gap-3">
+	            <div className="grid gap-3 sm:flex sm:items-center sm:gap-3">
 	              <div className="min-w-0 flex-1">
                   <InlineTextInput
                     ariaLabel={`Nom du compte: ${a.id}`}
@@ -308,35 +308,39 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                       dispatch({ type: 'UPDATE_ACCOUNT', accountId: a.id, patch: { name: nextName } });
                     }}
                   />
-                  <div className="mt-1 min-w-0 truncate text-[11px] text-slate-500">
+                  <div className="mt-1 min-w-0 truncate text-[11px] text-slate-400">
                     ID: <span className="font-mono">{a.id}</span>
                   </div>
 	              </div>
-	              <select
-	                className={baseSelect}
-	                value={a.kind}
-	                onChange={(e) => dispatch({ type: 'UPDATE_ACCOUNT', accountId: a.id, patch: { kind: e.target.value as Account['kind'] } })}
-	                aria-label={`Type du compte: ${a.id}`}
-	              >
-	                <option value="perso">Perso</option>
-	                <option value="commun">Commun</option>
-	              </select>
-              <button
-                type="button"
-                className={cx(
-                  'h-8 rounded-xl border border-white/15 bg-white/7 px-3 text-[11px] font-semibold text-rose-100 transition-colors hover:bg-rose-400/15',
-                  !canRemove && 'opacity-40 hover:bg-white/7',
-                )}
-	                disabled={!canRemove}
-	                title={canRemove ? 'Supprimer ce compte' : 'Impossible de supprimer le dernier compte actif.'}
-	                aria-label={`Supprimer le compte: ${a.id}`}
-	                onClick={() => {
-	                  if (!canRemove) return;
-	                  setRemoveDraft({ accountId: a.id, moveToAccountId: moveTargets[0]!.id });
-	                }}
-              >
-                Suppr
-              </button>
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2">
+                  <select
+                    className={cx(baseSelect, 'h-9 w-full sm:h-8 sm:w-auto')}
+                    value={a.kind}
+                    onChange={(e) =>
+                      dispatch({ type: 'UPDATE_ACCOUNT', accountId: a.id, patch: { kind: e.target.value as Account['kind'] } })
+                    }
+                    aria-label={`Type du compte: ${a.id}`}
+                  >
+                    <option value="perso">Perso</option>
+                    <option value="commun">Commun</option>
+                  </select>
+                  <button
+                    type="button"
+                    className={cx(
+                      'h-9 w-full rounded-xl border border-white/15 bg-white/7 px-3 text-[11px] font-semibold text-rose-100 transition-colors hover:bg-rose-400/15 sm:h-8 sm:w-auto',
+                      !canRemove && 'opacity-40 hover:bg-white/7',
+                    )}
+                    disabled={!canRemove}
+                    title={canRemove ? 'Supprimer ce compte' : 'Impossible de supprimer le dernier compte actif.'}
+                    aria-label={`Supprimer le compte: ${a.id}`}
+                    onClick={() => {
+                      if (!canRemove) return;
+                      setRemoveDraft({ accountId: a.id, moveToAccountId: moveTargets[0]!.id });
+                    }}
+                  >
+                    Suppr
+                  </button>
+                </div>
             </div>
 
 	            {removing && activeRemove ? (
@@ -381,21 +385,21 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         );
       })}
 
-      {inactiveAccounts.length ? (
-        <details className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-          <summary className="cursor-pointer select-none text-sm font-medium text-slate-300">Comptes supprimés</summary>
-          <div className="mt-3 space-y-2">
+	      {inactiveAccounts.length ? (
+	        <details className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+	          <summary className="cursor-pointer select-none text-sm font-medium text-slate-300">Comptes supprimés</summary>
+	          <div className="mt-3 space-y-2">
 	            {inactiveAccounts.map((a) => (
-	              <div key={a.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+	              <div key={a.id} className="grid gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 sm:flex sm:items-center sm:gap-3">
 	                <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold text-slate-200">{a.name || a.id}</div>
                     {a.name && a.name !== a.id ? (
-                      <div className="mt-0.5 truncate font-mono text-[11px] text-slate-500">{a.id}</div>
+                      <div className="mt-0.5 truncate font-mono text-[11px] text-slate-400">{a.id}</div>
                     ) : null}
 	                </div>
 	                <button
 	                  type="button"
-	                  className="h-8 rounded-xl border border-white/15 bg-white/7 px-3 text-[11px] font-semibold text-slate-100 transition-colors hover:bg-white/10"
+	                  className="h-9 w-full rounded-xl border border-white/15 bg-white/7 px-3 text-[11px] font-semibold text-slate-100 transition-colors hover:bg-white/10 sm:h-8 sm:w-auto"
 	                  onClick={() => dispatch({ type: 'UPDATE_ACCOUNT', accountId: a.id, patch: { active: true } })}
 	                  aria-label={`Restaurer le compte: ${a.id}`}
 	                >
