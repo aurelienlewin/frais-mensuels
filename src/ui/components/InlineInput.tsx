@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { InputHTMLAttributes } from 'react';
+import { parseEuroAmount } from '../../lib/money';
 import { cx } from '../cx';
 
 type DataAttributes = { [key: `data-${string}`]: string | undefined };
@@ -21,6 +22,7 @@ type BaseProps = {
 type InlineTextInputProps = BaseProps & {
   value: string;
   onCommit: (next: string) => void;
+  type?: InputHTMLAttributes<HTMLInputElement>['type'];
 };
 
 const DEFAULT_TEXT_INPUT_CLASS =
@@ -34,6 +36,7 @@ export function InlineTextInput({
   placeholder,
   ariaLabel,
   inputProps,
+  type = 'text',
 }: InlineTextInputProps) {
   const [draft, setDraft] = useState(value);
   const [editing, setEditing] = useState(false);
@@ -53,6 +56,7 @@ export function InlineTextInput({
       {...inputProps}
       className={cx(className, disabled && 'opacity-60')}
       disabled={disabled}
+      type={type}
       value={draft}
       placeholder={placeholder}
       aria-label={ariaLabel}
@@ -107,8 +111,8 @@ export function InlineNumberInput({
 
   const commit = () => {
     setEditing(false);
-    const n = Number(draft);
-    if (!Number.isFinite(n)) {
+    const n = parseEuroAmount(draft);
+    if (n === null) {
       setDraft(initial);
       return;
     }
@@ -137,7 +141,7 @@ export function InlineNumberInput({
         placeholder={placeholder}
         aria-label={ariaLabel}
         inputMode="decimal"
-        type="number"
+        type="text"
         min={min}
         max={max}
         step={step}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { pad2, ymFromDate, type YM } from '../lib/date';
-import { eurosToCents } from '../lib/money';
+import { eurosToCents, parseEuroAmount } from '../lib/money';
 import { useStore } from '../state/store';
 import { cx } from './cx';
 
@@ -93,7 +93,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
     const update = () => {
       raf = 0;
       const y = typeof window !== 'undefined' ? window.scrollY : 0;
-      setShowTop(y > 320);
+      setShowTop(y > 160);
     };
 
     const onScroll = () => {
@@ -115,8 +115,8 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
     if (!canEdit) return;
     const id = budgetId || inferred[open ?? 'perso'] || '';
     if (!id) return;
-    const amt = Number(amount);
-    if (!Number.isFinite(amt) || amt <= 0) return;
+    const amt = parseEuroAmount(amount);
+    if (amt === null || amt <= 0) return;
     const lbl = label.trim() || (open === 'essence' ? 'Plein' : '');
     if (!lbl) return;
 
@@ -133,7 +133,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
   const disabledAll = !canEdit || activeBudgets.length === 0;
   const position =
-    'fixed z-50 left-0 right-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] px-4 sm:left-auto sm:right-6 sm:bottom-6 sm:px-0';
+    'fixed z-50 left-0 right-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] pl-[calc(1rem+env(safe-area-inset-left))] pr-[calc(1rem+env(safe-area-inset-right))] sm:left-auto sm:right-6 sm:bottom-6 sm:pl-0 sm:pr-0';
 
   return (
     <div data-tour="quick-add" className={cx(position, 'flex flex-col items-end gap-2')}>
@@ -145,6 +145,22 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
           onTouchStart={() => setChooserOpen(false)}
         />
       ) : null}
+
+      {showTop && !chooserOpen && !open ? (
+        <button
+          type="button"
+          className="motion-hover motion-pop flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-ink-950/85 text-[12px] font-semibold text-slate-200 shadow-[0_16px_50px_-36px_rgba(0,0,0,0.9)] backdrop-blur transition-colors hover:bg-ink-950/95"
+          onClick={() => {
+            const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
+            window.scrollTo({ top: 0, behavior });
+          }}
+          aria-label="Retour en haut"
+          title="Retour en haut"
+        >
+          ↑
+        </button>
+      ) : null}
+
       {open ? (
         <div
           ref={dialogRef}
@@ -204,11 +220,9 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
             <div className="relative">
               <input
                 ref={amountRef}
-                className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
-                type="number"
+                className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10 sm:text-sm"
+                type="text"
                 inputMode="decimal"
-                step={0.01}
-                min={0}
                 placeholder="10"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -222,7 +236,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
             <input
               ref={labelRef}
-              className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+              className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10 sm:text-sm"
               placeholder={open === 'perso' ? 'ex: resto' : 'ex: plein'}
               value={label}
               onChange={(e) => setLabel(e.target.value)}
@@ -239,7 +253,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
                 Aucun budget correspondant trouvé. Choisis une enveloppe cible pour cet ajout.
               </div>
               <select
-                className="h-9 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 text-xs text-slate-100 outline-none focus:border-white/25"
+                className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 text-base text-slate-100 outline-none focus:border-white/25 sm:h-9 sm:text-xs"
                 value={budgetId}
                 onChange={(e) => setBudgetId(e.target.value)}
                 aria-label="Budget cible"
@@ -318,21 +332,6 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
               </span>
             </button>
           </div>
-        ) : null}
-
-        {showTop && !chooserOpen && !open ? (
-          <button
-            type="button"
-            className="motion-hover motion-pop flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-ink-950/85 text-[12px] font-semibold text-slate-200 shadow-[0_16px_50px_-36px_rgba(0,0,0,0.9)] backdrop-blur transition-colors hover:bg-ink-950/95"
-            onClick={() => {
-              const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
-              window.scrollTo({ top: 0, behavior });
-            }}
-            aria-label="Retour en haut"
-            title="Retour en haut"
-          >
-            ↑
-          </button>
         ) : null}
 
         <button

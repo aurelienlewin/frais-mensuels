@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { centsToEuros, eurosToCents, formatEUR } from '../lib/money';
+import { useEffect, useState } from 'react';
+import { centsToEuros, eurosToCents, formatEUR, parseEuroAmount } from '../lib/money';
 import { totalsByAccount, totalsForMonth } from '../state/selectors';
 import { useStore } from '../state/store';
 import type { YM } from '../lib/date';
@@ -12,6 +12,12 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   const { state, dispatch } = useStore();
   const totals = totalsForMonth(state, ym);
   const byAccount = totalsByAccount(state, ym);
+  const [salaryDraft, setSalaryDraft] = useState(() => String(centsToEuros(totals.salaryCents)));
+  const [salaryEditing, setSalaryEditing] = useState(false);
+
+  useEffect(() => {
+    if (!salaryEditing) setSalaryDraft(String(centsToEuros(totals.salaryCents)));
+  }, [salaryEditing, totals.salaryCents]);
 
   const ratio =
     totals.salaryCents > 0 ? Math.min(1, Math.max(0, totals.totalPourMoiAvecEnveloppesCents / totals.salaryCents)) : 0;
@@ -79,15 +85,31 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           <div className="text-xs text-slate-400">Salaire</div>
           <div className="relative">
             <input
-              className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
-              type="number"
+              className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10 sm:text-sm"
+              type="text"
               inputMode="decimal"
-              step={0.01}
-              value={String(centsToEuros(totals.salaryCents))}
+              value={salaryDraft}
               onChange={(e) => {
-                const n = Number(e.target.value);
-                if (!Number.isFinite(n)) return;
-                dispatch({ type: 'SET_SALARY', salaryCents: eurosToCents(n) });
+                setSalaryDraft(e.target.value);
+                setSalaryEditing(true);
+              }}
+              onBlur={() => {
+                setSalaryEditing(false);
+                const euros = salaryDraft.trim() === '' ? 0 : parseEuroAmount(salaryDraft);
+                if (euros === null || euros < 0) {
+                  setSalaryDraft(String(centsToEuros(totals.salaryCents)));
+                  return;
+                }
+                const next = eurosToCents(euros);
+                if (next !== totals.salaryCents) dispatch({ type: 'SET_SALARY', salaryCents: next });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                if (e.key === 'Escape') {
+                  setSalaryDraft(String(centsToEuros(totals.salaryCents)));
+                  setSalaryEditing(false);
+                  (e.currentTarget as HTMLInputElement).blur();
+                }
               }}
               aria-label="Salaire"
             />

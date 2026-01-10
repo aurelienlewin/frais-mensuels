@@ -43,6 +43,15 @@ body::before {
   z-index: 1;
 }
 
+/* Prevent iOS Safari auto-zoom on small inputs (requires >=16px). */
+@media (max-width: 640px) {
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* Better touch scrolling + nicer selection */
 * {
   -webkit-tap-highlight-color: transparent;

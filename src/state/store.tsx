@@ -69,6 +69,13 @@ function actionSummary(action: Action): string | null {
       return 'Enveloppe supprimée';
     case 'ADD_BUDGET_EXPENSE':
       return 'Dépense ajoutée';
+    case 'UPDATE_BUDGET_EXPENSE': {
+      const patch = action.patch;
+      if ('amountCents' in patch) return 'Montant mis à jour';
+      if ('label' in patch) return 'Libellé mis à jour';
+      if ('date' in patch) return 'Date mise à jour';
+      return 'Dépense mise à jour';
+    }
     case 'REMOVE_BUDGET_EXPENSE':
       return 'Dépense supprimée';
     default:

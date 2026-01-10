@@ -17,6 +17,7 @@ export type Action =
   | { type: 'ARCHIVE_MONTH'; ym: MonthData['ym'] }
   | { type: 'UNARCHIVE_MONTH'; ym: MonthData['ym'] }
   | { type: 'ADD_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expense: Omit<BudgetExpense, 'id'> }
+  | { type: 'UPDATE_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expenseId: string; patch: Partial<Omit<BudgetExpense, 'id'>> }
   | { type: 'REMOVE_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expenseId: string }
   | { type: 'ADD_BUDGET'; budget: Omit<Budget, 'id'> }
   | { type: 'UPDATE_BUDGET'; budgetId: string; patch: Partial<Omit<Budget, 'id'>> }
@@ -259,6 +260,34 @@ export function reducer(state: AppState, action: Action): AppState {
             budgets: {
               ...m.budgets,
               [action.budgetId]: { expenses: [next, ...prev], snapshot: existing?.snapshot },
+            },
+          };
+        });
+      case 'UPDATE_BUDGET_EXPENSE':
+        return withMonth(state, action.ym, (m) => {
+          const existing = m.budgets[action.budgetId];
+          const prev = existing?.expenses ?? [];
+          if (!existing || prev.length === 0) return m;
+
+          const nextExpenses = prev.map((e) => {
+            if (e.id !== action.expenseId) return e;
+            const patch = action.patch;
+            const nextAmountCents =
+              typeof patch.amountCents === 'number' && Number.isFinite(patch.amountCents) ? Math.max(0, Math.round(patch.amountCents)) : e.amountCents;
+            return {
+              ...e,
+              ...patch,
+              date: typeof patch.date === 'string' ? patch.date : e.date,
+              label: typeof patch.label === 'string' ? patch.label : e.label,
+              amountCents: nextAmountCents,
+            };
+          });
+
+          return {
+            ...m,
+            budgets: {
+              ...m.budgets,
+              [action.budgetId]: { expenses: nextExpenses, snapshot: existing.snapshot },
             },
           };
         });

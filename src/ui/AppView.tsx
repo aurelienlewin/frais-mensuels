@@ -314,11 +314,11 @@ export function AppView({
       >
         Aller au contenu
       </a>
-      <header className="sticky top-0 z-10 border-b border-white/15 bg-ink-950/95">
-        <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 sm:py-4">
-          <div className="sr-only" aria-live="polite">
-            {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
-          </div>
+	      <header className="sticky top-0 z-10 border-b border-white/15 bg-ink-950/95">
+	        <div className="mx-auto max-w-6xl py-3 pl-[calc(1rem+env(safe-area-inset-left))] pr-[calc(1rem+env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem+env(safe-area-inset-left))] sm:pr-[calc(1.5rem+env(safe-area-inset-right))]">
+	          <div className="sr-only" aria-live="polite">
+	            {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
+	          </div>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-baseline gap-3">
               <h1 className="text-base font-semibold tracking-tight">Frais mensuels</h1>
@@ -593,12 +593,16 @@ export function AppView({
           </nav>
           <div className="text-xs text-slate-500">Fenêtre: 3 mois avant / 3 mois après (et le mois sélectionné s’il est hors fenêtre).</div>
         </div>
-      </header>
+	      </header>
 
-      <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-4 pt-6 pb-36 sm:px-6 sm:pt-10 sm:pb-10">
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
-          <SummaryPanel ym={ym} />
-          <div className="space-y-6">
+	      <main
+	        id="main"
+	        tabIndex={-1}
+	        className="mx-auto max-w-6xl pt-6 pb-36 pl-[calc(1rem+env(safe-area-inset-left))] pr-[calc(1rem+env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem+env(safe-area-inset-left))] sm:pr-[calc(1.5rem+env(safe-area-inset-right))]"
+	      >
+	        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
+	          <SummaryPanel ym={ym} />
+	          <div className="space-y-6">
             <ChargesTable ym={ym} archived={archived} />
             <BudgetsPanel ym={ym} archived={archived} />
           </div>

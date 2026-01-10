@@ -1,10 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { YM } from '../lib/date';
-import { centsToEuros, eurosToCents, formatEUR } from '../lib/money';
+import { daysInMonth, pad2, type YM } from '../lib/date';
+import { centsToEuros, eurosToCents, formatEUR, parseEuroAmount } from '../lib/money';
 import { budgetsForMonth } from '../state/selectors';
 import { useStore } from '../state/store';
 import { cx } from './cx';
 import { InlineNumberInput, InlineTextInput } from './components/InlineInput';
+
+function normalizeSearch(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function isFuelBudget(name: string) {
+  const s = normalizeSearch(name);
+  return ['essence', 'carbur', 'gasoil', 'diesel'].some((k) => s.includes(k));
+}
 
 export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state } = useStore();
@@ -49,8 +58,8 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
     if (disabled) return false;
     if (!name.trim()) return false;
     if (!accountId) return false;
-    const n = Number(amount);
-    if (!Number.isFinite(n) || n < 0) return false;
+    const parsed = amount.trim() === '' ? 0 : parseEuroAmount(amount);
+    if (parsed === null || parsed < 0) return false;
     return true;
   })();
 
@@ -74,12 +83,10 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
         />
         <div className="relative">
           <input
-            className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+            className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 pr-10 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10 sm:text-sm"
             placeholder="0"
             inputMode="decimal"
-            type="number"
-            step={0.01}
-            min={0}
+            type="text"
             value={amount}
             disabled={disabled}
             onChange={(e) => setAmount(e.target.value)}
@@ -114,8 +121,8 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
           onClick={() => {
             if (!canSubmit) return;
             const cleanName = name.trim();
-            const euros = Number(amount);
-            if (!cleanName || !Number.isFinite(euros) || euros < 0) return;
+            const euros = amount.trim() === '' ? 0 : parseEuroAmount(amount);
+            if (!cleanName || euros === null || euros < 0) return;
             dispatch({
               type: 'ADD_BUDGET',
               budget: { name: cleanName, amountCents: eurosToCents(euros), accountId, active: true },
@@ -163,6 +170,9 @@ function BudgetCard({
   const over = budget.remainingCents < 0;
 
   const sortedExpenses = [...budget.expenses].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const defaultLabelPlaceholder = isFuelBudget(budget.name) ? 'ex: plein / essence / gasoil' : 'ex: resto';
+  const minDate = `${ym}-01`;
+  const maxDate = `${ym}-${pad2(daysInMonth(ym))}`;
 
   return (
     <div className="motion-hover rounded-3xl border border-white/15 bg-ink-950/45 p-5">
@@ -223,13 +233,15 @@ function BudgetCard({
               className="h-9 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
               type="date"
               value={date}
+              min={minDate}
+              max={maxDate}
               disabled={!canEdit}
               onChange={(e) => setDate(e.target.value)}
               aria-label="Date"
             />
             <input
               className="h-9 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
-              placeholder="ex: resto"
+              placeholder={defaultLabelPlaceholder}
               value={label}
               disabled={!canEdit}
               onChange={(e) => setLabel(e.target.value)}
@@ -239,9 +251,7 @@ function BudgetCard({
               className="h-9 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
               placeholder="10"
               inputMode="decimal"
-              type="number"
-              step={0.01}
-              min={0}
+              type="text"
               value={amount}
               disabled={!canEdit}
               onChange={(e) => setAmount(e.target.value)}
@@ -254,8 +264,8 @@ function BudgetCard({
 	              )}
 	              disabled={!canEdit}
 	              onClick={() => {
-	                const amt = Number(amount);
-	                if (!Number.isFinite(amt) || amt <= 0) return;
+	                const amt = parseEuroAmount(amount);
+	                if (amt === null || amt <= 0) return;
 	                const lbl = label.trim();
 	                if (!lbl) return;
 
@@ -288,9 +298,69 @@ function BudgetCard({
             <tbody className="text-sm">
               {sortedExpenses.map((e) => (
                 <tr key={e.id} className="border-t border-white/15 hover:bg-white/5">
-                  <td className="px-3 py-2 text-slate-300">{e.date}</td>
-                  <td className="px-3 py-2 text-slate-100">{e.label}</td>
-                  <td className="px-3 py-2 text-right font-medium tabular-nums text-slate-100">-{formatEUR(e.amountCents)}</td>
+                  <td className="px-3 py-2 text-slate-300">
+                    {canEdit ? (
+                      <InlineTextInput
+                        ariaLabel="Date de dépense"
+                        value={e.date}
+                        type="date"
+                        disabled={!canEdit}
+                        className="h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10"
+                        inputProps={{ min: minDate, max: maxDate }}
+                        onCommit={(next) => {
+                          if (!next || next === e.date) return;
+                          if (!/^\d{4}-\d{2}-\d{2}$/.test(next)) return;
+                          dispatch({ type: 'UPDATE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id, patch: { date: next } });
+                        }}
+                      />
+                    ) : (
+                      e.date
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-slate-100">
+                    {canEdit ? (
+                      <InlineTextInput
+                        ariaLabel="Libellé de dépense"
+                        value={e.label}
+                        disabled={!canEdit}
+                        className="h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10"
+                        onCommit={(next) => {
+                          const clean = next.trim();
+                          if (!clean || clean === e.label) return;
+                          dispatch({ type: 'UPDATE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id, patch: { label: clean } });
+                        }}
+                      />
+                    ) : (
+                      e.label
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right font-medium tabular-nums text-slate-100">
+                    {canEdit ? (
+                      <InlineNumberInput
+                        ariaLabel="Montant de dépense (euros)"
+                        value={centsToEuros(e.amountCents)}
+                        step={0.01}
+                        min={0}
+                        suffix="€"
+                        disabled={!canEdit}
+                        className="ml-auto w-[120px]"
+                        inputClassName="h-8 rounded-lg px-2 text-[13px]"
+                        onCommit={(euros) => {
+                          const cents = eurosToCents(euros);
+                          if (cents === e.amountCents) return;
+                          dispatch({
+                            type: 'UPDATE_BUDGET_EXPENSE',
+                            ym,
+                            budgetId: budget.id,
+                            expenseId: e.id,
+                            patch: { amountCents: cents },
+                          });
+                        }}
+                      />
+                    ) : (
+                      <>-{formatEUR(e.amountCents)}</>
+                    )}
+                  </td>
 	                  <td className="px-3 py-2 text-right">
 	                    <button
 	                      className={cx(

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { eurosToCents } from '../lib/money';
+import { eurosToCents, parseEuroAmount } from '../lib/money';
 import { useStore } from '../state/store';
 import type { Account, Budget } from '../state/types';
 import { cx } from './cx';
@@ -148,7 +148,13 @@ function BudgetSetupCard({
   });
   const [accountId, setAccountId] = useState(existing?.accountId ?? defaultAccountId);
 
-  const canSubmit = Boolean(name.trim()) && Boolean(accountId) && (amount.trim() === '' || Number.isFinite(Number(amount)));
+  const canSubmit = (() => {
+    if (!name.trim()) return false;
+    if (!accountId) return false;
+    const euros = amount.trim() === '' ? 0 : parseEuroAmount(amount);
+    if (euros === null || euros < 0) return false;
+    return true;
+  })();
 
   const status =
     existing?.active
@@ -173,18 +179,16 @@ function BudgetSetupCard({
           onChange={(e) => setName(e.target.value)}
           aria-label={`Nom enveloppe: ${title}`}
         />
-        <div className="relative">
-          <input
-            className="h-9 w-full rounded-2xl border border-white/15 bg-white/7 px-3 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
-            placeholder="0"
-            inputMode="decimal"
-            type="number"
-            step={0.01}
-            min={0}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            aria-label={`Montant enveloppe (euros): ${title}`}
-          />
+	        <div className="relative">
+	          <input
+	            className="h-9 w-full rounded-2xl border border-white/15 bg-white/7 px-3 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+	            placeholder="0"
+	            inputMode="decimal"
+	            type="text"
+	            value={amount}
+	            onChange={(e) => setAmount(e.target.value)}
+	            aria-label={`Montant enveloppe (euros): ${title}`}
+	          />
           <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-slate-400">€</div>
         </div>
       </div>
@@ -202,13 +206,13 @@ function BudgetSetupCard({
             'h-9 rounded-2xl border border-fuchsia-200/25 bg-fuchsia-400/12 px-4 text-sm font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/18',
             !canSubmit && 'opacity-50 hover:bg-fuchsia-400/12',
           )}
-          disabled={!canSubmit}
-          onClick={() => {
-            const cleanName = name.trim();
-            if (!cleanName || !accountId) return;
-            const euros = amount.trim() === '' ? 0 : Number(amount);
-            if (!Number.isFinite(euros) || euros < 0) return;
-            const amountCents = eurosToCents(euros);
+	          disabled={!canSubmit}
+	          onClick={() => {
+	            const cleanName = name.trim();
+	            if (!cleanName || !accountId) return;
+	            const euros = amount.trim() === '' ? 0 : parseEuroAmount(amount);
+	            if (euros === null || euros < 0) return;
+	            const amountCents = eurosToCents(euros);
 
             if (existing) {
               dispatch({ type: 'UPDATE_BUDGET', budgetId: existing.id, patch: { name: cleanName, amountCents, accountId, active: true } });
