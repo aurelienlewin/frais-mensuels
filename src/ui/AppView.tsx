@@ -315,7 +315,7 @@ export function AppView({
         Aller au contenu
       </a>
 	      <header className="sticky top-0 z-10 border-b border-white/15 bg-ink-950/95">
-	        <div className="mx-auto max-w-6xl py-3 pl-[calc(1rem+env(safe-area-inset-left))] pr-[calc(1rem+env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem+env(safe-area-inset-left))] sm:pr-[calc(1.5rem+env(safe-area-inset-right))]">
+	        <div className="mx-auto max-w-6xl py-3 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
 	          <div className="sr-only" aria-live="polite">
 	            {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
 	          </div>
@@ -598,7 +598,7 @@ export function AppView({
 	      <main
 	        id="main"
 	        tabIndex={-1}
-	        className="mx-auto max-w-6xl pt-6 pb-36 pl-[calc(1rem+env(safe-area-inset-left))] pr-[calc(1rem+env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem+env(safe-area-inset-left))] sm:pr-[calc(1.5rem+env(safe-area-inset-right))]"
+	        className="mx-auto max-w-6xl pt-6 pb-36 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]"
 	      >
 	        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
 	          <SummaryPanel ym={ym} />

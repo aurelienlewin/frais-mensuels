@@ -68,7 +68,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   return (
     <section
       data-tour="summary"
-      className="motion-hover motion-pop rounded-3xl border border-white/15 bg-ink-950/60 p-4 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)] sm:p-6 lg:sticky lg:top-32 lg:max-h-[calc(100dvh-8rem)] lg:overflow-auto"
+      className="motion-hover motion-pop rounded-3xl border border-white/15 bg-ink-950/60 p-4 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)] sm:p-6 lg:sticky lg:top-32 lg:max-h-[calc(100dvh_-_8rem)] lg:overflow-auto"
     >
       <div className="flex items-start justify-between gap-4">
         <div>

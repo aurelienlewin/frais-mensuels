@@ -133,7 +133,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
   const disabledAll = !canEdit || activeBudgets.length === 0;
   const position =
-    'fixed z-50 left-0 right-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] pl-[calc(1rem+env(safe-area-inset-left))] pr-[calc(1rem+env(safe-area-inset-right))] sm:left-auto sm:right-6 sm:bottom-6 sm:pl-0 sm:pr-0';
+    'fixed z-50 left-0 right-0 bottom-[calc(1rem_+_env(safe-area-inset-bottom))] pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] sm:left-auto sm:right-6 sm:bottom-6 sm:pl-0 sm:pr-0';
 
   return (
     <div data-tour="quick-add" className={cx(position, 'flex flex-col items-end gap-2')}>

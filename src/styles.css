@@ -13,9 +13,9 @@ body {
 }
 
 body {
-  /* Static background image: cheaper than multi radial-gradients */
+  /* Background image (default local, optionally overridden at runtime). */
   background-color: rgb(11 13 32);
-  background-image: url('/bg-snowy.jpg');
+  background-image: var(--bg-image, url('/bg-snowy.jpg'));
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
