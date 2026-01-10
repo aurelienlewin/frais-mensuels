@@ -29,9 +29,16 @@ function findBudgetIdByKeywords(
   return direct?.id ?? null;
 }
 
+function prefersReducedMotion() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state, dispatch } = useStore();
   const [open, setOpen] = useState<Mode | null>(null);
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const [showTop, setShowTop] = useState(false);
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
   const [budgetId, setBudgetId] = useState<string>('');
@@ -54,6 +61,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
   useEffect(() => {
     if (!open) return;
+    setChooserOpen(false);
     prevActiveRef.current = (document.activeElement as HTMLElement | null) ?? null;
     setAmount('');
     if (open === 'essence') setLabel('Plein');
@@ -67,6 +75,41 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
       prevActiveRef.current = null;
     };
   }, [open, inferred, activeBudgets]);
+
+  useEffect(() => {
+    if (!chooserOpen || open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      setChooserOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [chooserOpen, open]);
+
+  useEffect(() => {
+    let raf = 0;
+
+    const update = () => {
+      raf = 0;
+      const y = typeof window !== 'undefined' ? window.scrollY : 0;
+      setShowTop(y > 320);
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      if (raf) window.cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
 
   const submit = () => {
     if (!canEdit) return;
@@ -90,17 +133,25 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
   const disabledAll = !canEdit || activeBudgets.length === 0;
   const position =
-    'fixed z-50 right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:right-6 sm:bottom-6';
+    'fixed z-50 left-0 right-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] px-4 sm:left-auto sm:right-6 sm:bottom-6 sm:px-0';
 
   return (
-    <div data-tour="quick-add" className={position}>
+    <div data-tour="quick-add" className={cx(position, 'flex flex-col items-end gap-2')}>
+      {chooserOpen && !open ? (
+        <div
+          className="fixed inset-0"
+          aria-hidden="true"
+          onClick={() => setChooserOpen(false)}
+          onTouchStart={() => setChooserOpen(false)}
+        />
+      ) : null}
       {open ? (
         <div
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label={open === 'perso' ? 'Ajout rapide (dépense perso)' : 'Ajout rapide (plein d’essence)'}
-          className="mb-3 w-[min(92vw,420px)] rounded-3xl border border-white/15 bg-ink-950/95 p-4 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]"
+          className="w-full max-w-[420px] self-center rounded-3xl border border-white/15 bg-ink-950/95 p-4 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]"
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               e.preventDefault();
@@ -225,38 +276,86 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
         </div>
       ) : null}
 
-      <div
-        className={cx(
-          'motion-hover motion-pop relative h-44 w-44 select-none overflow-hidden rounded-tl-[999px] border border-white/15 bg-ink-950/80 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)] [clip-path:circle(100%_at_100%_100%)] sm:hidden',
-          disabledAll && 'opacity-60',
-        )}
-      >
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-white/0 to-transparent"
-          aria-hidden="true"
-        />
-        <div className="absolute bottom-4 right-4 grid gap-2">
+      <div className={cx('flex flex-col items-end gap-2 sm:hidden', disabledAll && 'opacity-60')}>
+        {chooserOpen && !open ? (
+          <div className="motion-pop grid w-full max-w-[320px] gap-2 self-center">
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-full border border-white/15 bg-ink-950/95 px-4 py-3 text-left text-sm text-slate-100 shadow-[0_16px_50px_-32px_rgba(0,0,0,0.9)] backdrop-blur"
+              onClick={() => {
+                if (disabledAll) return;
+                setChooserOpen(false);
+                setOpen('perso');
+              }}
+              disabled={disabledAll}
+              aria-label="Ajouter une dépense perso"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200/25 bg-emerald-400/12 text-base text-emerald-100">
+                +
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">Perso</span>
+                <span className="block truncate text-[11px] text-slate-400">Ajouter une dépense perso</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-full border border-white/15 bg-ink-950/95 px-4 py-3 text-left text-sm text-slate-100 shadow-[0_16px_50px_-32px_rgba(0,0,0,0.9)] backdrop-blur"
+              onClick={() => {
+                if (disabledAll) return;
+                setChooserOpen(false);
+                setOpen('essence');
+              }}
+              disabled={disabledAll}
+              aria-label="Ajouter un plein d’essence"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-200/25 bg-sky-400/12 text-base text-sky-100">
+                ⛽
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">Essence</span>
+                <span className="block truncate text-[11px] text-slate-400">Ajouter un plein d’essence</span>
+              </span>
+            </button>
+          </div>
+        ) : null}
+
+        {showTop && !chooserOpen && !open ? (
           <button
             type="button"
-            className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border border-emerald-200/25 bg-emerald-400/12 text-emerald-100 transition-colors active:bg-emerald-400/18 disabled:opacity-50"
-            onClick={() => setOpen((v) => (v === 'perso' ? null : 'perso'))}
-            disabled={disabledAll}
-            aria-label="Ajouter une dépense perso"
+            className="motion-hover motion-pop flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-ink-950/85 text-[12px] font-semibold text-slate-200 shadow-[0_16px_50px_-36px_rgba(0,0,0,0.9)] backdrop-blur transition-colors hover:bg-ink-950/95"
+            onClick={() => {
+              const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
+              window.scrollTo({ top: 0, behavior });
+            }}
+            aria-label="Retour en haut"
+            title="Retour en haut"
           >
-            <span className="text-lg leading-none">+</span>
-            <span className="text-[10px] font-semibold leading-none">Perso</span>
+            ↑
           </button>
-          <button
-            type="button"
-            className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border border-sky-200/25 bg-sky-400/12 text-sky-100 transition-colors active:bg-sky-400/18 disabled:opacity-50"
-            onClick={() => setOpen((v) => (v === 'essence' ? null : 'essence'))}
-            disabled={disabledAll}
-            aria-label="Ajouter un plein d’essence"
-          >
-            <span className="text-lg leading-none">⛽</span>
-            <span className="text-[10px] font-semibold leading-none">Essence</span>
-          </button>
-        </div>
+        ) : null}
+
+        <button
+          type="button"
+          className={cx(
+            'motion-hover motion-pop flex h-14 w-14 items-center justify-center rounded-full border bg-ink-950/95 text-fuchsia-100 shadow-[0_20px_70px_-42px_rgba(0,0,0,0.95)] backdrop-blur transition-colors',
+            disabledAll ? 'border-white/10 bg-white/5 text-slate-400' : 'border-fuchsia-200/35 hover:bg-ink-950/90',
+          )}
+          onClick={() => {
+            if (disabledAll) return;
+            if (open) {
+              setOpen(null);
+              setChooserOpen(false);
+              return;
+            }
+            setChooserOpen((v) => !v);
+          }}
+          aria-label={open ? 'Fermer' : chooserOpen ? 'Fermer le menu' : 'Ouvrir le menu ajout rapide'}
+          aria-expanded={chooserOpen}
+          disabled={disabledAll}
+        >
+          <span className={cx('text-3xl leading-none transition-transform duration-150', (chooserOpen || open) && 'rotate-45')}>+</span>
+        </button>
       </div>
 
       <div
