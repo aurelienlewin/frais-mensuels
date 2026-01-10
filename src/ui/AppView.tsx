@@ -28,6 +28,7 @@ export function AppView({
   const monthButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const toastTimerRef = useRef<number | null>(null);
   const lastSaveAtRef = useRef<string | undefined>(undefined);
+  const lastCloudAtRef = useRef<string | undefined>(undefined);
   const lastErrorStatusRef = useRef<boolean>(false);
 
   const tourSteps = useMemo<TourStep[]>(() => {
@@ -205,8 +206,10 @@ export function AppView({
     if (lastSaveAtRef.current === lastSavedAt) return;
     lastSaveAtRef.current = lastSavedAt;
     if (!saving.lastSavedMessage) return;
+    // Prefer cloud toasts when online + idle (auto-sync). Keep local toasts when offline / cloud not OK.
+    if (online && cloud.status === 'idle') return;
     showToast(saving.lastSavedMessage, 'success');
-  }, [saving.status, saving.lastSavedAt, saving.lastSavedMessage]);
+  }, [cloud.status, online, saving.status, saving.lastSavedAt, saving.lastSavedMessage]);
 
   useEffect(() => {
     const isError = saving.status === 'error';
@@ -215,6 +218,16 @@ export function AppView({
     }
     lastErrorStatusRef.current = isError;
   }, [saving.status]);
+
+  useEffect(() => {
+    const at = cloud.lastSyncedAt;
+    if (!at) return;
+    if (lastCloudAtRef.current === at) return;
+    lastCloudAtRef.current = at;
+    if (!cloud.lastMessage) return;
+    const tone = cloud.status === 'error' ? 'error' : 'success';
+    showToast(cloud.lastMessage, tone);
+  }, [cloud.lastMessage, cloud.lastSyncedAt, cloud.status]);
 
   useEffect(() => {
     if (state.ui?.tourDismissed) return;
@@ -240,13 +253,15 @@ export function AppView({
         <div className="pointer-events-none fixed left-1/2 top-16 z-[60] w-full -translate-x-1/2 px-4">
           <div
             key={toast.id}
+            role={toast.tone === 'error' ? 'alert' : 'status'}
+            aria-live={toast.tone === 'error' ? 'assertive' : 'polite'}
+            aria-atomic="true"
             className={cx(
               'motion-pop mx-auto w-fit rounded-2xl border bg-ink-950/95 px-4 py-2 text-[12px] font-semibold shadow-[0_20px_80px_-40px_rgba(0,0,0,0.95)]',
               toast.tone === 'error'
                 ? 'border-rose-200/35 text-rose-50'
                 : 'border-emerald-200/35 text-emerald-50',
             )}
-            aria-hidden="true"
           >
             {toast.message}
           </div>

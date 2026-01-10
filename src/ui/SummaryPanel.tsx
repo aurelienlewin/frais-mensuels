@@ -115,7 +115,14 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             <div>Charges + enveloppes / salaire</div>
             <div>{Math.round(ratio * 100)}%</div>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+          <div
+            className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
+            role="progressbar"
+            aria-label="Charges + enveloppes / salaire"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(ratio * 100)}
+          >
             <div className="h-full rounded-full bg-emerald-400/70" style={{ width: `${Math.round(ratio * 100)}%` }} />
           </div>
         </div>

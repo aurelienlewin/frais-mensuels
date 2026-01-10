@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { loadAppState, saveAppState } from '../lib/storage';
-import { cloudGetState, cloudPutState } from '../lib/authApi';
+import { cloudGetState, cloudPutState, cloudPutStateForce } from '../lib/authApi';
 import { normalizeState } from './normalize';
 import { seedState } from './seed';
 import { reducer, type Action } from './reducer';
@@ -89,19 +89,33 @@ function compareIso(a: string, b: string) {
 export function StoreProvider({ children, storageKey }: { children: React.ReactNode; storageKey: string }) {
   const [hydrated, setHydrated] = useState(false);
   const [hydratedFromLocal, setHydratedFromLocal] = useState(false);
+  const [isOnline, setIsOnline] = useState<boolean>(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
   const [saving, setSaving] = useState<Store['saving']>({ status: 'idle' });
   const [cloudStatus, setCloudStatus] = useState<Store['cloud']['status']>('idle');
   const [cloudLastSyncedAt, setCloudLastSyncedAt] = useState<string | undefined>(undefined);
   const [cloudLastMessage, setCloudLastMessage] = useState<string | undefined>(undefined);
   const [state, baseDispatch] = useReducer(reducer, undefined, () => seedState());
   const stateRef = useRef<AppState>(state);
-  const lastPersisted = useRef<string | null>(null);
+  const lastPersistedModifiedAt = useRef<string | null>(null);
   const saveTimer = useRef<number | null>(null);
   const cloudTimer = useRef<number | null>(null);
   const cloudInitDoneRef = useRef(false);
   const cloudInitInFlightRef = useRef(false);
   const lastCloudPushedRef = useRef<string | null>(null);
+  const forceNextCloudPushRef = useRef(false);
   const pendingSummaryRef = useRef<{ count: number; last: string } | null>(null);
+  const lastEditSummaryRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const on = () => setIsOnline(true);
+    const off = () => setIsOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
@@ -130,6 +144,7 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
       if (summary) {
         const cur = pendingSummaryRef.current;
         pendingSummaryRef.current = cur ? { count: cur.count + 1, last: summary } : { count: 1, last: summary };
+        lastEditSummaryRef.current = summary;
       }
       baseDispatch(action);
     };
@@ -157,9 +172,8 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
 
   useEffect(() => {
     if (!hydrated) return;
-
-    const raw = JSON.stringify(state);
-    if (raw === lastPersisted.current) return;
+    const mod = typeof state.modifiedAt === 'string' ? state.modifiedAt : null;
+    if (mod && lastPersistedModifiedAt.current === mod) return;
 
     setSaving((s) => ({ ...s, status: 'saving' }));
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
@@ -167,8 +181,8 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
 	    saveTimer.current = window.setTimeout(() => {
 	      (async () => {
 	        try {
-	          await saveAppState(storageKey, state);
-	          lastPersisted.current = raw;
+	          await saveAppState(storageKey, stateRef.current);
+	          lastPersistedModifiedAt.current = mod ?? stateRef.current.modifiedAt ?? new Date().toISOString();
 	          const pending = pendingSummaryRef.current;
 	          if (pending) pendingSummaryRef.current = null;
 	          const msg = pending
@@ -189,7 +203,7 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
   }, [state, hydrated]);
 
   const runCloudSync = useCallback(async () => {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (!isOnline) {
       setCloudStatus('offline');
       setCloudLastMessage('Offline');
       return;
@@ -236,31 +250,34 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
     setCloudStatus('idle');
     setCloudLastSyncedAt(new Date().toISOString());
     setCloudLastMessage('Déjà à jour');
-  }, [dispatch, hydratedFromLocal]);
+  }, [dispatch, hydratedFromLocal, isOnline]);
 
   const syncNow = useCallback(() => {
     void runCloudSync().catch((e) => {
       const msg = e instanceof Error ? e.message : 'Sync impossible';
       setCloudStatus('error');
+      setCloudLastSyncedAt(new Date().toISOString());
       setCloudLastMessage(msg);
     });
   }, [runCloudSync]);
 
   useEffect(() => {
     if (!hydrated) return;
+    if (!isOnline) return;
     if (cloudInitDoneRef.current || cloudInitInFlightRef.current) return;
     cloudInitInFlightRef.current = true;
     void runCloudSync()
       .catch((e) => {
         const msg = e instanceof Error ? e.message : 'Sync impossible';
         setCloudStatus('error');
+        setCloudLastSyncedAt(new Date().toISOString());
         setCloudLastMessage(msg);
       })
       .finally(() => {
         cloudInitInFlightRef.current = false;
         cloudInitDoneRef.current = true;
       });
-  }, [hydrated, runCloudSync]);
+  }, [hydrated, isOnline, runCloudSync]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -268,8 +285,9 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
     const mod = state.modifiedAt ?? null;
     if (!mod) return;
     if (lastCloudPushedRef.current === mod) return;
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (!isOnline) {
       setCloudStatus('offline');
+      setCloudLastMessage('Offline');
       return;
     }
 
@@ -279,22 +297,27 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
         try {
           setCloudStatus('syncing');
           const snapshot = stateRef.current;
-          const rec = await cloudPutState(snapshot, mod);
+          const force = forceNextCloudPushRef.current;
+          const rec = force ? await cloudPutStateForce(snapshot, mod) : await cloudPutState(snapshot, mod);
           lastCloudPushedRef.current = rec.modifiedAt;
+          if (force) forceNextCloudPushRef.current = false;
           setCloudStatus('idle');
           setCloudLastSyncedAt(new Date().toISOString());
-          setCloudLastMessage('Cloud synchronisé');
-        } catch {
+          const suffix = lastEditSummaryRef.current ? ` · ${lastEditSummaryRef.current}` : '';
+          setCloudLastMessage(`${force ? 'Cloud remplacé' : 'Cloud synchronisé'}${suffix}`);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : 'Cloud: erreur';
           setCloudStatus('error');
-          setCloudLastMessage('Cloud: erreur');
+          setCloudLastSyncedAt(new Date().toISOString());
+          setCloudLastMessage(msg);
         }
       })();
-    }, 2000);
+    }, 800);
 
     return () => {
       if (cloudTimer.current) window.clearTimeout(cloudTimer.current);
     };
-  }, [hydrated, state, state.modifiedAt]);
+  }, [hydrated, isOnline, state, state.modifiedAt]);
 
   const cloud = useMemo<Store['cloud']>(() => {
     return { status: cloudStatus, lastSyncedAt: cloudLastSyncedAt, lastMessage: cloudLastMessage, syncNow };
@@ -309,7 +332,12 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
       exportJson: () => JSON.stringify(state, null, 2),
       importJson: (raw) => {
         const parsed = JSON.parse(raw) as AppState;
-        dispatch({ type: 'HYDRATE', state: normalizeState(parsed) });
+        const normalized = normalizeState(parsed);
+        const imported = { ...normalized, modifiedAt: new Date().toISOString() } satisfies AppState;
+        forceNextCloudPushRef.current = true;
+        lastCloudPushedRef.current = null;
+        cloudInitDoneRef.current = true;
+        dispatch({ type: 'HYDRATE', state: imported });
       },
       reset: () => dispatch({ type: 'HYDRATE', state: seedState() }),
     };

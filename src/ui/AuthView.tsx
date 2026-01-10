@@ -92,7 +92,11 @@ export function AuthView({
 
           <div className="space-y-4 p-6">
             {!online ? (
-              <div className="rounded-2xl border border-rose-200/20 bg-rose-400/10 px-4 py-3 text-xs text-rose-100">
+              <div
+                role="status"
+                aria-live="polite"
+                className="rounded-2xl border border-rose-200/20 bg-rose-400/10 px-4 py-3 text-xs text-rose-100"
+              >
                 Offline: impossible de se connecter / créer un compte.
               </div>
             ) : null}
@@ -224,7 +228,15 @@ export function AuthView({
                   </>
                 ) : null}
 
-                {error ? <div className="rounded-2xl border border-rose-200/20 bg-rose-400/10 px-4 py-3 text-xs text-rose-100">{error}</div> : null}
+                {error ? (
+                  <div
+                    role="alert"
+                    aria-live="assertive"
+                    className="rounded-2xl border border-rose-200/20 bg-rose-400/10 px-4 py-3 text-xs text-rose-100"
+                  >
+                    {error}
+                  </div>
+                ) : null}
 
                 <button
                   type="button"

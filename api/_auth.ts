@@ -3,6 +3,7 @@ import { kvDel, kvExpire, kvGet, kvIncr, kvSet } from './_kv.js';
 export const SESSION_COOKIE = 'fm_session';
 const PREFIX = 'fm:auth:';
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
+const BufferCtor = (globalThis as any).Buffer as any;
 
 type PasswordHash = {
   v: 1;
@@ -49,14 +50,14 @@ function normalizeEmail(raw: string): string {
 async function sha256Base64Url(input: string): Promise<string> {
   const enc = new TextEncoder();
   const digest = await crypto.subtle.digest('SHA-256', enc.encode(input));
-  return Buffer.from(new Uint8Array(digest)).toString('base64url');
+  return BufferCtor.from(new Uint8Array(digest)).toString('base64url');
 }
 
 async function pbkdf2Sha256Base64Url(password: string, salt: Uint8Array, iter: number): Promise<string> {
   const enc = new TextEncoder();
   const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, baseKey, 256);
-  return Buffer.from(new Uint8Array(bits)).toString('base64url');
+  return BufferCtor.from(new Uint8Array(bits)).toString('base64url');
 }
 
 function timingSafeEqualStr(a: string, b: string): boolean {
@@ -107,19 +108,19 @@ export async function createPasswordHash(password: string): Promise<PasswordHash
   const iter = 160_000;
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const hash = await pbkdf2Sha256Base64Url(password, salt, iter);
-  return { v: 1, kdf: 'PBKDF2-SHA256', iter, saltB64Url: Buffer.from(salt).toString('base64url'), hashB64Url: hash };
+  return { v: 1, kdf: 'PBKDF2-SHA256', iter, saltB64Url: BufferCtor.from(salt).toString('base64url'), hashB64Url: hash };
 }
 
 export async function verifyPassword(password: string, stored: PasswordHash): Promise<boolean> {
   if (!stored || stored.v !== 1 || stored.kdf !== 'PBKDF2-SHA256') return false;
-  const salt = Buffer.from(stored.saltB64Url, 'base64url');
+  const salt = BufferCtor.from(stored.saltB64Url, 'base64url');
   const derived = await pbkdf2Sha256Base64Url(password, new Uint8Array(salt), stored.iter);
   return timingSafeEqualStr(derived, stored.hashB64Url);
 }
 
 export async function createRecoveryCode(): Promise<{ code: string; hash: RecoveryHash }> {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
-  const code = Buffer.from(bytes).toString('base64url');
+  const code = BufferCtor.from(bytes).toString('base64url');
   const hashB64Url = await sha256Base64Url(code);
   return { code, hash: { v: 1, alg: 'SHA256', hashB64Url } };
 }
@@ -195,7 +196,7 @@ export async function createUser(email: string, password: string): Promise<{ use
 }
 
 export async function createSession(user: UserRecordV1): Promise<string> {
-  const token = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url');
+  const token = BufferCtor.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url');
   const now = nowIso();
   const sess: SessionRecordV1 = {
     v: 1,

@@ -109,9 +109,10 @@ export default async function handler(req: any, res: any) {
   if (!state || typeof state !== 'object') return badRequest(res, 'Missing state');
   const modifiedAtRaw = typeof body?.modifiedAt === 'string' ? body.modifiedAt : (state as any)?.modifiedAt;
   const modifiedAt = typeof modifiedAtRaw === 'string' && modifiedAtRaw.length <= 64 ? modifiedAtRaw : new Date().toISOString();
+  const force = body?.force === true;
 
   const remoteMeta = await getStateMeta(user.id);
-  if (remoteMeta && compareIso(remoteMeta.modifiedAt, modifiedAt) > 0) {
+  if (!force && remoteMeta && compareIso(remoteMeta.modifiedAt, modifiedAt) > 0) {
     return json(res, 409, { ok: false, error: 'CONFLICT', record: remoteMeta });
   }
 

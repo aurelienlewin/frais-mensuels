@@ -81,3 +81,11 @@ export async function cloudPutState(state: unknown, modifiedAt?: string): Promis
   return body.record;
 }
 
+export async function cloudPutStateForce(state: unknown, modifiedAt?: string): Promise<{ modifiedAt: string; updatedAt: string }> {
+  const body = await api<ApiOk<{ record: { modifiedAt: string; updatedAt: string } }>>('/api/state', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ state, modifiedAt, force: true }),
+  });
+  return body.record;
+}

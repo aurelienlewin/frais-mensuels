@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEventHandler, type MutableRefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEventHandler, type MutableRefObject } from 'react';
 import { centsToEuros, eurosToCents, formatEUR } from '../lib/money';
 import { chargesForMonth } from '../state/selectors';
 import { useStore } from '../state/store';
@@ -10,7 +10,10 @@ import { InlineNumberInput, InlineTextInput } from './components/InlineInput';
 export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state, dispatch } = useStore();
   const rows = chargesForMonth(state, ym);
-  const activeAccounts = state.accounts.filter((a) => a.active);
+  const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
+  const activeAccountIds = useMemo(() => new Set(activeAccounts.map((a) => a.id)), [activeAccounts]);
+  const accountsById = useMemo(() => new Map(state.accounts.map((a) => [a.id, a])), [state.accounts]);
+  const chargesById = useMemo(() => new Map(state.charges.map((c) => [c.id, c])), [state.charges]);
   const tableRef = useRef<HTMLTableElement | null>(null);
   const mobileRef = useRef<HTMLDivElement | null>(null);
   const [isSmUp, setIsSmUp] = useState<boolean>(() => {
@@ -176,7 +179,13 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
       {isSmUp ? (
         <div className="overflow-auto">
           <table ref={tableRef} onKeyDown={onGridKeyDown} className="min-w-full table-fixed border-separate border-spacing-0">
-            <caption className="sr-only">Liste des charges du mois</caption>
+            <caption className="sr-only">
+              Liste des charges du mois.
+              <span id="charges-reorder-help">
+                Pour réordonner une ligne, utilise le bouton “⋮⋮” puis glisser-déposer (ou{' '}
+                <span className="font-mono">Alt</span>+<span className="font-mono">↑</span>/<span className="font-mono">↓</span>).
+              </span>
+            </caption>
 	            <thead className="sticky top-0 z-10 bg-ink-950/95">
               <tr className="text-left text-xs text-slate-400">
                 <Th className="w-[76px] sm:w-[88px]">OK</Th>
@@ -188,7 +197,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
             </thead>
             <tbody className="text-[13px] leading-tight">
               {rows.map((r) => {
-              const model = state.charges.find((c) => c.id === r.id) ?? null;
+              const model = chargesById.get(r.id) ?? null;
               const editable = canEdit && Boolean(model);
               const isInactive = Boolean(model && !model.active);
               const tint =
@@ -209,14 +218,14 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	              const ioSelectBase =
 	                'min-w-0 max-w-full h-7 rounded-lg border border-white/15 px-2 text-[11px] font-medium text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
 	              const hasAccountId = typeof r.accountId === 'string' && r.accountId.length > 0;
-	              const account = hasAccountId ? state.accounts.find((a) => a.id === r.accountId) ?? null : null;
-	              const accountInActiveList = hasAccountId ? activeAccounts.some((a) => a.id === r.accountId) : false;
+	              const account = hasAccountId ? accountsById.get(r.accountId) ?? null : null;
+	              const accountInActiveList = hasAccountId ? activeAccountIds.has(r.accountId) : false;
 	              const accountValue = accountInActiveList ? r.accountId : hasAccountId ? '__UNAVAILABLE__' : '';
 	              const accountUnavailableLabel = account ? `Supprimé: ${account.id}` : `Inconnu: ${String(r.accountId)}`;
 
 	              const destinationAccountId = r.destination?.kind === 'account' ? r.destination.accountId : '';
-	              const destinationAccount = destinationAccountId ? state.accounts.find((a) => a.id === destinationAccountId) ?? null : null;
-	              const destinationInActiveList = destinationAccountId ? activeAccounts.some((a) => a.id === destinationAccountId) : false;
+	              const destinationAccount = destinationAccountId ? accountsById.get(destinationAccountId) ?? null : null;
+	              const destinationInActiveList = destinationAccountId ? activeAccountIds.has(destinationAccountId) : false;
 	              const destinationValue = destinationInActiveList ? destinationAccountId : destinationAccountId ? '__UNAVAILABLE__' : '';
 	              const destinationUnavailableLabel = destinationAccount
 	                ? `Supprimé: ${destinationAccount.id}`
@@ -272,6 +281,8 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                           !editable && 'opacity-40',
                         )}
                         aria-label={`Réordonner: ${r.name}`}
+                        aria-describedby="charges-reorder-help"
+                        aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
                         title="Glisser-déposer pour réordonner (Alt+↑/↓)"
                         onDragStart={(e) => {
                           if (!editable) {
@@ -466,16 +477,18 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                                </option>
 	                              ))}
 	                            </select>
-	                          ) : (
-	                            <span
-	                              className="min-w-0 truncate rounded-lg border border-white/15 bg-ink-950/35 px-2 py-1 text-[11px] font-medium text-slate-100"
-	                              title={r.accountName}
-	                            >
-	                              {r.accountName}
-	                            </span>
-	                          )}
+		                          ) : (
+		                            <span
+		                              className="min-w-0 truncate rounded-lg border border-white/15 bg-ink-950/35 px-2 py-1 text-[11px] font-medium text-slate-100"
+		                              title={r.accountName}
+		                            >
+		                              {r.accountName}
+		                            </span>
+		                          )}
 
-	                          <span className="select-none text-slate-500">→</span>
+	                          <span className="select-none text-slate-500" aria-hidden="true">
+                              →
+                            </span>
 
 	                          {editable ? (
 	                            r.destination?.kind === 'text' ? (

@@ -38,6 +38,8 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
   const amountRef = useRef<HTMLInputElement | null>(null);
   const labelRef = useRef<HTMLInputElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const prevActiveRef = useRef<HTMLElement | null>(null);
 
   const activeBudgets = useMemo(() => state.budgets.filter((b) => b.active), [state.budgets]);
 
@@ -52,12 +54,18 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
   useEffect(() => {
     if (!open) return;
+    prevActiveRef.current = (document.activeElement as HTMLElement | null) ?? null;
     setAmount('');
     if (open === 'essence') setLabel('Plein');
     if (open === 'perso') setLabel('');
     const inferredId = inferred[open];
     setBudgetId(inferredId || activeBudgets[0]?.id || '');
     window.requestAnimationFrame(() => amountRef.current?.focus());
+
+    return () => {
+      prevActiveRef.current?.focus?.();
+      prevActiveRef.current = null;
+    };
   }, [open, inferred, activeBudgets]);
 
   const submit = () => {
@@ -85,9 +93,45 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
     'fixed z-50 right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:right-6 sm:bottom-6';
 
   return (
-    <div data-tour="quick-add" className={position} onKeyDown={(e) => (e.key === 'Escape' ? setOpen(null) : null)}>
+    <div data-tour="quick-add" className={position}>
       {open ? (
-        <div className="mb-3 w-[min(92vw,420px)] rounded-3xl border border-white/15 bg-ink-950/95 p-4 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]">
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={open === 'perso' ? 'Ajout rapide (dépense perso)' : 'Ajout rapide (plein d’essence)'}
+          className="mb-3 w-[min(92vw,420px)] rounded-3xl border border-white/15 bg-ink-950/95 p-4 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              setOpen(null);
+              return;
+            }
+            if (e.key !== 'Tab') return;
+
+            const root = dialogRef.current;
+            if (!root) return;
+            const focusables = Array.from(
+              root.querySelectorAll<HTMLElement>('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'),
+            ).filter((x) => !x.hasAttribute('disabled') && x.getAttribute('aria-hidden') !== 'true');
+            if (focusables.length === 0) return;
+
+            const first = focusables[0]!;
+            const last = focusables[focusables.length - 1]!;
+            const active = document.activeElement as HTMLElement | null;
+            const shift = (e as unknown as { shiftKey?: boolean }).shiftKey === true;
+
+            if (shift && active === first) {
+              e.preventDefault();
+              last.focus();
+              return;
+            }
+            if (!shift && active === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }}
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ajout rapide</div>

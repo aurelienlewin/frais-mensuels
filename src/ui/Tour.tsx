@@ -218,15 +218,18 @@ export function Tour({
 
   return (
     <div className="fixed inset-0 z-[80]">
-      <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px]" aria-hidden="true" />
-
       {highlightStyle ? (
         <div
-          className="pointer-events-none absolute rounded-[28px] border border-fuchsia-200/55 shadow-[0_0_0_1px_rgba(56,189,248,0.14),0_0_60px_-30px_rgba(189,147,249,0.6)]"
-          style={highlightStyle}
+          className="pointer-events-none absolute rounded-[28px] border border-fuchsia-200/75 shadow-[0_0_0_1px_rgba(56,189,248,0.22),0_0_90px_-40px_rgba(189,147,249,0.85)]"
+          style={{
+            ...highlightStyle,
+            boxShadow: '0 0 0 9999px rgba(0,0,0,0.72), 0 0 90px -40px rgba(189,147,249,0.85)',
+          }}
           aria-hidden="true"
         />
-      ) : null}
+      ) : (
+        <div className="absolute inset-0 bg-black/72" aria-hidden="true" />
+      )}
 
       <div
         ref={containerRef}

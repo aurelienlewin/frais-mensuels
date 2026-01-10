@@ -1,16 +1,17 @@
 type KvEnv = { url: string; token: string };
 
 function kvEnv(): KvEnv | null {
+  const env = ((globalThis as any)?.process?.env ?? {}) as Record<string, string | undefined>;
   const url = (
-    process.env.SYNC_REDIS_REST_URL ??
-    process.env.KV_REST_API_URL ??
-    process.env.UPSTASH_REDIS_REST_URL ??
+    env.SYNC_REDIS_REST_URL ??
+    env.KV_REST_API_URL ??
+    env.UPSTASH_REDIS_REST_URL ??
     ''
   ).trim();
   const token = (
-    process.env.SYNC_REDIS_REST_TOKEN ??
-    process.env.KV_REST_API_TOKEN ??
-    process.env.UPSTASH_REDIS_REST_TOKEN ??
+    env.SYNC_REDIS_REST_TOKEN ??
+    env.KV_REST_API_TOKEN ??
+    env.UPSTASH_REDIS_REST_TOKEN ??
     ''
   ).trim();
   if (!url || !token) return null;
@@ -78,4 +79,3 @@ export async function kvExpire(key: string, seconds: number): Promise<void> {
 export function kvConfigured(): boolean {
   return Boolean(kvEnv());
 }
-

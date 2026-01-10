@@ -64,7 +64,7 @@ function BudgetCard({
     <div className="motion-hover rounded-3xl border border-white/15 bg-ink-950/45 p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-[220px] flex-1">
-          <div className="text-xs text-slate-400 sm:hidden">Enveloppe</div>
+          <div className="text-xs text-slate-400">Enveloppe</div>
           <InlineTextInput
             ariaLabel="Nom du budget"
             value={budget.name}
@@ -77,7 +77,14 @@ function BudgetCard({
               {formatEUR(budget.spentCents)} / {formatEUR(budget.amountCents)}
             </div>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+          <div
+            className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
+            role="progressbar"
+            aria-label={`Dépenses / budget: ${budget.name}`}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(ratio * 100)}
+          >
             <div
               className={cx('h-full rounded-full', over ? 'bg-rose-400/70' : 'bg-emerald-400/70')}
               style={{ width: `${Math.round(ratio * 100)}%` }}

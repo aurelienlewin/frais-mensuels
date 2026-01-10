@@ -77,8 +77,9 @@ export function setCookie(res: any, name: string, value: string, opts?: { maxAge
   if (httpOnly) parts.push('HttpOnly');
 
   // Best-effort: set Secure when behind HTTPS (Vercel) or forced via env.
-  const forceSecure = String(process.env.FORCE_SECURE_COOKIES || '').toLowerCase() === 'true';
-  const onVercel = Boolean(process.env.VERCEL) || Boolean(process.env.VERCEL_ENV);
+  const env = ((globalThis as any)?.process?.env ?? {}) as Record<string, string | undefined>;
+  const forceSecure = String(env.FORCE_SECURE_COOKIES || '').toLowerCase() === 'true';
+  const onVercel = Boolean(env.VERCEL) || Boolean(env.VERCEL_ENV);
   if (forceSecure || onVercel) parts.push('Secure');
 
   if (typeof maxAge === 'number') parts.push(`Max-Age=${maxAge}`);
