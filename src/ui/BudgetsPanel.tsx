@@ -275,7 +275,7 @@ function BudgetCard({
           <div className="text-xs text-slate-500">Les montants sont des dépenses (ex: 10€ = -10€).</div>
         </div>
 
-        <div className="mt-3 overflow-x-auto overflow-y-hidden rounded-2xl border border-white/15 sm:overflow-hidden">
+        <div className="mt-3 overflow-x-auto overscroll-x-contain overflow-y-hidden rounded-2xl border border-white/15 sm:overflow-hidden">
           <table className="min-w-full">
             <thead className="bg-ink-950/50 text-left text-xs text-slate-400">
               <tr>

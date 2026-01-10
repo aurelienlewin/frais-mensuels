@@ -17,9 +17,9 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const monthChargeStateById = state.months[ym]?.charges ?? {};
   const tableRef = useRef<HTMLTableElement | null>(null);
   const mobileRef = useRef<HTMLDivElement | null>(null);
-  const [isSmUp, setIsSmUp] = useState<boolean>(() => {
+  const [isTableUp, setIsTableUp] = useState<boolean>(() => {
     try {
-      return window.matchMedia('(min-width: 640px)').matches;
+      return window.matchMedia('(min-width: 768px)').matches;
     } catch {
       return true;
     }
@@ -52,9 +52,9 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 
   useEffect(() => {
     try {
-      const mq = window.matchMedia('(min-width: 640px)');
-      setIsSmUp(mq.matches);
-      const onChange = (e: MediaQueryListEvent) => setIsSmUp(e.matches);
+      const mq = window.matchMedia('(min-width: 768px)');
+      setIsTableUp(mq.matches);
+      const onChange = (e: MediaQueryListEvent) => setIsTableUp(e.matches);
       mq.addEventListener('change', onChange);
       return () => mq.removeEventListener('change', onChange);
     } catch {
@@ -69,7 +69,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 
     const focusCell = (chargeId: string, col: string) => {
       window.requestAnimationFrame(() => {
-        const root = isSmUp ? tableRef.current : mobileRef.current;
+        const root = isTableUp ? tableRef.current : mobileRef.current;
         root
           ?.querySelector<HTMLElement>(`[data-grid="charges"][data-charge-id="${chargeId}"][data-col="${col}"]`)
           ?.focus();
@@ -90,7 +90,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
       pendingFocusCellRef.current = null;
       focusCell(pendingCell.chargeId, pendingCell.col);
     }
-  }, [isSmUp, rows]);
+  }, [isTableUp, rows]);
 
   const onGridKeyDown: KeyboardEventHandler<HTMLTableElement> = (e) => {
     if (e.key !== 'Enter') return;
@@ -224,8 +224,8 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
         </div>
       </div>
 
-      {isSmUp ? (
-        <div className="overflow-auto">
+      {isTableUp ? (
+        <div className="overflow-x-auto overscroll-x-contain">
           <table ref={tableRef} onKeyDown={onGridKeyDown} className="min-w-full table-fixed border-separate border-spacing-0">
             <caption className="sr-only">
               Liste des charges du mois.

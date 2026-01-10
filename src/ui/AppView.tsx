@@ -529,7 +529,7 @@ export function AppView({
             </div>
           </div>
 
-          <nav className="mt-4 flex items-center gap-2 overflow-x-auto pb-1" aria-label="Navigation par mois">
+          <nav className="mt-4 flex items-center gap-2 overflow-x-auto overscroll-x-contain pb-1" aria-label="Navigation par mois">
             {visibleMonths.map((m) => {
               const selected = m === ym;
               const disabled = isMonthDisabled(m);
@@ -603,6 +603,19 @@ export function AppView({
             <BudgetsPanel ym={ym} archived={archived} />
           </div>
         </div>
+
+        <footer className="mt-10 text-center text-[11px] text-slate-500">
+          Données synchronisées via{' '}
+          <a
+            href="https://vercel.com"
+            target="_blank"
+            rel="noreferrer"
+            className="underline decoration-white/15 underline-offset-4 hover:decoration-white/30"
+          >
+            Vercel
+          </a>{' '}
+          (Vercel KV / Upstash) · Chiffrées en transit (HTTPS) · App créée par Aurélien Lewin
+        </footer>
       </main>
 
       <QuickAddWidget ym={ym} archived={archived} />
