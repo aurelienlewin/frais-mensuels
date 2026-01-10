@@ -5,6 +5,7 @@ import { useStore } from '../state/store';
 import type { YM } from '../lib/date';
 import { cx } from './cx';
 import { DonutChart, type DonutSegment } from './components/DonutChart';
+import { InlineTextInput } from './components/InlineInput';
 import type { Account } from '../state/types';
 
 export function SummaryPanel({ ym }: { ym: YM }) {
@@ -173,17 +174,21 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       </div>
 
       <div className="mt-8">
-        <div className="text-sm font-medium text-slate-200">Par compte</div>
+          <div className="text-sm font-medium text-slate-200">Par compte</div>
         <div className="mt-3 space-y-2">
           {byAccount.map((a) => (
-            <div key={a.accountId} className="flex items-center justify-between rounded-2xl border border-white/15 bg-white/7 px-4 py-3">
-              <div>
-                <div className="text-sm text-slate-100">{a.accountName}</div>
-                <div className="mt-0.5 text-xs text-slate-400">
+            <div key={a.accountId} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/15 bg-white/7 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm text-slate-100" title={a.accountName}>
+                  {a.accountName}
+                </div>
+                <div className="mt-0.5 truncate text-xs text-slate-400">
                   {formatEUR(a.paidCents)} / {formatEUR(a.totalCents)} cochés
                 </div>
               </div>
-              <div className={cx('text-sm font-medium', a.kind === 'commun' ? 'text-sky-200' : 'text-slate-200')}>{formatEUR(a.totalCents)}</div>
+              <div className={cx('flex-none text-sm font-medium tabular-nums', a.kind === 'commun' ? 'text-sky-200' : 'text-slate-200')}>
+                {formatEUR(a.totalCents)}
+              </div>
             </div>
           ))}
 	          {byAccount.length === 0 ? <div className="text-sm text-slate-400">Aucune charge ce mois-ci.</div> : null}
@@ -222,7 +227,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     <div className="space-y-2">
       <div className="rounded-2xl border border-white/10 bg-ink-950/35 p-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ajouter un compte</div>
-        <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_120px_120px]">
+        <div className="mt-2 grid gap-2">
           <input
             className="h-8 w-full rounded-xl border border-white/15 bg-white/7 px-3 text-[13px] font-semibold text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
             placeholder="ex: BOURSO_PERSO"
@@ -230,47 +235,60 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             onChange={(e) => setAddDraft((s) => ({ ...s, rawId: e.target.value }))}
             aria-label="ID du compte"
           />
-          <select
-            className={baseSelect}
-            value={addDraft.kind}
-            onChange={(e) => setAddDraft((s) => ({ ...s, kind: e.target.value as Account['kind'] }))}
-            aria-label="Type du compte"
-          >
-            <option value="perso">Perso</option>
-            <option value="commun">Commun</option>
-          </select>
-          <button
-            type="button"
-            className={cx(
-              'h-8 rounded-xl border border-fuchsia-200/25 bg-fuchsia-400/12 px-3 text-[11px] font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/18',
-              !addId && 'opacity-50 hover:bg-fuchsia-400/12',
-            )}
-            disabled={!addId}
-            onClick={() => {
-              if (!addId) return;
-              dispatch({ type: 'ADD_ACCOUNT', accountId: addId, kind: addDraft.kind });
-              setAddDraft({ rawId: '', kind: addDraft.kind });
-            }}
-          >
-            {addExists ? 'Restaurer' : 'Ajouter'}
-          </button>
+          <div className="grid gap-2 sm:grid-cols-[120px_minmax(0,1fr)]">
+            <select
+              className={baseSelect}
+              value={addDraft.kind}
+              onChange={(e) => setAddDraft((s) => ({ ...s, kind: e.target.value as Account['kind'] }))}
+              aria-label="Type du compte"
+            >
+              <option value="perso">Perso</option>
+              <option value="commun">Commun</option>
+            </select>
+            <button
+              type="button"
+              className={cx(
+                'h-8 w-full rounded-xl border border-fuchsia-200/25 bg-fuchsia-400/12 px-3 text-[11px] font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/18',
+                !addId && 'opacity-50 hover:bg-fuchsia-400/12',
+              )}
+              disabled={!addId}
+              onClick={() => {
+                if (!addId) return;
+                dispatch({ type: 'ADD_ACCOUNT', accountId: addId, kind: addDraft.kind });
+                setAddDraft({ rawId: '', kind: addDraft.kind });
+              }}
+            >
+              {addExists ? 'Restaurer' : 'Ajouter'}
+            </button>
+          </div>
         </div>
         <div className="mt-2 text-[11px] text-slate-500">Astuce: espaces → “_”, tout est mis en majuscules.</div>
       </div>
 
-      {activeAccounts.map((a) => {
-        const moveTargets = activeAccounts.filter((x) => x.id !== a.id);
-        const canRemove = moveTargets.length > 0;
-        const removing = removeDraft?.accountId === a.id;
-        const activeRemove = removing ? removeDraft : null;
+	      {activeAccounts.map((a) => {
+	        const moveTargets = activeAccounts.filter((x) => x.id !== a.id);
+	        const canRemove = moveTargets.length > 0;
+	        const removing = removeDraft?.accountId === a.id;
+	        const activeRemove = removing ? removeDraft : null;
 
 	        return (
 	          <div key={a.id} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
 	            <div className="flex items-center gap-3">
 	              <div className="min-w-0 flex-1">
-	                <div className="h-8 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-[13px] font-semibold text-slate-100">
-	                  <div className="flex h-full items-center font-mono">{a.id}</div>
-	                </div>
+                  <InlineTextInput
+                    ariaLabel={`Nom du compte: ${a.id}`}
+                    value={a.name}
+                    disabled={false}
+                    className="h-8 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-[13px] font-semibold text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-white/15 focus:bg-white/10"
+                    onCommit={(name) => {
+                      const nextName = name.trim() || a.id;
+                      if (nextName === a.name) return;
+                      dispatch({ type: 'UPDATE_ACCOUNT', accountId: a.id, patch: { name: nextName } });
+                    }}
+                  />
+                  <div className="mt-1 min-w-0 truncate text-[11px] text-slate-500">
+                    ID: <span className="font-mono">{a.id}</span>
+                  </div>
 	              </div>
 	              <select
 	                className={baseSelect}
@@ -299,21 +317,21 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               </button>
             </div>
 
-            {removing && activeRemove ? (
+	            {removing && activeRemove ? (
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-ink-950/35 p-3">
                 <div className="text-xs text-slate-300">Déplacer charges/budgets vers</div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    className={cx(baseSelect, 'h-9')}
-                    value={activeRemove.moveToAccountId}
-                    onChange={(e) =>
-                      setRemoveDraft((cur) => (cur ? { ...cur, moveToAccountId: e.target.value as Account['id'] } : cur))
-                    }
-                    aria-label="Compte cible"
+	                  <select
+	                    className={cx(baseSelect, 'h-9')}
+	                    value={activeRemove.moveToAccountId}
+	                    onChange={(e) =>
+	                      setRemoveDraft((cur) => (cur ? { ...cur, moveToAccountId: e.target.value as Account['id'] } : cur))
+	                    }
+	                    aria-label="Compte cible"
 	                  >
 	                    {moveTargets.map((t) => (
 	                      <option key={t.id} value={t.id}>
-	                        {t.id}
+	                        {t.name && t.name !== t.id ? `${t.name} (${t.id})` : t.id}
 	                      </option>
 	                    ))}
 	                  </select>
@@ -348,9 +366,10 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 	            {inactiveAccounts.map((a) => (
 	              <div key={a.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
 	                <div className="min-w-0 flex-1">
-	                  <div className="text-sm font-semibold text-slate-200">
-	                    <span className="font-mono">{a.id}</span>
-	                  </div>
+                    <div className="truncate text-sm font-semibold text-slate-200">{a.name || a.id}</div>
+                    {a.name && a.name !== a.id ? (
+                      <div className="mt-0.5 truncate font-mono text-[11px] text-slate-500">{a.id}</div>
+                    ) : null}
 	                </div>
 	                <button
 	                  type="button"

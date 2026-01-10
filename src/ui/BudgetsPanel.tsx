@@ -99,7 +99,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
         >
           {activeAccounts.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.id}
+              {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
             </option>
           ))}
         </select>

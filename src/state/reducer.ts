@@ -1,6 +1,6 @@
 import { dueDateIso, pad2 } from '../lib/date';
 import { uid } from '../lib/id';
-import type { Account, AppState, Budget, BudgetExpense, Charge, MonthData } from './types';
+import type { Account, AppState, Budget, BudgetExpense, Charge, MonthChargeSnapshot, MonthData } from './types';
 
 export type Action =
   | { type: 'HYDRATE'; state: AppState }
@@ -11,6 +11,9 @@ export type Action =
   | { type: 'REMOVE_ACCOUNT'; accountId: Account['id']; moveToAccountId: Account['id'] }
   | { type: 'ENSURE_MONTH'; ym: MonthData['ym'] }
   | { type: 'TOGGLE_CHARGE_PAID'; ym: MonthData['ym']; chargeId: string; paid: boolean }
+  | { type: 'ADD_MONTH_CHARGE'; ym: MonthData['ym']; charge: Omit<Charge, 'id' | 'sortOrder' | 'active'> }
+  | { type: 'UPDATE_MONTH_CHARGE'; ym: MonthData['ym']; chargeId: string; patch: Partial<Omit<Charge, 'id' | 'active'>> }
+  | { type: 'REMOVE_MONTH_CHARGE'; ym: MonthData['ym']; chargeId: string }
   | { type: 'ARCHIVE_MONTH'; ym: MonthData['ym'] }
   | { type: 'UNARCHIVE_MONTH'; ym: MonthData['ym'] }
   | { type: 'ADD_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expense: Omit<BudgetExpense, 'id'> }
@@ -43,6 +46,18 @@ function ensureMonth(state: AppState, ym: MonthData['ym']): MonthData {
     charges: {},
     budgets: {},
   };
+}
+
+function nextMonthChargeSortOrder(state: AppState, month: MonthData, scope: Charge['scope']): number {
+  const maxGlobal = state.charges
+    .filter((c) => c.scope === scope)
+    .reduce((acc, c) => Math.max(acc, c.sortOrder), 0);
+  const maxLocal = Object.values(month.charges)
+    .map((st) => st.snapshot)
+    .filter(Boolean)
+    .filter((snap) => snap!.scope === scope)
+    .reduce((acc, snap) => Math.max(acc, snap!.sortOrder), 0);
+  return Math.max(maxGlobal, maxLocal) + 10;
 }
 
 function withMonth(state: AppState, ym: MonthData['ym'], updater: (m: MonthData) => MonthData): AppState {
@@ -135,6 +150,68 @@ export function reducer(state: AppState, action: Action): AppState {
             },
           },
         }));
+      case 'ADD_MONTH_CHARGE':
+        return withMonth(state, action.ym, (m) => {
+          if (m.archived) return m;
+          const id = uid('mchg');
+          const sortOrder = nextMonthChargeSortOrder(state, m, action.charge.scope);
+          const splitPercent = action.charge.scope === 'commun' ? 50 : undefined;
+          return {
+            ...m,
+            charges: {
+              ...m.charges,
+              [id]: {
+                paid: false,
+                snapshot: {
+                  name: action.charge.name,
+                  amountCents: action.charge.amountCents,
+                  sortOrder,
+                  dayOfMonth: action.charge.dayOfMonth,
+                  accountId: action.charge.accountId,
+                  scope: action.charge.scope,
+                  splitPercent,
+                  payment: action.charge.payment,
+                  destination: action.charge.destination ?? null,
+                },
+              },
+            },
+          };
+        });
+      case 'UPDATE_MONTH_CHARGE':
+        return withMonth(state, action.ym, (m) => {
+          if (m.archived) return m;
+          const st = m.charges[action.chargeId];
+          const snap = st?.snapshot;
+          if (!st || !snap) return m;
+          // Only month-only charges are editable via this action.
+          const existsGlobally = state.charges.some((c) => c.id === action.chargeId);
+          if (existsGlobally) return m;
+
+          const nextSnap = (() => {
+            const merged = { ...snap, ...action.patch } as MonthChargeSnapshot;
+            const nextScope: MonthChargeSnapshot['scope'] = merged.scope === 'commun' ? 'commun' : 'perso';
+            return { ...merged, scope: nextScope, splitPercent: nextScope === 'commun' ? 50 : undefined } as MonthChargeSnapshot;
+          })();
+
+          return {
+            ...m,
+            charges: {
+              ...m.charges,
+              [action.chargeId]: { ...st, snapshot: nextSnap },
+            },
+          };
+        });
+      case 'REMOVE_MONTH_CHARGE':
+        return withMonth(state, action.ym, (m) => {
+          if (m.archived) return m;
+          const st = m.charges[action.chargeId];
+          if (!st?.snapshot) return m;
+          const existsGlobally = state.charges.some((c) => c.id === action.chargeId);
+          if (existsGlobally) return m;
+          const nextCharges = { ...m.charges };
+          delete nextCharges[action.chargeId];
+          return { ...m, charges: nextCharges };
+        });
       case 'ARCHIVE_MONTH':
         return withMonth(state, action.ym, (m) => {
           const today = todayIsoLocal();

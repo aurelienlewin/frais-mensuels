@@ -14,6 +14,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const activeAccountIds = useMemo(() => new Set(activeAccounts.map((a) => a.id)), [activeAccounts]);
   const accountsById = useMemo(() => new Map(state.accounts.map((a) => [a.id, a])), [state.accounts]);
   const chargesById = useMemo(() => new Map(state.charges.map((c) => [c.id, c])), [state.charges]);
+  const monthChargeStateById = state.months[ym]?.charges ?? {};
   const tableRef = useRef<HTMLTableElement | null>(null);
   const mobileRef = useRef<HTMLDivElement | null>(null);
   const [isSmUp, setIsSmUp] = useState<boolean>(() => {
@@ -30,6 +31,24 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const [dragOver, setDragOver] = useState<{ id: string; pos: 'before' | 'after' } | null>(null);
 
   const canEdit = !archived;
+  const isMonthOnlyCharge = (chargeId: string) => !chargesById.has(chargeId) && Boolean(monthChargeStateById[chargeId]?.snapshot);
+  const updateCharge = (chargeId: string, patch: Partial<Omit<Charge, 'id' | 'active'>>) => {
+    if (!canEdit) return;
+    if (chargesById.has(chargeId)) {
+      dispatch({ type: 'UPDATE_CHARGE', chargeId, patch });
+      return;
+    }
+    dispatch({ type: 'UPDATE_MONTH_CHARGE', ym, chargeId, patch });
+  };
+  const removeCharge = (chargeId: string) => {
+    if (!canEdit) return;
+    if (chargesById.has(chargeId)) {
+      dispatch({ type: 'REMOVE_CHARGE', chargeId });
+      return;
+    }
+    dispatch({ type: 'REMOVE_MONTH_CHARGE', ym, chargeId });
+  };
+  const reorderableIds = (scope: ChargeScope) => rows.filter((r) => r.scope === scope && chargesById.has(r.id)).map((r) => r.id);
 
   useEffect(() => {
     try {
@@ -117,7 +136,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
     targetId: string,
     pos: 'before' | 'after',
   ) => {
-    const groupIds = rows.filter((r) => r.scope === scope).map((r) => r.id);
+    const groupIds = reorderableIds(scope);
     const srcIdx = groupIds.indexOf(sourceId);
     const tgtIdx = groupIds.indexOf(targetId);
     if (srcIdx === -1 || tgtIdx === -1) return;
@@ -133,13 +152,15 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 
   const communRows = rows.filter((r) => r.scope === 'commun');
   const persoRows = rows.filter((r) => r.scope === 'perso');
+  const communReorderIds = communRows.filter((r) => chargesById.has(r.id)).map((r) => r.id);
+  const persoReorderIds = persoRows.filter((r) => chargesById.has(r.id)).map((r) => r.id);
 
 	  return (
 	    <section
 	      data-tour="charges"
 	      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
 	    >
-      <div className="flex items-center justify-between gap-4 border-b border-white/15 px-4 py-4 sm:px-6 sm:py-5">
+	      <div className="flex items-center justify-between gap-4 border-b border-white/15 px-4 py-4 sm:px-6 sm:py-5">
         <div>
           <h2 className="text-sm text-slate-300">Charges</h2>
           <div className="mt-1 text-xl font-semibold tracking-tight">{rows.length} lignes</div>
@@ -173,6 +194,33 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
           >
             + Ajouter
           </button>
+          <button
+            className={cx(
+              'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10',
+              !canEdit && 'opacity-50',
+            )}
+            disabled={!canEdit}
+            title="Ajoute une charge uniquement pour ce mois (ponctuelle)"
+            onClick={() => {
+              const defaultAccount = activeAccounts[0]?.id ?? state.accounts[0]?.id ?? 'PERSONAL_MAIN';
+              pendingFocusColRef.current = '1';
+              dispatch({
+                type: 'ADD_MONTH_CHARGE',
+                ym,
+                charge: {
+                  name: 'Dépense ponctuelle',
+                  amountCents: 0,
+                  dayOfMonth: 1,
+                  accountId: defaultAccount,
+                  scope: 'perso',
+                  payment: 'manuel',
+                  destination: null,
+                },
+              });
+            }}
+          >
+            + Ponctuelle
+          </button>
         </div>
       </div>
 
@@ -195,11 +243,14 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 <Th className="w-[56px]" ariaHidden />
               </tr>
             </thead>
-            <tbody className="text-[13px] leading-tight">
+	            <tbody className="text-[13px] leading-tight">
               {rows.map((r) => {
               const model = chargesById.get(r.id) ?? null;
-              const editable = canEdit && Boolean(model);
+              const isMonthOnly = isMonthOnlyCharge(r.id);
+              const editable = canEdit && (Boolean(model) || isMonthOnly);
+              const canReorder = canEdit && Boolean(model);
               const isInactive = Boolean(model && !model.active);
+              const monthOnlyChip = 'border-fuchsia-200/30 bg-fuchsia-400/15 text-fuchsia-50';
               const tint =
                 r.scope === 'commun'
                   ? 'bg-sky-500/20 hover:bg-sky-500/30'
@@ -247,9 +298,10 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                         ? 'shadow-[inset_0_2px_0_rgba(189,147,249,0.85)]'
                         : 'shadow-[inset_0_-2px_0_rgba(189,147,249,0.85)]'
                       : null,
-                  )}
+	                  )}
                   onDragOver={(e) => {
                     if (!canEdit) return;
+                    if (!model) return;
                     const src = dragging;
                     if (!src) return;
                     if (src.scope !== r.scope) return;
@@ -261,9 +313,11 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                   }}
                   onDrop={(e) => {
                     if (!canEdit) return;
+                    if (!model) return;
                     const srcId = e.dataTransfer.getData('text/plain') || dragging?.id || '';
                     if (!srcId || srcId === r.id) return;
                     if (dragging?.scope !== r.scope) return;
+                    if (!chargesById.has(srcId)) return;
                     e.preventDefault();
                     reorderInScope(r.scope, srcId, r.id, dragOver?.id === r.id ? dragOver.pos : 'before');
                     setDragging(null);
@@ -271,25 +325,25 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                   }}
                 >
                   <Td className="w-[76px] sm:w-[88px]">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        draggable={editable}
-                        disabled={!editable}
-                        className={cx(
-                          'rounded-md border border-white/10 bg-white/5 px-1.5 py-1 text-[10px] leading-none text-slate-200 transition-colors hover:bg-white/10',
-                          !editable && 'opacity-40',
-                        )}
-                        aria-label={`Réordonner: ${r.name}`}
-                        aria-describedby="charges-reorder-help"
-                        aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
-                        title="Glisser-déposer pour réordonner (Alt+↑/↓)"
-                        onDragStart={(e) => {
-                          if (!editable) {
-                            e.preventDefault();
-                            return;
-                          }
-                          setDragging({ id: r.id, scope: r.scope });
+	                    <div className="flex items-center gap-2">
+	                      <button
+	                        type="button"
+	                        draggable={canReorder}
+	                        disabled={!canReorder}
+	                        className={cx(
+	                          'rounded-md border border-white/10 bg-white/5 px-1.5 py-1 text-[10px] leading-none text-slate-200 transition-colors hover:bg-white/10',
+	                          !canReorder && 'opacity-40',
+	                        )}
+	                        aria-label={`Réordonner: ${r.name}`}
+	                        aria-describedby="charges-reorder-help"
+	                        aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+	                        title="Glisser-déposer pour réordonner (Alt+↑/↓)"
+	                        onDragStart={(e) => {
+	                          if (!canReorder) {
+	                            e.preventDefault();
+	                            return;
+	                          }
+	                          setDragging({ id: r.id, scope: r.scope });
                           setDragOver(null);
                           e.dataTransfer.effectAllowed = 'move';
                           e.dataTransfer.setData('text/plain', r.id);
@@ -297,17 +351,17 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                         onDragEnd={() => {
                           setDragging(null);
                           setDragOver(null);
-                        }}
-                        onKeyDown={(e) => {
-                          if (!editable) return;
-                          if (!e.altKey) return;
-                          if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-                          e.preventDefault();
-                          const groupIds = rows.filter((x) => x.scope === r.scope).map((x) => x.id);
-                          const idx = groupIds.indexOf(r.id);
-                          const nextIdx = e.key === 'ArrowUp' ? idx - 1 : idx + 1;
-                          const targetId = groupIds[nextIdx];
-                          if (!targetId) return;
+	                        }}
+	                        onKeyDown={(e) => {
+	                          if (!canReorder) return;
+	                          if (!e.altKey) return;
+	                          if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+	                          e.preventDefault();
+	                          const groupIds = reorderableIds(r.scope);
+	                          const idx = groupIds.indexOf(r.id);
+	                          const nextIdx = e.key === 'ArrowUp' ? idx - 1 : idx + 1;
+	                          const targetId = groupIds[nextIdx];
+	                          if (!targetId) return;
                           reorderInScope(r.scope, r.id, targetId, e.key === 'ArrowUp' ? 'before' : 'after');
                         }}
                       >
@@ -332,13 +386,13 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                        ariaLabel="Libellé"
 	                        value={r.name}
 	                        disabled={!editable}
-	                        className={cx(
-	                          'h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10',
-	                          r.paid && 'line-through decoration-white/25',
-	                        )}
-	                        onCommit={(name) => dispatch({ type: 'UPDATE_CHARGE', chargeId: r.id, patch: { name } })}
-	                        inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '1' }}
-	                      />
+		                        className={cx(
+		                          'h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10',
+		                          r.paid && 'line-through decoration-white/25',
+		                        )}
+		                        onCommit={(name) => updateCharge(r.id, { name })}
+		                        inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '1' }}
+		                      />
 		                      <div className="mt-2 grid gap-2 text-[11px] text-slate-200/90">
 		                        <div
 		                          className={cx(
@@ -360,13 +414,13 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                                  const digits = raw.replace(/[^\d]/g, '');
 		                                  if (!digits) return;
 		                                  const n = Number.parseInt(digits, 10);
-	                                  if (!Number.isFinite(n)) return;
-	                                  const clamped = Math.max(1, Math.min(31, n));
-	                                  if (clamped === r.dayOfMonth) return;
-	                                  dispatch({ type: 'UPDATE_CHARGE', chargeId: r.id, patch: { dayOfMonth: clamped } });
-	                                }}
-	                                inputProps={{
-	                                  title: r.dueDate,
+		                                  if (!Number.isFinite(n)) return;
+		                                  const clamped = Math.max(1, Math.min(31, n));
+		                                  if (clamped === r.dayOfMonth) return;
+		                                  updateCharge(r.id, { dayOfMonth: clamped });
+		                                }}
+		                                inputProps={{
+		                                  title: r.dueDate,
 	                                  inputMode: 'numeric',
 	                                  pattern: '[0-9]*',
 	                                  maxLength: 2,
@@ -385,21 +439,15 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                            </span>
 		                          )}
 
-	                          {editable ? (
-	                            <select
-	                              className={cx(metaSelect, typeChip)}
-	                              value={r.scope}
-	                              onChange={(e) =>
-	                                dispatch({
-	                                  type: 'UPDATE_CHARGE',
-	                                  chargeId: r.id,
-	                                  patch: { scope: e.target.value as ChargeScope },
-	                                })
-	                              }
-	                              aria-label="Type"
-	                              data-grid="charges"
-	                              data-charge-id={r.id}
-	                              data-col="3"
+		                          {editable ? (
+		                            <select
+		                              className={cx(metaSelect, typeChip)}
+		                              value={r.scope}
+		                              onChange={(e) => updateCharge(r.id, { scope: e.target.value as ChargeScope })}
+		                              aria-label="Type"
+		                              data-grid="charges"
+		                              data-charge-id={r.id}
+		                              data-col="3"
 	                            >
 	                              <option value="commun">Commun</option>
 	                              <option value="perso">Perso</option>
@@ -410,21 +458,15 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                            </span>
 		                          )}
 
-	                          {editable ? (
-	                            <select
-	                              className={cx(metaSelect, paymentChip)}
-	                              value={r.payment}
-	                              onChange={(e) =>
-	                                dispatch({
-	                                  type: 'UPDATE_CHARGE',
-	                                  chargeId: r.id,
-	                                  patch: { payment: e.target.value as Charge['payment'] },
-	                                })
-	                              }
-	                              aria-label="Paiement"
-	                              data-grid="charges"
-	                              data-charge-id={r.id}
-	                              data-col="4"
+		                          {editable ? (
+		                            <select
+		                              className={cx(metaSelect, paymentChip)}
+		                              value={r.payment}
+		                              onChange={(e) => updateCharge(r.id, { payment: e.target.value as Charge['payment'] })}
+		                              aria-label="Paiement"
+		                              data-grid="charges"
+		                              data-charge-id={r.id}
+		                              data-col="4"
 	                            >
 	                              <option value="auto">Auto</option>
 	                              <option value="manuel">Manuel</option>
@@ -434,6 +476,18 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                              {r.payment === 'auto' ? 'Auto' : 'Manuel'}
 		                            </span>
 		                          )}
+
+		                          {isMonthOnly ? (
+		                            <span
+		                              title="Charge uniquement pour ce mois"
+		                              className={cx(
+		                                'inline-flex h-6 items-center rounded-lg border px-2 text-[10px] font-semibold uppercase tracking-wide',
+		                                monthOnlyChip,
+		                              )}
+		                            >
+		                              Ponctuelle
+		                            </span>
+		                          ) : null}
 
 		                          {isInactive ? (
 		                            <span className="inline-flex h-6 items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
@@ -453,14 +507,14 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                              className={cx(ioSelectBase, 'w-full truncate bg-ink-950/35')}
 	                              value={accountValue}
 	                              title={r.accountName}
-	                              onChange={(e) => {
-	                                const v = e.target.value;
-	                                if (!v || v === '__UNAVAILABLE__') return;
-	                                dispatch({ type: 'UPDATE_CHARGE', chargeId: r.id, patch: { accountId: v as Charge['accountId'] } });
-	                              }}
-	                              aria-label="Provenance (compte)"
-	                              data-grid="charges"
-	                              data-charge-id={r.id}
+		                              onChange={(e) => {
+		                                const v = e.target.value;
+		                                if (!v || v === '__UNAVAILABLE__') return;
+		                                updateCharge(r.id, { accountId: v as Charge['accountId'] });
+		                              }}
+		                              aria-label="Provenance (compte)"
+		                              data-grid="charges"
+		                              data-charge-id={r.id}
 	                              data-col="5"
 	                            >
 	                              <option value="" disabled>
@@ -471,12 +525,12 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                                  {accountUnavailableLabel}
 	                                </option>
 	                              ) : null}
-	                              {activeAccounts.map((a) => (
-	                                <option key={a.id} value={a.id}>
-	                                  {a.id}
-	                                </option>
-	                              ))}
-	                            </select>
+		                              {activeAccounts.map((a) => (
+		                                <option key={a.id} value={a.id}>
+		                                  {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
+		                                </option>
+		                              ))}
+		                            </select>
 		                          ) : (
 		                            <span
 		                              className="min-w-0 truncate rounded-lg border border-white/15 bg-ink-950/35 px-2 py-1 text-[11px] font-medium text-slate-100"
@@ -501,20 +555,16 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                                  className="h-7 w-full min-w-0 rounded-lg border border-white/15 bg-ink-950/35 px-2 text-[11px] font-medium text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-white/25 focus:bg-ink-950/45"
 		                                  onCommit={(text) => {
 		                                    const next = text.trim();
-		                                    dispatch({
-		                                      type: 'UPDATE_CHARGE',
-	                                      chargeId: r.id,
-	                                      patch: { destination: next ? { kind: 'text', text: next } : null },
-	                                    });
-	                                  }}
-	                                  inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '6' }}
-	                                />
-	                                <button
-	                                  className="h-7 flex-none rounded-lg border border-white/10 bg-white/5 px-2 text-[11px] text-slate-200 transition-colors hover:bg-white/10"
-	                                  onClick={() => dispatch({ type: 'UPDATE_CHARGE', chargeId: r.id, patch: { destination: null } })}
-	                                  aria-label="Supprimer la destination"
-	                                  type="button"
-	                                >
+		                                    updateCharge(r.id, { destination: next ? { kind: 'text', text: next } : null });
+		                                  }}
+		                                  inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '6' }}
+		                                />
+		                                <button
+		                                  className="h-7 flex-none rounded-lg border border-white/10 bg-white/5 px-2 text-[11px] text-slate-200 transition-colors hover:bg-white/10"
+		                                  onClick={() => updateCharge(r.id, { destination: null })}
+		                                  aria-label="Supprimer la destination"
+		                                  type="button"
+		                                >
 	                                  ✕
 	                                </button>
 	                              </div>
@@ -529,31 +579,23 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                                )}
 	                                value={r.destination?.kind === 'account' ? destinationValue : ''}
 	                                title={r.destinationLabel ?? undefined}
-	                                onChange={(e) => {
-	                                  const v = e.target.value;
-	                                  if (!v) {
-	                                    dispatch({ type: 'UPDATE_CHARGE', chargeId: r.id, patch: { destination: null } });
-	                                    return;
-	                                  }
+		                                onChange={(e) => {
+		                                  const v = e.target.value;
+		                                  if (!v) {
+		                                    updateCharge(r.id, { destination: null });
+		                                    return;
+		                                  }
 		                                  if (v === '__UNAVAILABLE__') return;
 		                                  if (v === '__TEXT__') {
 		                                    pendingFocusCellRef.current = { chargeId: r.id, col: '6' };
-		                                    dispatch({
-		                                      type: 'UPDATE_CHARGE',
-		                                      chargeId: r.id,
-		                                      patch: { destination: { kind: 'text', text: '' } },
-	                                    });
-	                                    return;
-	                                  }
-	                                  dispatch({
-	                                    type: 'UPDATE_CHARGE',
-	                                    chargeId: r.id,
-	                                    patch: { destination: { kind: 'account', accountId: v as Charge['accountId'] } },
-	                                  });
-	                                }}
-	                                aria-label="Destination"
-	                                data-grid="charges"
-	                                data-charge-id={r.id}
+		                                    updateCharge(r.id, { destination: { kind: 'text', text: '' } });
+		                                    return;
+		                                  }
+		                                  updateCharge(r.id, { destination: { kind: 'account', accountId: v as Charge['accountId'] } });
+		                                }}
+		                                aria-label="Destination"
+		                                data-grid="charges"
+		                                data-charge-id={r.id}
 	                                data-col="6"
 	                              >
 	                                <option value="">Destination…</option>
@@ -562,13 +604,13 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                                    {destinationUnavailableLabel}
 	                                  </option>
 	                                ) : null}
-	                                {activeAccounts.map((a) => (
-	                                  <option key={a.id} value={a.id}>
-	                                    {a.id}
-	                                  </option>
-	                                ))}
-	                                <option value="__TEXT__">Autre…</option>
-	                              </select>
+		                                {activeAccounts.map((a) => (
+		                                  <option key={a.id} value={a.id}>
+		                                    {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
+		                                  </option>
+		                                ))}
+		                                <option value="__TEXT__">Autre…</option>
+		                              </select>
 	                            )
 	                          ) : r.destinationLabel ? (
 	                            <span
@@ -595,14 +637,12 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                              step={0.01}
 	                              min={0}
 	                              suffix="€"
-	                              disabled={!editable}
-	                              className="w-full"
-	                              inputClassName="h-7 rounded-lg px-2 text-[11px]"
-	                              onCommit={(euros) =>
-	                                dispatch({ type: 'UPDATE_CHARGE', chargeId: r.id, patch: { amountCents: eurosToCents(euros) } })
-	                              }
-	                              inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '7' }}
-	                            />
+		                              disabled={!editable}
+		                              className="w-full"
+		                              inputClassName="h-7 rounded-lg px-2 text-[11px]"
+		                              onCommit={(euros) => updateCharge(r.id, { amountCents: eurosToCents(euros) })}
+		                              inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '7' }}
+		                            />
 	                            <div className="text-right">
 	                              <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ma part</div>
 	                              <div className="text-[12px] font-semibold tabular-nums text-slate-100">{formatEUR(r.myShareCents)}</div>
@@ -618,16 +658,14 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                       value={centsToEuros(r.amountCents)}
                       step={0.01}
                       min={0}
-                      suffix="€"
-                      disabled={!editable}
-                      className="ml-auto w-[120px]"
-                      inputClassName="h-8 rounded-lg px-2 text-[13px]"
-                      onCommit={(euros) =>
-                        dispatch({ type: 'UPDATE_CHARGE', chargeId: r.id, patch: { amountCents: eurosToCents(euros) } })
-                      }
-                      inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '7' }}
-                    />
-                  </Td>
+	                      suffix="€"
+	                      disabled={!editable}
+	                      className="ml-auto w-[120px]"
+	                      inputClassName="h-8 rounded-lg px-2 text-[13px]"
+	                      onCommit={(euros) => updateCharge(r.id, { amountCents: eurosToCents(euros) })}
+	                      inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '7' }}
+	                    />
+	                  </Td>
                   <Td className="hidden text-right sm:table-cell">
                     <div className="text-[13px] font-semibold tabular-nums text-slate-100">{formatEUR(r.myShareCents)}</div>
                   </Td>
@@ -636,12 +674,12 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                       className={cx(
                         'rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs transition-colors duration-150 hover:bg-white/10',
                         !editable && 'opacity-40',
-                      )}
-                      disabled={!editable}
-                      onClick={() => dispatch({ type: 'REMOVE_CHARGE', chargeId: r.id })}
-                      aria-label={`Supprimer ${r.name}`}
-                    >
-                      ✕
+	                      )}
+	                      disabled={!editable}
+	                      onClick={() => removeCharge(r.id)}
+	                      aria-label={`Supprimer ${r.name}`}
+	                    >
+	                      ✕
                     </button>
                   </Td>
                 </tr>
@@ -662,66 +700,82 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
           {rows.length === 0 ? (
             <div className="px-4 py-10 text-center text-slate-400">Aucune charge. Ajoute une ligne pour commencer.</div>
           ) : (
-            <div className="space-y-5 px-4 py-4">
-              {communRows.length ? (
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-sky-200">Commun</div>
-                    <div className="text-xs text-slate-400">{communRows.length}</div>
-                  </div>
-                  <div className="space-y-3">
-                    {communRows.map((r, idx) => (
-                      <MobileCard
-                        key={r.id}
-                        r={r}
-                        canEdit={canEdit}
-                        activeAccounts={activeAccounts}
-                        pendingFocusCellRef={pendingFocusCellRef}
-                        canMoveUp={idx > 0}
-                        canMoveDown={idx < communRows.length - 1}
-                        onReorder={(dir) => {
-                          const targetId = dir === 'up' ? communRows[idx - 1]?.id : communRows[idx + 1]?.id;
-                          if (!targetId) return;
-                          reorderInScope('commun', r.id, targetId, dir === 'up' ? 'before' : 'after');
-                        }}
-                        onTogglePaid={(paid) => dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: r.id, paid })}
-                        onUpdate={(patch) => dispatch({ type: 'UPDATE_CHARGE', chargeId: r.id, patch })}
-                        onRemove={() => dispatch({ type: 'REMOVE_CHARGE', chargeId: r.id })}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+	            <div className="space-y-5 px-4 py-4">
+		              {communRows.length ? (
+		                <div>
+	                  <div className="mb-2 flex items-center justify-between">
+	                    <div className="text-xs font-semibold uppercase tracking-wide text-sky-200">Commun</div>
+	                    <div className="text-xs text-slate-400">{communRows.length}</div>
+	                  </div>
+		                  <div className="space-y-3">
+		                    {communRows.map((r) => {
+                        const canReorder = chargesById.has(r.id);
+                        const reorderIdx = canReorder ? communReorderIds.indexOf(r.id) : -1;
+                        const isMonthOnly = isMonthOnlyCharge(r.id);
+                        const editable = canEdit && (canReorder || isMonthOnly);
+                        return (
+		                      <MobileCard
+		                        key={r.id}
+		                        r={r}
+	                          isMonthOnly={isMonthOnly}
+	                        canEdit={editable}
+	                        activeAccounts={activeAccounts}
+		                        pendingFocusCellRef={pendingFocusCellRef}
+		                        canMoveUp={canReorder && reorderIdx > 0}
+		                        canMoveDown={canReorder && reorderIdx >= 0 && reorderIdx < communReorderIds.length - 1}
+		                        onReorder={(dir) => {
+	                            if (!canReorder) return;
+		                          const targetId = dir === 'up' ? communReorderIds[reorderIdx - 1] : communReorderIds[reorderIdx + 1];
+		                          if (!targetId) return;
+		                          reorderInScope('commun', r.id, targetId, dir === 'up' ? 'before' : 'after');
+		                        }}
+	                        onTogglePaid={(paid) => dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: r.id, paid })}
+	                        onUpdate={(patch) => updateCharge(r.id, patch)}
+	                        onRemove={() => removeCharge(r.id)}
+	                      />
+                      );
+                    })}
+	                  </div>
+	                </div>
+	              ) : null}
 
               {persoRows.length ? (
                 <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-emerald-200">Perso</div>
-                    <div className="text-xs text-slate-400">{persoRows.length}</div>
-                  </div>
-                  <div className="space-y-3">
-                    {persoRows.map((r, idx) => (
-                      <MobileCard
-                        key={r.id}
-                        r={r}
-                        canEdit={canEdit}
-                        activeAccounts={activeAccounts}
-                        pendingFocusCellRef={pendingFocusCellRef}
-                        canMoveUp={idx > 0}
-                        canMoveDown={idx < persoRows.length - 1}
-                        onReorder={(dir) => {
-                          const targetId = dir === 'up' ? persoRows[idx - 1]?.id : persoRows[idx + 1]?.id;
-                          if (!targetId) return;
-                          reorderInScope('perso', r.id, targetId, dir === 'up' ? 'before' : 'after');
-                        }}
-                        onTogglePaid={(paid) => dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: r.id, paid })}
-                        onUpdate={(patch) => dispatch({ type: 'UPDATE_CHARGE', chargeId: r.id, patch })}
-                        onRemove={() => dispatch({ type: 'REMOVE_CHARGE', chargeId: r.id })}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+	                  <div className="mb-2 flex items-center justify-between">
+	                    <div className="text-xs font-semibold uppercase tracking-wide text-emerald-200">Perso</div>
+	                    <div className="text-xs text-slate-400">{persoRows.length}</div>
+	                  </div>
+		                  <div className="space-y-3">
+		                    {persoRows.map((r) => {
+                        const canReorder = chargesById.has(r.id);
+                        const reorderIdx = canReorder ? persoReorderIds.indexOf(r.id) : -1;
+                        const isMonthOnly = isMonthOnlyCharge(r.id);
+                        const editable = canEdit && (canReorder || isMonthOnly);
+                        return (
+		                      <MobileCard
+		                        key={r.id}
+		                        r={r}
+                          isMonthOnly={isMonthOnly}
+	                        canEdit={editable}
+	                        activeAccounts={activeAccounts}
+		                        pendingFocusCellRef={pendingFocusCellRef}
+		                        canMoveUp={canReorder && reorderIdx > 0}
+		                        canMoveDown={canReorder && reorderIdx >= 0 && reorderIdx < persoReorderIds.length - 1}
+		                        onReorder={(dir) => {
+	                            if (!canReorder) return;
+		                          const targetId = dir === 'up' ? persoReorderIds[reorderIdx - 1] : persoReorderIds[reorderIdx + 1];
+		                          if (!targetId) return;
+		                          reorderInScope('perso', r.id, targetId, dir === 'up' ? 'before' : 'after');
+		                        }}
+	                        onTogglePaid={(paid) => dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: r.id, paid })}
+	                        onUpdate={(patch) => updateCharge(r.id, patch)}
+	                        onRemove={() => removeCharge(r.id)}
+	                      />
+                      );
+                    })}
+	                  </div>
+	                </div>
+	              ) : null}
             </div>
           )}
         </div>
@@ -739,6 +793,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 
 function MobileCard({
   r,
+  isMonthOnly,
   canEdit,
   activeAccounts,
   pendingFocusCellRef,
@@ -746,16 +801,17 @@ function MobileCard({
   canMoveDown,
   onReorder,
   onTogglePaid,
-  onUpdate,
-  onRemove,
-}: {
-  r: ReturnType<typeof chargesForMonth>[number];
-  canEdit: boolean;
-  activeAccounts: Array<{ id: Charge['accountId']; active: boolean }>;
-  pendingFocusCellRef: MutableRefObject<{ chargeId: string; col: string } | null>;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onReorder: (dir: 'up' | 'down') => void;
+	  onUpdate,
+	  onRemove,
+		}: {
+		  r: ReturnType<typeof chargesForMonth>[number];
+      isMonthOnly: boolean;
+		  canEdit: boolean;
+		  activeAccounts: Array<{ id: Charge['accountId']; name: string; active: boolean }>;
+		  pendingFocusCellRef: MutableRefObject<{ chargeId: string; col: string } | null>;
+		  canMoveUp: boolean;
+	  canMoveDown: boolean;
+	  onReorder: (dir: 'up' | 'down') => void;
   onTogglePaid: (paid: boolean) => void;
   onUpdate: (patch: Partial<Omit<Charge, 'id'>>) => void;
   onRemove: () => void;
@@ -767,6 +823,7 @@ function MobileCard({
     r.scope === 'commun' ? 'border-sky-200/30 bg-sky-400/15 text-sky-50' : 'border-emerald-200/30 bg-emerald-400/15 text-emerald-50';
   const paymentChip =
     r.payment === 'auto' ? 'border-violet-200/30 bg-violet-400/15 text-violet-50' : 'border-amber-200/30 bg-amber-400/15 text-amber-50';
+  const monthOnlyChip = 'border-fuchsia-200/30 bg-fuchsia-400/15 text-fuchsia-50';
 
   const metaSelect =
     'h-9 rounded-2xl border border-white/15 bg-ink-950/35 px-3 text-xs font-semibold uppercase tracking-wide text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45 sm:h-6 sm:rounded-lg sm:px-2 sm:text-[10px]';
@@ -855,20 +912,32 @@ function MobileCard({
               <option value="perso">Perso</option>
             </select>
 
-            <select
-              className={cx(metaSelect, paymentChip)}
-              value={r.payment}
-              onChange={(e) => onUpdate({ payment: e.target.value as Charge['payment'] })}
+	            <select
+	              className={cx(metaSelect, paymentChip)}
+	              value={r.payment}
+	              onChange={(e) => onUpdate({ payment: e.target.value as Charge['payment'] })}
               aria-label="Paiement"
               data-grid="charges"
               data-charge-id={r.id}
               data-col="4"
               disabled={!canEdit}
             >
-              <option value="auto">Auto</option>
-              <option value="manuel">Manuel</option>
-            </select>
-          </div>
+	              <option value="auto">Auto</option>
+	              <option value="manuel">Manuel</option>
+	            </select>
+
+            {isMonthOnly ? (
+              <span
+                title="Charge uniquement pour ce mois"
+                className={cx(
+                  'inline-flex h-9 items-center rounded-2xl border px-3 text-xs font-semibold uppercase tracking-wide text-slate-100',
+                  monthOnlyChip,
+                )}
+              >
+                Ponctuelle
+              </span>
+            ) : null}
+	          </div>
 
           <div className="mt-3 grid gap-2">
             <label className="grid gap-1">
@@ -895,12 +964,12 @@ function MobileCard({
                     Inconnu: {String(r.accountId)}
                   </option>
                 ) : null}
-                {activeAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.id}
-                  </option>
-                ))}
-              </select>
+	                {activeAccounts.map((a) => (
+	                  <option key={a.id} value={a.id}>
+	                    {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
+	                  </option>
+	                ))}
+	              </select>
             </label>
 
             <label className="grid gap-1">
@@ -959,13 +1028,13 @@ function MobileCard({
                       Inconnu: {destinationAccountId}
                     </option>
                   ) : null}
-                  {activeAccounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.id}
-                    </option>
-                  ))}
-                  <option value="__TEXT__">Autre…</option>
-                </select>
+	                  {activeAccounts.map((a) => (
+	                    <option key={a.id} value={a.id}>
+	                      {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
+	                    </option>
+	                  ))}
+	                  <option value="__TEXT__">Autre…</option>
+	                </select>
               )}
             </label>
           </div>

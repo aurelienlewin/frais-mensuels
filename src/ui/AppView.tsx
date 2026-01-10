@@ -189,6 +189,20 @@ export function AppView({
     return months;
   }, [todayYm, ym]);
 
+  const monthHasData = (m: YM) => {
+    const md = state.months[m];
+    if (!md) return false;
+    if (md.archived) return true;
+    if (Object.keys(md.charges).length > 0) return true;
+    if (Object.keys(md.budgets).length > 0) return true;
+    return false;
+  };
+  const isMonthDisabled = (m: YM) => {
+    if (m === ym) return false;
+    const isPast = m < todayYm;
+    return isPast && !monthHasData(m);
+  };
+
   const archivedMonths = useMemo(() => {
     return Object.keys(state.months)
       .filter((k) => state.months[k as YM]?.archived)
@@ -324,14 +338,25 @@ export function AppView({
                 Aujourd’hui
               </button>
 
+              {(() => {
+                const prevYm = ymAdd(ym, -1);
+                const disabled = isMonthDisabled(prevYm);
+                return (
               <button
-                className="rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10"
-                onClick={() => setYm((v) => ymAdd(v, -1))}
+                className={cx(
+                  'rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors',
+                  disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-white/10',
+                )}
+                onClick={() => setYm(prevYm)}
                 aria-label="Mois précédent"
                 type="button"
+                disabled={disabled}
+                title={disabled ? 'Aucune donnée pour ce mois.' : undefined}
               >
                 ←
               </button>
+                );
+              })()}
               <button
                 className="rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10"
                 onClick={() => setYm((v) => ymAdd(v, 1))}
@@ -507,6 +532,7 @@ export function AppView({
           <nav className="mt-4 flex items-center gap-2 overflow-x-auto pb-1" aria-label="Navigation par mois">
             {visibleMonths.map((m) => {
               const selected = m === ym;
+              const disabled = isMonthDisabled(m);
               const isArchived = state.months[m]?.archived ?? false;
               const idx = visibleMonths.indexOf(m);
               return (
@@ -515,25 +541,40 @@ export function AppView({
                   ref={(el) => {
                     monthButtonRefs.current[m] = el;
                   }}
-                  className={[
+                  className={cx(
                     'flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm capitalize transition',
-                    selected ? 'border-white/30 bg-white/12 text-slate-100' : 'border-white/15 bg-white/7 text-slate-200 hover:bg-white/10',
-                  ].join(' ')}
-                  onClick={() => setYm(m)}
+                    selected ? 'border-white/30 bg-white/12 text-slate-100' : 'border-white/15 bg-white/7 text-slate-200',
+                    disabled ? 'cursor-not-allowed opacity-50' : !selected && 'hover:bg-white/10',
+                  )}
+                  onClick={() => {
+                    if (disabled) return;
+                    setYm(m);
+                  }}
                   aria-current={selected ? 'page' : undefined}
                   type="button"
+                  disabled={disabled}
+                  title={disabled ? 'Aucune donnée pour ce mois.' : undefined}
                   onKeyDown={(e) => {
                     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
                     e.preventDefault();
+
+                    const pickIndex = (start: number, step: number) => {
+                      for (let i = start; i >= 0 && i < visibleMonths.length; i += step) {
+                        const candidate = visibleMonths[i]!;
+                        if (!isMonthDisabled(candidate)) return i;
+                      }
+                      return null;
+                    };
+
                     const currentIdx = idx;
-                    const nextIdx =
-                      e.key === 'ArrowLeft'
-                        ? Math.max(0, currentIdx - 1)
-                        : e.key === 'ArrowRight'
-                          ? Math.min(visibleMonths.length - 1, currentIdx + 1)
-                          : e.key === 'Home'
-                            ? 0
-                            : visibleMonths.length - 1;
+                    const nextIdx = (() => {
+                      if (e.key === 'Home') return pickIndex(0, 1);
+                      if (e.key === 'End') return pickIndex(visibleMonths.length - 1, -1);
+                      const step = e.key === 'ArrowLeft' ? -1 : 1;
+                      return pickIndex(currentIdx + step, step);
+                    })();
+                    if (nextIdx === null) return;
+
                     const nextYm = visibleMonths[nextIdx]!;
                     monthButtonRefs.current[nextYm]?.focus();
                     if (nextYm !== ym) setYm(nextYm);

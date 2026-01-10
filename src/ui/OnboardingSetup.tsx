@@ -115,7 +115,7 @@ export function AccountsSetupPrompt() {
           <span className="text-slate-400">Actifs:</span>
           {activeAccounts.map((a) => (
             <span key={a.id} className="rounded-full border border-white/10 bg-ink-950/35 px-2 py-1 font-mono text-[11px]">
-              {a.id}
+              {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
             </span>
           ))}
         </div>
@@ -193,7 +193,7 @@ function BudgetSetupCard({
         <Select
           value={accountId}
           onChange={setAccountId}
-          options={activeAccounts.map((a) => ({ value: a.id, label: a.id }))}
+          options={activeAccounts.map((a) => ({ value: a.id, label: a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id }))}
           ariaLabel={`Compte source enveloppe: ${title}`}
         />
         <button
@@ -241,4 +241,3 @@ export function EssentialBudgetsSetupPrompt() {
     </div>
   );
 }
-

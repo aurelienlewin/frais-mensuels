@@ -31,13 +31,15 @@ export function normalizeState(state: AppState): AppState {
   if (!inputAccounts.length) changed = true;
 
   let accounts = fallbackAccounts.map((a) => {
-    const active = typeof (a as { active?: unknown }).active === 'boolean' ? a.active : true;
-    const fixedName = a.id;
+    const rawActive = (a as { active?: unknown }).active;
+    const active = typeof rawActive === 'boolean' ? rawActive : true;
+    const rawName = (a as { name?: unknown }).name;
+    const name = typeof rawName === 'string' && rawName.trim() ? rawName.trim() : a.id;
     const kind: Account['kind'] = a.kind === 'commun' ? 'commun' : 'perso';
     const changedThis =
-      fixedName !== a.name || active !== (a as { active?: unknown }).active || kind !== (a as { kind?: unknown }).kind;
+      name !== rawName || active !== rawActive || kind !== (a as { kind?: unknown }).kind;
     if (changedThis) changed = true;
-    return { ...a, name: fixedName, active, kind };
+    return { ...a, name, active, kind };
   });
   if (accounts.length && accounts.every((a) => !a.active)) {
     changed = true;

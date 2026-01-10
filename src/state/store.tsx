@@ -21,8 +21,12 @@ function actionSummary(action: Action): string | null {
       return 'OK mis à jour';
     case 'ADD_CHARGE':
       return 'Charge ajoutée';
+    case 'ADD_MONTH_CHARGE':
+      return 'Charge ponctuelle ajoutée';
     case 'REMOVE_CHARGE':
       return 'Charge supprimée';
+    case 'REMOVE_MONTH_CHARGE':
+      return 'Charge ponctuelle supprimée';
     case 'REORDER_CHARGES':
       return 'Ordre mis à jour';
     case 'UPDATE_CHARGE': {
@@ -35,6 +39,17 @@ function actionSummary(action: Action): string | null {
       if ('accountId' in patch) return 'Compte source mis à jour';
       if ('destination' in patch) return 'Destination mise à jour';
       return 'Charge mise à jour';
+    }
+    case 'UPDATE_MONTH_CHARGE': {
+      const patch = action.patch;
+      if ('amountCents' in patch) return 'Montant mis à jour';
+      if ('dayOfMonth' in patch) return 'Jour mis à jour';
+      if ('name' in patch) return 'Libellé mis à jour';
+      if ('scope' in patch) return 'Type mis à jour';
+      if ('payment' in patch) return 'Paiement mis à jour';
+      if ('accountId' in patch) return 'Compte source mis à jour';
+      if ('destination' in patch) return 'Destination mise à jour';
+      return 'Charge ponctuelle mise à jour';
     }
     case 'UPDATE_ACCOUNT': {
       const patch = action.patch;

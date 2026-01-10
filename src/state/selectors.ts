@@ -63,9 +63,11 @@ function resolveSnapshot(
 ): { paid: boolean; snap: MonthChargeSnapshot | null } {
   const month = state.months[ym];
   const monthState = month?.charges[chargeId];
-  if (month?.archived && monthState?.snapshot) return { paid: monthState.paid, snap: monthState.snapshot };
+  if (monthState?.snapshot && month?.archived) return { paid: monthState.paid, snap: monthState.snapshot };
 
   const ch = state.charges.find((c) => c.id === chargeId);
+  // Month-only charges (planned/one-off): stored as a snapshot in the month, not in global charges.
+  if (!ch && monthState?.snapshot) return { paid: monthState.paid, snap: monthState.snapshot };
   const defaultPaid =
     !month?.archived &&
     !monthState &&
