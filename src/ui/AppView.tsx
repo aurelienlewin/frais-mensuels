@@ -6,6 +6,7 @@ import { BudgetsPanel } from './BudgetsPanel';
 import { SummaryPanel } from './SummaryPanel';
 import { QuickAddWidget } from './QuickAddWidget';
 import { Tour, type TourStep } from './Tour';
+import { AccountsSetupPrompt, EssentialBudgetsSetupPrompt } from './OnboardingSetup';
 import { cx } from './cx';
 import type { AuthUser } from '../lib/authApi';
 
@@ -56,6 +57,18 @@ export function AppView({
         ),
       },
       {
+        id: 'setup-accounts',
+        title: 'Configurer tes comptes',
+        anchor: 'charges',
+        body: (
+          <>
+            <p>Avant de saisir tes charges, crée/ajuste tes comptes (provenance/destination).</p>
+            <AccountsSetupPrompt />
+            <p className="text-xs text-slate-400">Tu pourras ensuite les gérer depuis Résumé → Comptes.</p>
+          </>
+        ),
+      },
+      {
         id: 'charges',
         title: 'Charges mensuelles',
         anchor: 'charges',
@@ -87,6 +100,17 @@ export function AppView({
             <p className="text-xs text-slate-400">
               Tu peux réordonner les lignes via drag & drop (ou les flèches sur mobile).
             </p>
+          </>
+        ),
+      },
+      {
+        id: 'setup-budgets',
+        title: 'Créer tes enveloppes',
+        anchor: 'budgets',
+        body: (
+          <>
+            <p>Pour l’ajout rapide (perso + essence), crée au moins 2 enveloppes et fixe un montant.</p>
+            <EssentialBudgetsSetupPrompt />
           </>
         ),
       },

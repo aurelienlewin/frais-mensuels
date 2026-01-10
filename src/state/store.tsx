@@ -42,6 +42,8 @@ function actionSummary(action: Action): string | null {
       if ('kind' in patch) return 'Type de compte mis à jour';
       return 'Compte mis à jour';
     }
+    case 'ADD_ACCOUNT':
+      return 'Compte ajouté';
     case 'REMOVE_ACCOUNT':
       return 'Compte supprimé';
     case 'ADD_BUDGET':

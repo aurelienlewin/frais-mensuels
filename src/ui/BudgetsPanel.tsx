@@ -22,12 +22,116 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
       </div>
 
       <div className="space-y-6 p-4 sm:p-6">
+        <AddBudgetCard disabled={archived} />
         {budgets.map((b) => (
           <BudgetCard key={b.id} ym={ym} budget={b} model={modelById.get(b.id) ?? null} archived={archived} />
         ))}
         {budgets.length === 0 ? <div className="text-sm text-slate-400">Aucun budget actif.</div> : null}
       </div>
     </section>
+  );
+}
+
+function AddBudgetCard({ disabled }: { disabled: boolean }) {
+  const { state, dispatch } = useStore();
+  const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
+  const defaultAccountId = activeAccounts.find((a) => a.kind === 'perso')?.id ?? activeAccounts[0]?.id ?? '';
+
+  const [name, setName] = useState('');
+  const [amount, setAmount] = useState('');
+  const [accountId, setAccountId] = useState(defaultAccountId);
+
+  useEffect(() => {
+    setAccountId((cur) => cur || defaultAccountId);
+  }, [defaultAccountId]);
+
+  const canSubmit = (() => {
+    if (disabled) return false;
+    if (!name.trim()) return false;
+    if (!accountId) return false;
+    const n = Number(amount);
+    if (!Number.isFinite(n) || n < 0) return false;
+    return true;
+  })();
+
+  return (
+    <div className={cx('rounded-3xl border border-white/15 bg-ink-950/45 p-5', disabled && 'opacity-70')}>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="text-xs text-slate-400">Nouvelle enveloppe</div>
+          <div className="mt-1 text-sm font-semibold text-slate-100">Ajouter un budget</div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_140px]">
+        <input
+          className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+          placeholder="ex: Budget perso"
+          value={name}
+          disabled={disabled}
+          onChange={(e) => setName(e.target.value)}
+          aria-label="Nom du budget"
+        />
+        <div className="relative">
+          <input
+            className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+            placeholder="0"
+            inputMode="decimal"
+            type="number"
+            step={0.01}
+            min={0}
+            value={amount}
+            disabled={disabled}
+            onChange={(e) => setAmount(e.target.value)}
+            aria-label="Montant réservé (euros)"
+          />
+          <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs text-slate-400">€</div>
+        </div>
+      </div>
+
+      <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_140px]">
+        <select
+          className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none focus:border-white/25"
+          value={accountId}
+          disabled={disabled || activeAccounts.length === 0}
+          onChange={(e) => setAccountId(e.target.value)}
+          aria-label="Compte source"
+        >
+          {activeAccounts.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.id}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          className={cx(
+            'h-10 rounded-2xl border border-fuchsia-200/25 bg-fuchsia-400/12 px-4 text-sm font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/18',
+            !canSubmit && 'opacity-50 hover:bg-fuchsia-400/12',
+          )}
+          disabled={!canSubmit}
+          onClick={() => {
+            if (!canSubmit) return;
+            const cleanName = name.trim();
+            const euros = Number(amount);
+            if (!cleanName || !Number.isFinite(euros) || euros < 0) return;
+            dispatch({
+              type: 'ADD_BUDGET',
+              budget: { name: cleanName, amountCents: eurosToCents(euros), accountId, active: true },
+            });
+            setName('');
+            setAmount('');
+          }}
+        >
+          Ajouter
+        </button>
+      </div>
+
+      <div className="mt-2 text-xs text-slate-500">
+        Astuce: pour l’ajout rapide, utilise un nom contenant <span className="font-mono">perso</span> ou <span className="font-mono">essence</span>.
+      </div>
+    </div>
   );
 }
 

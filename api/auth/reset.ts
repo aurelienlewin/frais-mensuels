@@ -52,6 +52,6 @@ export default async function handler(req: any, res: any) {
   await putUser(nextUser);
 
   const token = await createSession(nextUser);
-  setCookie(res, SESSION_COOKIE, token, { maxAgeSeconds: 60 * 60 * 24 * 30, httpOnly: true });
+  setCookie(req, res, SESSION_COOKIE, token, { maxAgeSeconds: 60 * 60 * 24 * 30, httpOnly: true });
   return json(res, 200, { ok: true, user: { id: nextUser.id, email: nextUser.email }, recoveryCode: nextRecovery.code });
 }

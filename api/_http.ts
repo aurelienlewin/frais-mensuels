@@ -70,24 +70,56 @@ export function parseCookies(req: any): Record<string, string> {
   return out;
 }
 
-export function setCookie(res: any, name: string, value: string, opts?: { maxAgeSeconds?: number; httpOnly?: boolean }) {
+function isSecureRequest(req: any, env: Record<string, string | undefined>): boolean {
+  // Prefer trusted proxy headers when available (Vercel / reverse proxies).
+  const proto = req?.headers?.['x-forwarded-proto'] ?? req?.headers?.['x-forwarded-protocol'];
+  if (typeof proto === 'string' && proto.trim()) {
+    const p = proto.split(',')[0]!.trim().toLowerCase();
+    if (p === 'https') return true;
+    if (p === 'http') return false;
+  }
+
+  const xfSsl = req?.headers?.['x-forwarded-ssl'];
+  if (typeof xfSsl === 'string' && xfSsl.trim().toLowerCase() === 'on') return true;
+
+  // Direct TLS (non-proxied).
+  if (req?.socket?.encrypted) return true;
+  if (req?.connection?.encrypted) return true;
+
+  // Best-effort fallback: Vercel prod/preview are always HTTPS from the browser.
+  const vercelEnv = String(env.VERCEL_ENV || '').toLowerCase();
+  if ((env.VERCEL || env.VERCEL_ENV) && vercelEnv && vercelEnv !== 'development') return true;
+
+  return false;
+}
+
+export function setCookie(
+  req: any,
+  res: any,
+  name: string,
+  value: string,
+  opts?: { maxAgeSeconds?: number; httpOnly?: boolean },
+) {
   const httpOnly = opts?.httpOnly !== false;
   const maxAge = typeof opts?.maxAgeSeconds === 'number' ? Math.max(0, Math.floor(opts.maxAgeSeconds)) : undefined;
   const parts = [`${name}=${encodeURIComponent(value)}`, 'Path=/', 'SameSite=Lax'];
   if (httpOnly) parts.push('HttpOnly');
 
-  // Best-effort: set Secure when behind HTTPS (Vercel) or forced via env.
+  // Best-effort: set Secure when behind HTTPS (Vercel / reverse proxy) or forced via env.
   const env = ((globalThis as any)?.process?.env ?? {}) as Record<string, string | undefined>;
   const forceSecure = String(env.FORCE_SECURE_COOKIES || '').toLowerCase() === 'true';
-  const onVercel = Boolean(env.VERCEL) || Boolean(env.VERCEL_ENV);
-  if (forceSecure || onVercel) parts.push('Secure');
+  const secure = forceSecure || isSecureRequest(req, env);
+  if (secure) parts.push('Secure');
 
-  if (typeof maxAge === 'number') parts.push(`Max-Age=${maxAge}`);
+  if (typeof maxAge === 'number') {
+    parts.push(`Max-Age=${maxAge}`);
+    parts.push(`Expires=${new Date(Date.now() + maxAge * 1000).toUTCString()}`);
+  }
   const existing = res.getHeader('Set-Cookie');
   const next = typeof existing === 'string' ? [existing, parts.join('; ')] : Array.isArray(existing) ? [...existing, parts.join('; ')] : [parts.join('; ')];
   res.setHeader('Set-Cookie', next);
 }
 
-export function clearCookie(res: any, name: string) {
-  setCookie(res, name, '', { maxAgeSeconds: 0 });
+export function clearCookie(req: any, res: any, name: string) {
+  setCookie(req, res, name, '', { maxAgeSeconds: 0 });
 }

@@ -204,13 +204,60 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 	  const { state, dispatch } = useStore();
 	  const activeAccounts = state.accounts.filter((a) => a.active);
 	  const inactiveAccounts = state.accounts.filter((a) => !a.active);
+    const [addDraft, setAddDraft] = useState<{ rawId: string; kind: Account['kind'] }>({
+      rawId: '',
+      kind: 'perso',
+    });
 	  const [removeDraft, setRemoveDraft] = useState<{ accountId: Account['id']; moveToAccountId: Account['id'] } | null>(null);
 
   const baseSelect =
     'h-8 rounded-xl border border-white/15 bg-ink-950/35 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
+  const addId = addDraft.rawId
+    .trim()
+    .replace(/\s+/g, '_')
+    .toUpperCase();
+  const addExists = Boolean(addId && state.accounts.some((a) => a.id === addId));
 
   return (
     <div className="space-y-2">
+      <div className="rounded-2xl border border-white/10 bg-ink-950/35 p-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ajouter un compte</div>
+        <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_120px_120px]">
+          <input
+            className="h-8 w-full rounded-xl border border-white/15 bg-white/7 px-3 text-[13px] font-semibold text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+            placeholder="ex: BOURSO_PERSO"
+            value={addDraft.rawId}
+            onChange={(e) => setAddDraft((s) => ({ ...s, rawId: e.target.value }))}
+            aria-label="ID du compte"
+          />
+          <select
+            className={baseSelect}
+            value={addDraft.kind}
+            onChange={(e) => setAddDraft((s) => ({ ...s, kind: e.target.value as Account['kind'] }))}
+            aria-label="Type du compte"
+          >
+            <option value="perso">Perso</option>
+            <option value="commun">Commun</option>
+          </select>
+          <button
+            type="button"
+            className={cx(
+              'h-8 rounded-xl border border-fuchsia-200/25 bg-fuchsia-400/12 px-3 text-[11px] font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/18',
+              !addId && 'opacity-50 hover:bg-fuchsia-400/12',
+            )}
+            disabled={!addId}
+            onClick={() => {
+              if (!addId) return;
+              dispatch({ type: 'ADD_ACCOUNT', accountId: addId, kind: addDraft.kind });
+              setAddDraft({ rawId: '', kind: addDraft.kind });
+            }}
+          >
+            {addExists ? 'Restaurer' : 'Ajouter'}
+          </button>
+        </div>
+        <div className="mt-2 text-[11px] text-slate-500">Astuce: espaces → “_”, tout est mis en majuscules.</div>
+      </div>
+
       {activeAccounts.map((a) => {
         const moveTargets = activeAccounts.filter((x) => x.id !== a.id);
         const canRemove = moveTargets.length > 0;

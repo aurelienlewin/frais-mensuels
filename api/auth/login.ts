@@ -35,6 +35,6 @@ export default async function handler(req: any, res: any) {
   if (!ok || !user) return json(res, 401, { ok: false, error: 'INVALID_CREDENTIALS', message: 'Invalid email or password' });
 
   const token = await createSession(user);
-  setCookie(res, SESSION_COOKIE, token, { maxAgeSeconds: 60 * 60 * 24 * 30, httpOnly: true });
+  setCookie(req, res, SESSION_COOKIE, token, { maxAgeSeconds: 60 * 60 * 24 * 30, httpOnly: true });
   return json(res, 200, { ok: true, user: { id: user.id, email: user.email } });
 }

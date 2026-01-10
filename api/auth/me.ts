@@ -1,6 +1,6 @@
 import { getSession, getUserById, SESSION_COOKIE, touchSession } from '../_auth.js';
 import { kvConfigured } from '../_kv.js';
-import { json, methodNotAllowed, parseCookies, unauthorized } from '../_http.js';
+import { json, methodNotAllowed, parseCookies, setCookie, unauthorized } from '../_http.js';
 
 export default async function handler(req: any, res: any) {
   if (!kvConfigured()) {
@@ -27,5 +27,7 @@ export default async function handler(req: any, res: any) {
   if (sess.sessionVersion !== user.sessionVersion) return unauthorized(res);
 
   await touchSession(token);
+  // Refresh cookie TTL (rolling sessions).
+  setCookie(req, res, SESSION_COOKIE, token, { maxAgeSeconds: 60 * 60 * 24 * 30, httpOnly: true });
   return json(res, 200, { ok: true, user: { id: user.id, email: user.email } });
 }

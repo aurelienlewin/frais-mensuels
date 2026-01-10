@@ -1,6 +1,6 @@
 import { getSession, getUserById, SESSION_COOKIE, touchSession } from './_auth.js';
 import { kvConfigured, kvGet, kvSet } from './_kv.js';
-import { badRequest, json, methodNotAllowed, parseCookies, readJsonBody, unauthorized } from './_http.js';
+import { badRequest, json, methodNotAllowed, parseCookies, readJsonBody, setCookie, unauthorized } from './_http.js';
 
 const PREFIX = 'fm:state:';
 const CHUNK_SIZE = 700;
@@ -91,6 +91,8 @@ export default async function handler(req: any, res: any) {
   if (!user) return unauthorized(res);
   if (sess.sessionVersion !== user.sessionVersion) return unauthorized(res);
   await touchSession(token);
+  // Refresh cookie TTL (rolling sessions).
+  setCookie(req, res, SESSION_COOKIE, token, { maxAgeSeconds: 60 * 60 * 24 * 30, httpOnly: true });
 
   if (method === 'GET') {
     const rec = await getStateRecord(user.id);

@@ -19,6 +19,6 @@ export default async function handler(req: any, res: any) {
   const token = cookies[SESSION_COOKIE] ?? '';
   if (token) await deleteSession(token);
 
-  clearCookie(res, SESSION_COOKIE);
+  clearCookie(req, res, SESSION_COOKIE);
   return json(res, 200, { ok: true });
 }
