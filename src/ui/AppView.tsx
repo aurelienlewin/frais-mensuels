@@ -24,6 +24,7 @@ export function AppView({
 }) {
   const { saving, state, dispatch, exportJson, importJson, reset, cloud } = useStore();
   const [ym, setYm] = useState<YM>(initialYm);
+  const [monthsNavOpen, setMonthsNavOpen] = useState(false);
   const [online, setOnline] = useState<boolean>(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
   const [toast, setToast] = useState<{ id: string; message: string; tone: 'success' | 'error' } | null>(null);
   const [tourOpen, setTourOpen] = useState(false);
@@ -604,8 +605,29 @@ export function AppView({
             </div>
           </div>
 
+          <div className="mt-4 flex items-center justify-between gap-2 sm:hidden">
+            <div className="min-w-0 truncate text-xs font-semibold text-slate-200">{monthLabelFr(ym)}</div>
+            <button
+              type="button"
+              className="flex flex-none items-center gap-1.5 rounded-full border border-white/15 bg-white/7 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10"
+              onClick={() => setMonthsNavOpen((v) => !v)}
+              aria-expanded={monthsNavOpen}
+              aria-controls="month-nav"
+            >
+              <span>{monthsNavOpen ? 'Masquer' : 'Mois'}</span>
+              <span aria-hidden="true" className="text-[11px]">
+                {monthsNavOpen ? '▴' : '▾'}
+              </span>
+            </button>
+          </div>
+
           <nav
-            className="mt-4 flex flex-wrap items-center gap-2 pb-1 max-[360px]:mt-3 max-[360px]:gap-1.5"
+            id="month-nav"
+            className={cx(
+              'mt-3 grid grid-cols-4 gap-2 pb-1 sm:mt-4 sm:flex sm:flex-wrap sm:items-center sm:gap-2',
+              !monthsNavOpen && 'hidden',
+              'sm:flex',
+            )}
             aria-label="Navigation par mois"
           >
             {visibleMonths.map((m) => {
@@ -620,13 +642,14 @@ export function AppView({
                     monthButtonRefs.current[m] = el;
                   }}
                   className={cx(
-                    'flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm capitalize transition max-[360px]:gap-1.5 max-[360px]:px-2.5 max-[360px]:py-1 max-[360px]:text-xs',
+                    'flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm capitalize transition max-[360px]:gap-1.5 max-[360px]:px-2.5 max-[360px]:py-1 max-[360px]:text-xs sm:w-auto sm:justify-start',
                     selected ? 'border-white/30 bg-white/12 text-slate-100' : 'border-white/15 bg-white/7 text-slate-200',
                     disabled ? 'cursor-not-allowed opacity-50' : !selected && 'hover:bg-white/10',
                   )}
                   onClick={() => {
                     if (disabled) return;
                     setYm(m);
+                    setMonthsNavOpen(false);
                   }}
                   aria-current={selected ? 'page' : undefined}
                   type="button"
@@ -669,7 +692,7 @@ export function AppView({
               );
             })}
           </nav>
-          <div className="text-xs text-slate-400 max-[360px]:text-[11px]">
+          <div className={cx('text-xs text-slate-400 max-[360px]:text-[11px]', !monthsNavOpen && 'hidden', 'sm:block')}>
             <span className="max-[360px]:hidden">
               Fenêtre: 3 mois avant / 3 mois après (et le mois sélectionné s’il est hors fenêtre).
             </span>
