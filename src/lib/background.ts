@@ -6,6 +6,7 @@ type SavedBgV1 = {
 };
 
 const STORAGE_KEY = 'fm:bg:v1';
+const SESSION_KEY = 'fm:bg:session:v1';
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
 
 type BgTheme = { id: string; keywords: string };
@@ -22,6 +23,12 @@ const THEMES: BgTheme[] = [
 let requestSeq = 0;
 let activeRequest = 0;
 
+type SessionBgV1 = {
+  v: 1;
+  url: string;
+  savedAt: number;
+};
+
 function readSaved(): SavedBgV1 | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -36,11 +43,34 @@ function readSaved(): SavedBgV1 | null {
   }
 }
 
+function readSessionSaved(): SessionBgV1 | null {
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SessionBgV1>;
+    if (!parsed || parsed.v !== 1) return null;
+    if (typeof parsed.url !== 'string' || !parsed.url) return null;
+    return { v: 1, url: parsed.url, savedAt: typeof parsed.savedAt === 'number' ? parsed.savedAt : 0 };
+  } catch {
+    return null;
+  }
+}
+
 function save(url: string, ttlMs: number) {
   try {
     const now = Date.now();
     const next: SavedBgV1 = { v: 1, url, savedAt: now, expiresAt: now + ttlMs };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // ignore (private mode / quota)
+  }
+}
+
+function saveSession(url: string) {
+  try {
+    const now = Date.now();
+    const next: SessionBgV1 = { v: 1, url, savedAt: now };
+    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
   } catch {
     // ignore (private mode / quota)
   }
@@ -81,17 +111,18 @@ export function initDynamicBackground(options?: { force?: boolean; ttlMs?: numbe
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   const ttlMs = typeof options?.ttlMs === 'number' && options.ttlMs > 0 ? options.ttlMs : DEFAULT_TTL_MS;
 
-  const existing = readSaved();
-  const now = Date.now();
-  const shouldReuse = !options?.force && existing && existing.expiresAt > now;
-  if (shouldReuse) {
-    applyBackgroundUrl(existing.url);
+  const session = readSessionSaved();
+  if (!options?.force && session?.url) {
+    applyBackgroundUrl(session.url);
     return;
   }
+
+  const existing = readSaved();
 
   // If we're offline but we do have a previously saved URL, keep it.
   if (!options?.force && existing && typeof navigator !== 'undefined' && navigator.onLine === false) {
     applyBackgroundUrl(existing.url);
+    saveSession(existing.url);
     return;
   }
 
@@ -112,12 +143,16 @@ export function initDynamicBackground(options?: { force?: boolean; ttlMs?: numbe
     const finalUrl = img.currentSrc || img.src;
     if (!finalUrl) return;
     applyBackgroundUrl(finalUrl);
+    saveSession(finalUrl);
     save(finalUrl, ttlMs);
   };
   img.onerror = () => {
     if (activeRequest !== requestId) return;
     // If we have a previously saved background, revert to it (better than the local default).
-    if (existing?.url) applyBackgroundUrl(existing.url);
+    if (existing?.url) {
+      applyBackgroundUrl(existing.url);
+      saveSession(existing.url);
+    }
   };
   img.src = src;
 }

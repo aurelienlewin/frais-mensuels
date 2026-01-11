@@ -25,12 +25,12 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
       data-tour="budgets"
       className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
     >
-      <div className="border-b border-white/15 px-4 py-4 sm:px-6 sm:py-5">
+      <div className="border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
         <div className="text-sm text-slate-300">Enveloppes</div>
         <h2 className="mt-1 text-xl font-semibold tracking-tight">Budgets & dépenses</h2>
       </div>
 
-      <div className="space-y-6 p-4 sm:p-6">
+      <div className="space-y-6 p-4 max-[360px]:space-y-4 max-[360px]:p-3 sm:p-6">
         <AddBudgetCard disabled={archived} />
         {budgets.map((b) => (
           <BudgetCard key={b.id} ym={ym} budget={b} model={modelById.get(b.id) ?? null} archived={archived} />
@@ -175,7 +175,7 @@ function BudgetCard({
   const maxDate = `${ym}-${pad2(daysInMonth(ym))}`;
 
   return (
-    <div className="motion-hover rounded-3xl border border-white/15 bg-ink-950/45 p-5">
+    <div className="motion-hover rounded-3xl border border-white/15 bg-ink-950/45 p-5 max-[360px]:p-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-[220px] flex-1">
           <div className="text-xs text-slate-400">Enveloppe</div>
@@ -186,7 +186,7 @@ function BudgetCard({
             onCommit={(name) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { name } })}
           />
           <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-            <div>{budget.accountName}</div>
+            <div className="min-w-0 flex-1 truncate">{budget.accountName}</div>
             <div className={cx('tabular-nums', over ? 'text-rose-200' : 'text-slate-300')}>
               {formatEUR(budget.spentCents)} / {formatEUR(budget.amountCents)}
             </div>
@@ -285,7 +285,96 @@ function BudgetCard({
           <div className="text-xs text-slate-400">Les montants sont des dépenses (ex: 10€ = -10€).</div>
         </div>
 
-        <div className="mt-3 overflow-x-auto overscroll-x-contain overflow-y-hidden rounded-2xl border border-white/15 sm:overflow-hidden">
+        <div className="mt-3 space-y-2 sm:hidden">
+          {sortedExpenses.map((e) => (
+            <div key={e.id} className="rounded-2xl border border-white/15 bg-ink-950/35 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1 text-xs text-slate-300">
+                  {canEdit ? (
+                    <InlineTextInput
+                      ariaLabel="Date de dépense"
+                      value={e.date}
+                      type="date"
+                      disabled={!canEdit}
+                      className="h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[12px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10"
+                      inputProps={{ min: minDate, max: maxDate }}
+                      onCommit={(next) => {
+                        if (!next || next === e.date) return;
+                        if (!/^\d{4}-\d{2}-\d{2}$/.test(next)) return;
+                        dispatch({ type: 'UPDATE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id, patch: { date: next } });
+                      }}
+                    />
+                  ) : (
+                    e.date
+                  )}
+                </div>
+
+                {canEdit ? (
+                  <button
+                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/15 bg-white/7 text-xs transition-colors duration-150 hover:bg-white/10"
+                    disabled={!canEdit}
+                    onClick={() => dispatch({ type: 'REMOVE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id })}
+                    aria-label={`Supprimer dépense ${e.label}`}
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="mt-2 flex items-center gap-2">
+                <div className="min-w-0 flex-1 text-sm text-slate-100">
+                  {canEdit ? (
+                    <InlineTextInput
+                      ariaLabel="Libellé de dépense"
+                      value={e.label}
+                      disabled={!canEdit}
+                      className="h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10"
+                      onCommit={(next) => {
+                        const clean = next.trim();
+                        if (!clean || clean === e.label) return;
+                        dispatch({ type: 'UPDATE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id, patch: { label: clean } });
+                      }}
+                    />
+                  ) : (
+                    <div className="truncate">{e.label}</div>
+                  )}
+                </div>
+
+                <div className="flex-none text-right font-medium tabular-nums text-slate-100">
+                  {canEdit ? (
+                    <InlineNumberInput
+                      ariaLabel="Montant de dépense (euros)"
+                      value={centsToEuros(e.amountCents)}
+                      step={0.01}
+                      min={0}
+                      suffix="€"
+                      disabled={!canEdit}
+                      className="ml-auto w-[120px] max-[360px]:w-[104px]"
+                      inputClassName="h-8 rounded-lg px-2 text-[13px]"
+                      onCommit={(euros) => {
+                        const cents = eurosToCents(euros);
+                        if (cents === e.amountCents) return;
+                        dispatch({
+                          type: 'UPDATE_BUDGET_EXPENSE',
+                          ym,
+                          budgetId: budget.id,
+                          expenseId: e.id,
+                          patch: { amountCents: cents },
+                        });
+                      }}
+                    />
+                  ) : (
+                    <>-{formatEUR(e.amountCents)}</>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+          {sortedExpenses.length === 0 ? <div className="py-4 text-center text-sm text-slate-400">Aucune dépense.</div> : null}
+        </div>
+
+        <div className="mt-3 hidden overflow-hidden rounded-2xl border border-white/15 sm:block">
           <table className="min-w-full">
             <thead className="bg-ink-950/50 text-left text-xs text-slate-400">
               <tr>
@@ -361,18 +450,19 @@ function BudgetCard({
                       <>-{formatEUR(e.amountCents)}</>
                     )}
                   </td>
-	                  <td className="px-3 py-2 text-right">
-	                    <button
-	                      className={cx(
-	                        'rounded-xl border border-white/15 bg-white/7 px-2 py-1 text-xs transition-colors duration-150 hover:bg-white/10',
-	                        !canEdit && 'opacity-40',
-	                      )}
-	                      disabled={!canEdit}
-	                      onClick={() => dispatch({ type: 'REMOVE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id })}
-	                      aria-label={`Supprimer dépense ${e.label}`}
-	                    >
-	                      ✕
-	                    </button>
+                  <td className="px-3 py-2 text-right">
+                    <button
+                      className={cx(
+                        'rounded-xl border border-white/15 bg-white/7 px-2 py-1 text-xs transition-colors duration-150 hover:bg-white/10',
+                        !canEdit && 'opacity-40',
+                      )}
+                      disabled={!canEdit}
+                      onClick={() => dispatch({ type: 'REMOVE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id })}
+                      aria-label={`Supprimer dépense ${e.label}`}
+                      type="button"
+                    >
+                      ✕
+                    </button>
                   </td>
                 </tr>
               ))}

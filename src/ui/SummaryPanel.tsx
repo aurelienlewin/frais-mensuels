@@ -68,7 +68,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   return (
     <section
       data-tour="summary"
-      className="motion-hover motion-pop rounded-3xl border border-white/15 bg-ink-950/60 p-4 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)] sm:p-6 lg:sticky lg:top-32 lg:max-h-[calc(100dvh_-_8rem)] lg:overflow-auto"
+      className="motion-hover motion-pop rounded-3xl border border-white/15 bg-ink-950/60 p-4 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)] max-[360px]:p-3 sm:p-6 lg:sticky lg:top-32 lg:max-h-[calc(100dvh_-_8rem)] lg:overflow-auto"
     >
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -475,9 +475,19 @@ function Row({
   valueClassName?: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className={cx('text-sm', strong ? 'text-slate-200' : 'text-slate-400')}>{label}</div>
-      <div className={cx('text-sm tabular-nums', strong ? 'font-semibold text-slate-100' : 'text-slate-200', valueClassName)}>{value}</div>
+    <div className="flex min-w-0 items-baseline justify-between gap-3">
+      <div className={cx('min-w-0 flex-1 text-sm leading-tight max-[360px]:text-xs', strong ? 'text-slate-200' : 'text-slate-400')}>
+        {label}
+      </div>
+      <div
+        className={cx(
+          'flex-none whitespace-nowrap text-sm tabular-nums max-[360px]:text-xs',
+          strong ? 'font-semibold text-slate-100' : 'text-slate-200',
+          valueClassName,
+        )}
+      >
+        {value}
+      </div>
     </div>
   );
 }

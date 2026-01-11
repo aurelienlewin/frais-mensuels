@@ -160,7 +160,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	      data-tour="charges"
 	      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
 	    >
-	      <div className="flex items-center justify-between gap-4 border-b border-white/15 px-4 py-4 sm:px-6 sm:py-5">
+	      <div className="flex items-center justify-between gap-4 border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
         <div>
           <h2 className="text-sm text-slate-300">Charges</h2>
           <div className="mt-1 text-xl font-semibold tracking-tight">{rows.length} lignes</div>
@@ -704,7 +704,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
           {rows.length === 0 ? (
             <div className="px-4 py-10 text-center text-slate-400">Aucune charge. Ajoute une ligne pour commencer.</div>
           ) : (
-	            <div className="space-y-5 px-4 py-4">
+	            <div className="space-y-5 px-4 py-4 max-[360px]:space-y-4 max-[360px]:px-3 max-[360px]:py-3">
 		              {communRows.length ? (
 		                <div>
 	                  <div className="mb-2 flex items-center justify-between">
@@ -785,7 +785,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
         </div>
       )}
 
-      <div className="border-t border-white/15 px-4 py-4 text-xs text-slate-400 sm:px-6">
+      <div className="border-t border-white/15 px-4 py-4 text-xs text-slate-400 max-[360px]:px-3 max-[360px]:py-3 sm:px-6">
         <span className="sm:hidden">Astuce: ↑/↓ pour réordonner, coche OK quand c’est prélevé.</span>
         <span className="hidden sm:inline">
           Astuce: Entrée pour valider + descendre (Shift+Entrée remonte), Échap pour annuler, glisser ⋮⋮ pour réordonner.

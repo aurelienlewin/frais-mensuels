@@ -318,7 +318,7 @@ export function AppView({
         Aller au contenu
       </a>
 	      <header className="sticky top-0 z-10 border-b border-white/15 bg-ink-950/95 pt-[env(safe-area-inset-top)]">
-	        <div className="mx-auto max-w-6xl py-3 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
+	        <div className="mx-auto max-w-6xl py-3 max-[360px]:py-2 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
 	          <div className="sr-only" aria-live="polite">
 	            {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
 	          </div>
@@ -334,7 +334,7 @@ export function AppView({
 
             <div className="flex items-center gap-2">
               <button
-                className="rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10"
+                className="rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs"
                 onClick={() => setYm(todayYm)}
                 type="button"
               >
@@ -347,7 +347,7 @@ export function AppView({
                 return (
               <button
                 className={cx(
-                  'rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors',
+                  'rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs',
                   disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-white/10',
                 )}
                 onClick={() => setYm(prevYm)}
@@ -361,7 +361,7 @@ export function AppView({
                 );
               })()}
               <button
-                className="rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10"
+                className="rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs"
                 onClick={() => setYm((v) => ymAdd(v, 1))}
                 aria-label="Mois suivant"
                 type="button"
@@ -371,7 +371,7 @@ export function AppView({
 
               <select
                 className={cx(
-                  'h-10 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10',
+                  'h-10 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10 max-[360px]:h-9 max-[360px]:px-2 max-[360px]:text-xs',
                   archivedMonths.length === 0 && 'opacity-50',
                 )}
                 defaultValue=""
@@ -404,7 +404,7 @@ export function AppView({
               >
                 <summary
                   aria-label="Menu"
-                  className="list-none rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10"
+                  className="list-none rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs"
                   data-tour="menu"
                 >
                   ⋯
@@ -533,7 +533,7 @@ export function AppView({
               </details>
 
               <button
-                className="ml-2 rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10"
+                className="ml-2 rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs"
                 onClick={() => {
                   if (!archived) {
                     const ok = window.confirm('Archiver ce mois ? Les montants seront figés (modifiable en réouvrant).');
@@ -552,7 +552,10 @@ export function AppView({
             </div>
           </div>
 
-          <nav className="mt-4 flex items-center gap-2 overflow-x-auto overscroll-x-contain pb-1" aria-label="Navigation par mois">
+          <nav
+            className="mt-4 flex items-center gap-2 overflow-x-auto overscroll-x-contain pb-1 max-[360px]:mt-3 max-[360px]:gap-1.5"
+            aria-label="Navigation par mois"
+          >
             {visibleMonths.map((m) => {
               const selected = m === ym;
               const disabled = isMonthDisabled(m);
@@ -565,7 +568,7 @@ export function AppView({
                     monthButtonRefs.current[m] = el;
                   }}
                   className={cx(
-                    'flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm capitalize transition',
+                    'flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm capitalize transition max-[360px]:gap-1.5 max-[360px]:px-2.5 max-[360px]:py-1 max-[360px]:text-xs',
                     selected ? 'border-white/30 bg-white/12 text-slate-100' : 'border-white/15 bg-white/7 text-slate-200',
                     disabled ? 'cursor-not-allowed opacity-50' : !selected && 'hover:bg-white/10',
                   )}
@@ -614,18 +617,23 @@ export function AppView({
               );
             })}
           </nav>
-          <div className="text-xs text-slate-400">Fenêtre: 3 mois avant / 3 mois après (et le mois sélectionné s’il est hors fenêtre).</div>
+          <div className="text-xs text-slate-400 max-[360px]:text-[11px]">
+            <span className="max-[360px]:hidden">
+              Fenêtre: 3 mois avant / 3 mois après (et le mois sélectionné s’il est hors fenêtre).
+            </span>
+            <span className="hidden max-[360px]:inline">Fenêtre: ±3 mois.</span>
+          </div>
         </div>
 	      </header>
 
 	      <main
 	        id="main"
 	        tabIndex={-1}
-	        className="mx-auto max-w-6xl pt-6 pb-36 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]"
+	        className="mx-auto max-w-6xl pt-6 pb-24 max-[360px]:pt-4 max-[360px]:pb-20 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]"
 	      >
-	        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
+	        <div className="grid gap-4 max-[360px]:gap-3 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
 	          <SummaryPanel ym={ym} />
-	          <div className="space-y-6">
+	          <div className="space-y-6 max-[360px]:space-y-4">
             <ChargesTable ym={ym} archived={archived} />
             <BudgetsPanel ym={ym} archived={archived} />
           </div>

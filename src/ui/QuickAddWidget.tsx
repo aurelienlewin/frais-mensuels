@@ -141,7 +141,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
   const disabledAll = !canEdit || activeBudgets.length === 0;
   const position =
-    'fixed z-50 left-0 right-0 bottom-[calc(1rem_+_env(safe-area-inset-bottom))] pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] sm:left-auto sm:right-6 sm:bottom-6 sm:pl-0 sm:pr-0';
+    'fixed z-50 left-0 right-0 bottom-[calc(1rem_+_env(safe-area-inset-bottom))] pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:bottom-[calc(0.75rem_+_env(safe-area-inset-bottom))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:left-auto sm:right-6 sm:bottom-6 sm:pl-0 sm:pr-0';
 
   return (
     <div data-tour="quick-add" className={cx(position, 'flex flex-col items-end gap-2')}>
@@ -368,7 +368,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
         <button
           type="button"
           className={cx(
-            'motion-hover motion-pop flex h-12 w-12 touch-manipulation items-center justify-center rounded-full border bg-ink-950/95 text-fuchsia-100 shadow-[0_20px_70px_-42px_rgba(0,0,0,0.95)] backdrop-blur transition-colors',
+            'motion-hover motion-pop flex h-12 w-12 touch-manipulation items-center justify-center rounded-full border bg-ink-950/95 text-fuchsia-100 shadow-[0_20px_70px_-42px_rgba(0,0,0,0.95)] backdrop-blur transition-colors max-[360px]:h-11 max-[360px]:w-11',
             disabledAll ? 'border-white/10 bg-white/5 text-slate-400' : 'border-fuchsia-200/35 hover:bg-ink-950/90',
           )}
           onClick={() => {
