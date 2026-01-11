@@ -1,4 +1,4 @@
-import { methodNotAllowed } from './_http';
+import { methodNotAllowed } from './_http.js';
 import { Readable } from 'node:stream';
 
 type BgTheme = { id: string; keywords: string };
@@ -101,4 +101,3 @@ export default async function handler(req: any, res: any) {
     res.end();
   }
 }
-

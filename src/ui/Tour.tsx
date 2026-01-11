@@ -268,7 +268,7 @@ export function Tour({
         <div
           ref={popRef}
           className={cx(
-            'motion-pop flex max-h-[calc(100dvh_-_2rem)] w-[min(92vw,420px)] flex-col overflow-hidden rounded-3xl border border-white/15 bg-ink-950/95 p-5 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.95)]',
+            'motion-pop flex max-h-[calc(100dvh-2rem-var(--safe-area-top,0px)-var(--safe-area-bottom,0px))] w-[min(calc(100vw-2rem-var(--safe-area-left,0px)-var(--safe-area-right,0px)),420px)] flex-col overflow-hidden rounded-3xl border border-white/15 bg-ink-950/95 p-5 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.95)]',
             anchored ? 'fixed' : 'relative',
           )}
           style={dialogStyle}
