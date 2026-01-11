@@ -129,7 +129,13 @@ body::before {
     min-width: 0;
   }
 
-  #root,
+  /* Avoid `overflow-wrap:anywhere` globally: it can shrink intrinsic sizes and cause per-letter wrapping. */
+  #root {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  /* Keep aggressive wrapping for long IDs/tokens. */
   #root .font-mono {
     overflow-wrap: anywhere;
     word-break: break-word;
