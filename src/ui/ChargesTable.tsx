@@ -253,8 +253,9 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
               const monthOnlyChip = 'border-fuchsia-200/30 bg-fuchsia-400/15 text-fuchsia-50';
               const tint =
                 r.scope === 'commun'
-                  ? 'bg-sky-500/20 hover:bg-sky-500/30'
-                  : 'bg-emerald-500/20 hover:bg-emerald-500/30';
+                  ? 'bg-sky-500/22 hover:bg-sky-500/34'
+                  : 'bg-emerald-500/22 hover:bg-emerald-500/34';
+              const leftAccent = r.scope === 'commun' ? 'border-l-4 border-sky-300/70' : 'border-l-4 border-emerald-300/70';
               const paidFx = r.paid ? 'opacity-70' : 'opacity-100';
               const typeChip =
                 r.scope === 'commun'
@@ -324,7 +325,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                     setDragOver(null);
                   }}
                 >
-                  <Td className="w-[76px] sm:w-[88px]">
+                  <Td className={cx('w-[76px] sm:w-[88px]', leftAccent)}>
 	                    <div className="flex items-center gap-2">
 	                      <button
 	                        type="button"
@@ -373,7 +374,10 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                         disabled={!canEdit}
                         onChange={(e) => dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: r.id, paid: e.target.checked })}
                         aria-label={`Prélevé: ${r.name}`}
-                        className="h-4 w-4 rounded border-white/20 bg-white/5 text-emerald-400"
+                        className={cx(
+                          'h-4 w-4 rounded border-white/20 bg-white/5',
+                          r.scope === 'commun' ? 'text-sky-400' : 'text-emerald-400',
+                        )}
                         data-grid="charges"
                         data-charge-id={r.id}
                         data-col="0"
@@ -826,8 +830,8 @@ function MobileCard({
 
   const tint =
     r.scope === 'commun'
-      ? 'border-sky-200/15 bg-gradient-to-br from-sky-500/15 via-ink-950/40 to-ink-950/35'
-      : 'border-emerald-200/15 bg-gradient-to-br from-emerald-500/15 via-ink-950/40 to-ink-950/35';
+      ? 'border-sky-200/25 border-l-4 border-l-sky-300/70 bg-gradient-to-br from-sky-400/20 via-ink-950/40 to-ink-950/35'
+      : 'border-emerald-200/25 border-l-4 border-l-emerald-300/70 bg-gradient-to-br from-emerald-400/20 via-ink-950/40 to-ink-950/35';
   const paidFx = r.paid ? 'opacity-70' : 'opacity-100';
 
   const typeChip =
@@ -867,7 +871,10 @@ function MobileCard({
             disabled={!canEdit}
             onChange={(e) => onTogglePaid(e.target.checked)}
             aria-label={`Prélevé: ${r.name}`}
-            className="h-4 w-4 rounded border-white/20 bg-white/5 text-emerald-400"
+            className={cx(
+              'h-4 w-4 rounded border-white/20 bg-white/5',
+              r.scope === 'commun' ? 'text-sky-400' : 'text-emerald-400',
+            )}
             data-grid="charges"
             data-charge-id={r.id}
             data-col="0"

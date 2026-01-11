@@ -26,6 +26,22 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
+function readSafeAreaInsets() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return { top: 0, right: 0, bottom: 0, left: 0 };
+  const style = window.getComputedStyle(document.documentElement);
+  const read = (name: string) => {
+    const raw = style.getPropertyValue(name).trim();
+    const n = Number.parseFloat(raw);
+    return Number.isFinite(n) ? n : 0;
+  };
+  return {
+    top: read('--safe-area-top'),
+    right: read('--safe-area-right'),
+    bottom: read('--safe-area-bottom'),
+    left: read('--safe-area-left'),
+  };
+}
+
 export function Tour({
   open,
   steps,
@@ -114,7 +130,12 @@ export function Tour({
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const gap = 14;
-    const margin = 12;
+    const safe = readSafeAreaInsets();
+    const marginBase = 12;
+    const marginLeft = marginBase + safe.left;
+    const marginRight = marginBase + safe.right;
+    const marginTop = marginBase + safe.top;
+    const marginBottom = marginBase + safe.bottom;
 
     const candidates = [
       { left: anchorRect.left, top: anchorRect.bottom + gap }, // bottom
@@ -124,15 +145,15 @@ export function Tour({
     ];
 
     const fits = (p: { left: number; top: number }) =>
-      p.left >= margin &&
-      p.top >= margin &&
-      p.left + pop.width <= vw - margin &&
-      p.top + pop.height <= vh - margin;
+      p.left >= marginLeft &&
+      p.top >= marginTop &&
+      p.left + pop.width <= vw - marginRight &&
+      p.top + pop.height <= vh - marginBottom;
 
     const chosen = candidates.find(fits) ?? candidates[0]!;
     setPopPos({
-      left: clamp(chosen.left, margin, Math.max(margin, vw - pop.width - margin)),
-      top: clamp(chosen.top, margin, Math.max(margin, vh - pop.height - margin)),
+      left: clamp(chosen.left, marginLeft, Math.max(marginLeft, vw - pop.width - marginRight)),
+      top: clamp(chosen.top, marginTop, Math.max(marginTop, vh - pop.height - marginBottom)),
     });
   }, [anchorRect, idx, open]);
 
@@ -193,7 +214,12 @@ export function Tour({
   const dialogStyle = (() => {
     if (!anchored || !anchorRect) return undefined;
     if (popPos) return { left: popPos.left, top: popPos.top } satisfies CSSProperties;
-    const margin = 12;
+    const safe = readSafeAreaInsets();
+    const marginBase = 12;
+    const marginLeft = marginBase + safe.left;
+    const marginRight = marginBase + safe.right;
+    const marginTop = marginBase + safe.top;
+    const marginBottom = marginBase + safe.bottom;
     const gap = 14;
     const vw = typeof window !== 'undefined' ? window.innerWidth : 420;
     const vh = typeof window !== 'undefined' ? window.innerHeight : 320;
@@ -201,8 +227,8 @@ export function Tour({
     const approxH = 260;
 
     return {
-      left: clamp(anchorRect.left, margin, Math.max(margin, vw - approxW - margin)),
-      top: clamp(anchorRect.bottom + gap, margin, Math.max(margin, vh - approxH - margin)),
+      left: clamp(anchorRect.left, marginLeft, Math.max(marginLeft, vw - approxW - marginRight)),
+      top: clamp(anchorRect.bottom + gap, marginTop, Math.max(marginTop, vh - approxH - marginBottom)),
     } satisfies CSSProperties;
   })();
 
@@ -236,7 +262,7 @@ export function Tour({
         role="dialog"
         aria-modal="true"
         aria-label="Guide de démarrage"
-        className="absolute inset-0 flex items-center justify-center p-4"
+        className="absolute inset-0 flex items-center justify-center pt-[calc(1rem_+_env(safe-area-inset-top))] pb-[calc(1rem_+_env(safe-area-inset-bottom))] pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))]"
         onKeyDown={onKeyDown}
       >
         <div

@@ -208,7 +208,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   {formatEUR(a.paidCents)} / {formatEUR(a.totalCents)} cochés
                 </div>
               </div>
-              <div className={cx('flex-none text-sm font-medium tabular-nums', a.kind === 'commun' ? 'text-sky-200' : 'text-slate-200')}>
+              <div className={cx('flex-none text-sm font-medium tabular-nums', a.kind === 'commun' ? 'text-sky-200' : 'text-emerald-200')}>
                 {formatEUR(a.totalCents)}
               </div>
             </div>

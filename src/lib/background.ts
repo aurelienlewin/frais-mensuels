@@ -63,7 +63,10 @@ function pickTheme(): BgTheme {
 
 function applyBackgroundUrl(url: string) {
   const escaped = url.replace(/"/g, '\\"');
-  document.documentElement.style.setProperty('--bg-image', `url("${escaped}")`);
+  // Always keep a local fallback behind the dynamic image.
+  const value = `url("${escaped}"), url("/bg-snowy.jpg")`;
+  document.documentElement.style.setProperty('--bg-image', value);
+  document.body?.style?.setProperty('--bg-image', value);
 }
 
 function buildUnsplashUrl(theme: BgTheme, w: number, h: number) {
@@ -95,12 +98,14 @@ export function initDynamicBackground(options?: { force?: boolean; ttlMs?: numbe
   const theme = pickTheme();
   const src = buildUnsplashUrl(theme, w, h);
 
+  // Start loading via CSS immediately (keeps the local fallback visible until loaded).
+  applyBackgroundUrl(src);
+
   const requestId = (requestSeq += 1);
   activeRequest = requestId;
 
   const img = new Image();
   img.decoding = 'async';
-  img.referrerPolicy = 'no-referrer';
   img.onload = () => {
     if (activeRequest !== requestId) return;
     const finalUrl = img.currentSrc || img.src;

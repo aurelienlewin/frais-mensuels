@@ -90,13 +90,16 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
   useEffect(() => {
     let raf = 0;
 
+    const getScrollTop = () => {
+      if (typeof window === 'undefined' || typeof document === 'undefined') return 0;
+      const scrollEl = document.scrollingElement;
+      const y = scrollEl ? scrollEl.scrollTop : window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      return Math.max(0, y);
+    };
+
     const update = () => {
       raf = 0;
-      const y =
-        typeof window !== 'undefined'
-          ? window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
-          : 0;
-      setShowTop(y > 160);
+      setShowTop(getScrollTop() > 160);
     };
 
     const onScroll = () => {
@@ -106,10 +109,12 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
     update();
     window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true });
     window.addEventListener('resize', onScroll);
     return () => {
       if (raf) window.cancelAnimationFrame(raf);
       window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', onScroll);
     };
   }, []);
