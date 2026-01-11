@@ -888,7 +888,7 @@ function MobileCard({
               value={r.name}
               disabled={!canEdit}
               className={cx(
-                'h-9 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-[14px] font-semibold text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10',
+                'h-9 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 text-[14px] font-semibold text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10',
                 r.paid && 'line-through decoration-white/25',
               )}
               onCommit={(name) => onUpdate({ name })}
@@ -1079,7 +1079,7 @@ function MobileCard({
                       value={r.destination.text}
                       placeholder="Destination…"
                       disabled={!canEdit}
-                      className="h-10 w-full min-w-0 rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[13px] font-medium text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-white/25 focus:bg-ink-950/45"
+                      className="h-10 min-w-0 flex-1 rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[13px] font-medium text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-white/25 focus:bg-ink-950/45"
                       onCommit={(text) => {
                         const next = text.trim();
                         onUpdate({ destination: next ? { kind: 'text', text: next } : null });

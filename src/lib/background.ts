@@ -73,7 +73,8 @@ function buildUnsplashUrl(theme: BgTheme, w: number, h: number) {
   // Unsplash "Source" (no API key): returns an image via redirect.
   // Note: this triggers a third-party request from the client.
   const sig = Math.floor(Math.random() * 1_000_000_000);
-  return `https://source.unsplash.com/${w}x${h}/?${theme.keywords}&sig=${sig}`;
+  // Use the "random" endpoint to avoid sticky caching on size-only URLs.
+  return `https://source.unsplash.com/random/${w}x${h}?${theme.keywords}&sig=${sig}`;
 }
 
 export function initDynamicBackground(options?: { force?: boolean; ttlMs?: number }) {
@@ -89,7 +90,7 @@ export function initDynamicBackground(options?: { force?: boolean; ttlMs?: numbe
   }
 
   // If we're offline but we do have a previously saved URL, keep it.
-  if (existing && typeof navigator !== 'undefined' && navigator.onLine === false) {
+  if (!options?.force && existing && typeof navigator !== 'undefined' && navigator.onLine === false) {
     applyBackgroundUrl(existing.url);
     return;
   }
@@ -115,7 +116,8 @@ export function initDynamicBackground(options?: { force?: boolean; ttlMs?: numbe
   };
   img.onerror = () => {
     if (activeRequest !== requestId) return;
-    // Keep the default local background from CSS.
+    // If we have a previously saved background, revert to it (better than the local default).
+    if (existing?.url) applyBackgroundUrl(existing.url);
   };
   img.src = src;
 }
