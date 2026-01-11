@@ -160,17 +160,17 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	      data-tour="charges"
 	      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
 	    >
-	      <div className="flex items-center justify-between gap-4 border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
+	      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
         <div>
           <h2 className="text-sm text-slate-300">Charges</h2>
           <div className="mt-1 text-xl font-semibold tracking-tight">{rows.length} lignes</div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2 max-[360px]:gap-1.5">
 	          <button
 	            data-tour="add-charge"
 	            className={cx(
-	              'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10',
+	              'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
 	              !canEdit && 'opacity-50',
 	            )}
             disabled={!canEdit}
@@ -196,7 +196,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
           </button>
           <button
             className={cx(
-              'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10',
+              'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
               !canEdit && 'opacity-50',
             )}
             disabled={!canEdit}

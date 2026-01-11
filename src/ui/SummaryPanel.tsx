@@ -70,7 +70,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       data-tour="summary"
       className="motion-hover motion-pop rounded-3xl border border-white/15 bg-ink-950/60 p-4 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)] max-[360px]:p-3 sm:p-6 lg:sticky lg:top-32 lg:max-h-[calc(100dvh_-_8rem)] lg:overflow-auto"
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-sm text-slate-300">Résumé</div>
           <h2 className="mt-1 text-xl font-semibold tracking-tight">Totaux</h2>
@@ -152,7 +152,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       </div>
 
       <div className="mt-6 overflow-hidden rounded-3xl border border-white/15 bg-white/7 p-4 max-[360px]:mt-4 max-[360px]:p-3">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="text-sm font-medium text-slate-200">Répartition</div>
             <div className="mt-0.5 text-xs text-slate-400">{repartition.label}</div>
