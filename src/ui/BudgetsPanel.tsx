@@ -175,19 +175,19 @@ function BudgetCard({
   const maxDate = `${ym}-${pad2(daysInMonth(ym))}`;
 
   return (
-    <div className="motion-hover rounded-3xl border border-white/15 bg-ink-950/45 p-5 max-[360px]:p-4">
+      <div className="motion-hover rounded-3xl border border-white/15 bg-ink-950/45 p-5 max-[360px]:p-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-[220px] flex-1">
-          <div className="text-xs text-slate-400">Enveloppe</div>
+          <div className="truncate text-xs text-slate-400">Enveloppe</div>
           <InlineTextInput
             ariaLabel="Nom du budget"
             value={budget.name}
             disabled={!canEdit}
             onCommit={(name) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { name } })}
           />
-          <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-            <div className="min-w-0 flex-1 truncate">{budget.accountName}</div>
-            <div className={cx('tabular-nums', over ? 'text-rose-200' : 'text-slate-300')}>
+          <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-400 max-[360px]:flex-col max-[360px]:items-start max-[360px]:justify-start max-[360px]:gap-1">
+            <div className="min-w-0 flex-1 truncate max-[360px]:w-full">{budget.accountName}</div>
+            <div className={cx('tabular-nums whitespace-nowrap max-[360px]:self-end', over ? 'text-rose-200' : 'text-slate-300')}>
               {formatEUR(budget.spentCents)} / {formatEUR(budget.amountCents)}
             </div>
           </div>
@@ -288,30 +288,28 @@ function BudgetCard({
         <div className="mt-3 space-y-2 sm:hidden">
           {sortedExpenses.map((e) => (
             <div key={e.id} className="rounded-2xl border border-white/15 bg-ink-950/35 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1 text-xs text-slate-300">
-                  {canEdit ? (
-                    <InlineTextInput
-                      ariaLabel="Date de dépense"
-                      value={e.date}
-                      type="date"
-                      disabled={!canEdit}
-                      className="h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[12px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10"
-                      inputProps={{ min: minDate, max: maxDate }}
-                      onCommit={(next) => {
-                        if (!next || next === e.date) return;
-                        if (!/^\d{4}-\d{2}-\d{2}$/.test(next)) return;
-                        dispatch({ type: 'UPDATE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id, patch: { date: next } });
-                      }}
-                    />
-                  ) : (
-                    e.date
-                  )}
-                </div>
+              <div className="flex items-center gap-2">
+                {canEdit ? (
+                  <InlineTextInput
+                    ariaLabel="Date de dépense"
+                    value={e.date}
+                    type="date"
+                    disabled={!canEdit}
+                    className="h-8 min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-2 text-[12px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10 max-[360px]:text-[11px]"
+                    inputProps={{ min: minDate, max: maxDate }}
+                    onCommit={(next) => {
+                      if (!next || next === e.date) return;
+                      if (!/^\d{4}-\d{2}-\d{2}$/.test(next)) return;
+                      dispatch({ type: 'UPDATE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id, patch: { date: next } });
+                    }}
+                  />
+                ) : (
+                  <div className="min-w-0 flex-1 truncate text-xs text-slate-300">{e.date}</div>
+                )}
 
                 {canEdit ? (
                   <button
-                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/15 bg-white/7 text-xs transition-colors duration-150 hover:bg-white/10"
+                    className="flex h-8 w-8 flex-none items-center justify-center rounded-xl border border-white/15 bg-white/7 text-xs transition-colors duration-150 hover:bg-white/10"
                     disabled={!canEdit}
                     onClick={() => dispatch({ type: 'REMOVE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id })}
                     aria-label={`Supprimer dépense ${e.label}`}

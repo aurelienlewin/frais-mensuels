@@ -28,6 +28,17 @@ type SessionBgV1 = {
   savedAt: number;
 };
 
+let currentCss: string | null = null;
+let fadeTimer: number | null = null;
+
+function prefersReducedMotion() {
+  try {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+  } catch {
+    return false;
+  }
+}
+
 function readSessionSaved(): SessionBgV1 | null {
   try {
     const raw = window.sessionStorage.getItem(SESSION_KEY);
@@ -52,9 +63,51 @@ function saveSession(css: string) {
 }
 
 function applyBackgroundCss(css: string) {
-  document.documentElement.style.setProperty('--bg-image', css);
-  document.body?.style?.setProperty('--bg-image', css);
-  if (document.body) document.body.style.backgroundImage = css;
+  const root = document.documentElement;
+  if (!root) return;
+
+  const next = css.trim();
+  if (!next) return;
+
+  if (fadeTimer) {
+    window.clearTimeout(fadeTimer);
+    fadeTimer = null;
+
+    const mid = root.style.getPropertyValue('--bg-image-b').trim();
+    if (mid) {
+      root.style.setProperty('--bg-image-a', mid);
+      currentCss = mid;
+    }
+    root.style.setProperty('--bg-b-opacity', '0');
+  }
+
+  if (currentCss === next) {
+    root.style.setProperty('--bg-image-a', next);
+    root.style.setProperty('--bg-image-b', next);
+    root.style.setProperty('--bg-b-opacity', '0');
+    return;
+  }
+
+  if (prefersReducedMotion()) {
+    currentCss = next;
+    root.style.setProperty('--bg-image-a', next);
+    root.style.setProperty('--bg-image-b', next);
+    root.style.setProperty('--bg-b-opacity', '0');
+    return;
+  }
+
+  root.style.setProperty('--bg-image-b', next);
+  root.style.setProperty('--bg-b-opacity', '0');
+
+  window.requestAnimationFrame(() => {
+    root.style.setProperty('--bg-b-opacity', '1');
+    fadeTimer = window.setTimeout(() => {
+      currentCss = next;
+      root.style.setProperty('--bg-image-a', next);
+      root.style.setProperty('--bg-b-opacity', '0');
+      fadeTimer = null;
+    }, 620);
+  });
 }
 
 export function initDynamicBackground(options?: { force?: boolean }) {
