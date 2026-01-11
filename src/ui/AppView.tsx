@@ -332,7 +332,7 @@ export function AppView({
               {archived ? <div className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-200">Archivé</div> : null}
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 max-[360px]:gap-1.5">
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
               <button
                 className="rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs"
                 onClick={() => setYm(todayYm)}

@@ -166,7 +166,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
           <div className="mt-1 text-xl font-semibold tracking-tight">{rows.length} lignes</div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2 max-[360px]:gap-1.5">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
 	          <button
 	            data-tour="add-charge"
 	            className={cx(
