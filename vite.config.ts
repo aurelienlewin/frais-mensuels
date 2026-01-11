@@ -1,7 +1,34 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+
+function pad2(n: number) {
+  return String(n).padStart(2, '0');
+}
+
+function buildTimestampUtc(d = new Date()) {
+  return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}-${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}Z`;
+}
+
+function resolveBuildId() {
+  const envSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || process.env.COMMIT_SHA;
+  const shaFromEnv = typeof envSha === 'string' && envSha.trim() ? envSha.trim().slice(0, 7) : null;
+
+  const shaFromGit = (() => {
+    try {
+      const out = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+      return out ? out : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const sha = shaFromEnv || shaFromGit;
+  const ts = buildTimestampUtc();
+  return sha ? `${sha}-${ts}` : ts;
+}
 
 function apiJsToTsDevPlugin(): Plugin {
   const root = process.cwd();
@@ -74,7 +101,12 @@ export default defineConfig(({ command, mode }) => {
     if (!(k in process.env)) process.env[k] = v;
   }
 
+  const buildId = resolveBuildId();
+
   return {
+    define: {
+      __APP_BUILD_ID__: JSON.stringify(buildId),
+    },
     plugins: [react(), command === 'serve' ? apiJsToTsDevPlugin() : null, command === 'serve' ? vercelApiDevPlugin() : null].filter(
       Boolean,
     ) as Plugin[],

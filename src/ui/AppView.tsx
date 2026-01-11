@@ -702,6 +702,7 @@ export function AppView({
             Vercel
           </a>{' '}
           (Vercel KV / Upstash) · Chiffrées en transit (HTTPS) · App créée par Aurélien Lewin
+          <div className="mt-2 font-mono text-[10px] text-slate-500/90">build {__APP_BUILD_ID__}</div>
         </footer>
       </main>
 
