@@ -14,6 +14,8 @@ html,
 body {
   height: 100%;
   overflow-x: hidden;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 @supports (overflow-x: clip) {
@@ -116,10 +118,10 @@ body::before {
   }
 }
 
-/* Ultra-small screens: shrink rem-based sizing and avoid horizontal clipping. */
-@media (max-width: 340px) {
+/* Small screens: scale rem-based sizing and prevent horizontal clipping. */
+@media (max-width: 420px) {
   html {
-    font-size: 15px;
+    font-size: clamp(12.5px, 4vw, 16px);
   }
 
   #root,
@@ -131,11 +133,5 @@ body::before {
   #root .font-mono {
     overflow-wrap: anywhere;
     word-break: break-word;
-  }
-}
-
-@media (max-width: 320px) {
-  html {
-    font-size: 14px;
   }
 }

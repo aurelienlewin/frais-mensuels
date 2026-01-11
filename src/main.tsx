@@ -6,7 +6,54 @@ import { initDynamicBackground } from './lib/background';
 
 let swRegistration: ServiceWorkerRegistration | null = null;
 
+function installOverflowDebug() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('debugOverflow') !== '1') return;
+
+    const style = document.createElement('style');
+    style.textContent = `[data-overflow-x="1"]{outline:2px solid rgba(244,63,94,0.9)!important;outline-offset:2px!important;}`;
+    document.head.appendChild(style);
+
+    const mark = () => {
+      const vw = document.documentElement.clientWidth;
+      const offenders: Array<{ el: Element; overflowPx: number }> = [];
+
+      for (const el of Array.from(document.body.querySelectorAll('*'))) {
+        if (!(el instanceof HTMLElement) && !(el instanceof SVGElement)) continue;
+        (el as HTMLElement).removeAttribute('data-overflow-x');
+        const rect = el.getBoundingClientRect();
+        const overflowPx = rect.right - vw;
+        if (overflowPx > 0.5) offenders.push({ el, overflowPx });
+      }
+
+      offenders.sort((a, b) => b.overflowPx - a.overflowPx);
+      for (const o of offenders.slice(0, 30)) {
+        (o.el as HTMLElement).setAttribute('data-overflow-x', '1');
+      }
+
+      // eslint-disable-next-line no-console
+      console.log(
+        '[overflow-debug] top offenders:',
+        offenders.slice(0, 12).map((o) => ({
+          overflowPx: Math.round(o.overflowPx * 10) / 10,
+          tag: o.el.tagName.toLowerCase(),
+          class: (o.el as HTMLElement).className || '',
+        })),
+      );
+    };
+
+    (window as any).__debugOverflow = mark;
+    window.addEventListener('resize', () => window.requestAnimationFrame(mark));
+    window.addEventListener('load', () => window.requestAnimationFrame(mark));
+    window.requestAnimationFrame(mark);
+  } catch {
+    // ignore
+  }
+}
+
 initDynamicBackground();
+installOverflowDebug();
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   initDynamicBackground();
