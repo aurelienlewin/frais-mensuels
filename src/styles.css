@@ -124,8 +124,8 @@ body::before {
     font-size: clamp(12.5px, 4vw, 16px);
   }
 
-  #root,
-  #root * {
+  /* Allow shrink in flex/grid layouts without overriding Tailwind `min-w-*` utilities. */
+  :where(#root .flex > *, #root .grid > *) {
     min-width: 0;
   }
 
