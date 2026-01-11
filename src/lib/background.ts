@@ -1,33 +1,26 @@
-const SESSION_KEY = 'fm:bg:session:v1';
+const SESSION_KEY = 'fm:bg:session:v2';
 
-const LOCAL_FALLBACK = 'url("/bg-snowy.jpg")';
+const LOCAL_FALLBACK_URL = '/bg-snowy.jpg';
 
-const PRESET_BACKGROUNDS: string[] = [
-  `radial-gradient(1200px circle at 12% 8%, rgba(167, 139, 250, 0.26), transparent 58%),
-radial-gradient(900px circle at 84% 28%, rgba(56, 189, 248, 0.18), transparent 56%),
-radial-gradient(800px circle at 52% 92%, rgba(52, 211, 153, 0.13), transparent 60%),
-${LOCAL_FALLBACK}`,
-  `radial-gradient(1200px circle at 80% 12%, rgba(244, 114, 182, 0.22), transparent 58%),
-radial-gradient(900px circle at 18% 34%, rgba(251, 191, 36, 0.16), transparent 56%),
-radial-gradient(700px circle at 52% 90%, rgba(56, 189, 248, 0.12), transparent 60%),
-${LOCAL_FALLBACK}`,
-  `radial-gradient(1200px circle at 16% 16%, rgba(56, 189, 248, 0.22), transparent 58%),
-radial-gradient(900px circle at 86% 36%, rgba(34, 211, 238, 0.14), transparent 56%),
-radial-gradient(800px circle at 50% 90%, rgba(167, 139, 250, 0.12), transparent 60%),
-${LOCAL_FALLBACK}`,
-  `radial-gradient(1200px circle at 22% 12%, rgba(34, 197, 94, 0.18), transparent 58%),
-radial-gradient(900px circle at 78% 32%, rgba(45, 212, 191, 0.14), transparent 56%),
-radial-gradient(800px circle at 56% 92%, rgba(147, 197, 253, 0.11), transparent 60%),
-${LOCAL_FALLBACK}`,
-  `radial-gradient(1100px circle at 72% 18%, rgba(129, 140, 248, 0.22), transparent 58%),
-radial-gradient(900px circle at 22% 40%, rgba(56, 189, 248, 0.14), transparent 56%),
-radial-gradient(800px circle at 52% 92%, rgba(244, 114, 182, 0.10), transparent 60%),
-${LOCAL_FALLBACK}`,
-  `radial-gradient(1200px circle at 18% 18%, rgba(167, 139, 250, 0.20), transparent 58%),
-radial-gradient(900px circle at 82% 34%, rgba(74, 222, 128, 0.12), transparent 56%),
-radial-gradient(800px circle at 54% 92%, rgba(56, 189, 248, 0.12), transparent 60%),
-${LOCAL_FALLBACK}`,
-].map((s) => s.replace(/\s*\r?\n\s*/g, ' '));
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function computeSize() {
+  const dpr = clamp(typeof window.devicePixelRatio === 'number' ? window.devicePixelRatio : 1, 1, 2);
+  const w = clamp(Math.round(window.innerWidth * dpr), 720, 1920);
+  const h = clamp(Math.round(window.innerHeight * dpr), 720, 1920);
+  return { w, h };
+}
+
+function newSeed() {
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function buildCss(w: number, h: number, seed: string) {
+  const apiUrl = `/api/background?w=${w}&h=${h}&seed=${encodeURIComponent(seed)}`;
+  return `url("${apiUrl}"), url("${LOCAL_FALLBACK_URL}")`;
+}
 
 type SessionBgV1 = {
   v: 1;
@@ -58,11 +51,6 @@ function saveSession(css: string) {
   }
 }
 
-function pickPreset(excludeCss?: string) {
-  const pool = PRESET_BACKGROUNDS.filter((s) => s !== excludeCss);
-  return pool[Math.floor(Math.random() * pool.length)] ?? PRESET_BACKGROUNDS[0] ?? LOCAL_FALLBACK;
-}
-
 function applyBackgroundCss(css: string) {
   document.documentElement.style.setProperty('--bg-image', css);
   document.body?.style?.setProperty('--bg-image', css);
@@ -78,7 +66,8 @@ export function initDynamicBackground(options?: { force?: boolean }) {
     return;
   }
 
-  const preset = pickPreset(session?.css);
-  applyBackgroundCss(preset);
-  saveSession(preset);
+  const { w, h } = computeSize();
+  const css = buildCss(w, h, newSeed());
+  applyBackgroundCss(css);
+  saveSession(css);
 }
