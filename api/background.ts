@@ -12,6 +12,8 @@ const THEMES: BgTheme[] = [
   { id: 'glacier', keywords: 'glacier,ice,mountains,landscape' },
 ];
 
+const LOCAL_FALLBACK = '/bg-snowy.jpg';
+
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
@@ -36,6 +38,28 @@ function parsePositiveInt(raw: string | null) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+async function fetchImage(url: string) {
+  const upstream = await fetch(url, {
+    redirect: 'follow',
+    headers: {
+      'User-Agent': 'fraismensuels/1.0 (background proxy)',
+      Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+    },
+  });
+
+  const contentType = upstream.headers.get('content-type') || '';
+  if (!upstream.ok || !contentType.toLowerCase().startsWith('image/')) return null;
+  return { upstream, contentType };
+}
+
+function redirectToLocal(res: any) {
+  res.statusCode = 302;
+  res.setHeader('Location', LOCAL_FALLBACK);
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('X-Background-Provider', 'local');
+  res.end();
+}
+
 export default async function handler(req: any, res: any) {
   if (req?.method !== 'GET' && req?.method !== 'HEAD') return methodNotAllowed(res, ['GET', 'HEAD']);
 
@@ -50,30 +74,26 @@ export default async function handler(req: any, res: any) {
     const h = clamp(hRaw ?? 1800, 480, 2400);
     const theme = pickTheme(seed);
 
-    const upstreamUrl = new URL(`https://source.unsplash.com/random/${w}x${h}`);
+    const unsplashUrl = new URL(`https://source.unsplash.com/random/${w}x${h}/`);
     // Unsplash "Source" expects keywords as query string (without key), plus an optional cache buster.
-    upstreamUrl.search = `${theme.keywords}&sig=${encodeURIComponent(seed)}`;
+    unsplashUrl.search = `${theme.keywords}&sig=${encodeURIComponent(seed)}`;
 
-    const upstream = await fetch(upstreamUrl.toString(), {
-      redirect: 'follow',
-      headers: {
-        'User-Agent': 'fraismensuels/1.0 (background proxy)',
-        Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
-      },
-    });
+    const picsumSeed = hash32(`${seed}:${theme.id}`).toString(16);
+    const picsumUrl = `https://picsum.photos/seed/${picsumSeed}/${w}/${h}`;
 
-    const contentType = upstream.headers.get('content-type') || '';
-    if (!upstream.ok || !contentType.toLowerCase().startsWith('image/')) {
-      res.statusCode = 302;
-      res.setHeader('Location', '/bg-snowy.jpg');
-      res.setHeader('Cache-Control', 'no-store, max-age=0');
-      res.end();
+    const picked =
+      (await fetchImage(unsplashUrl.toString()).then((r) => (r ? { provider: 'unsplash', ...r } : null))) ??
+      (await fetchImage(picsumUrl).then((r) => (r ? { provider: 'picsum', ...r } : null)));
+
+    if (!picked) {
+      redirectToLocal(res);
       return;
     }
 
     res.statusCode = 200;
-    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Type', picked.contentType);
     res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.setHeader('X-Background-Provider', picked.provider);
     res.setHeader('X-Background-Theme', theme.id);
     res.setHeader('X-Background-Seed', seed);
 
@@ -82,22 +102,19 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    if (!upstream.body) {
-      const buf = Buffer.from(await upstream.arrayBuffer());
+    if (!picked.upstream.body) {
+      const buf = Buffer.from(await picked.upstream.arrayBuffer());
       res.end(buf);
       return;
     }
 
     try {
-      Readable.fromWeb(upstream.body as any).pipe(res);
+      Readable.fromWeb(picked.upstream.body as any).pipe(res);
     } catch {
-      const buf = Buffer.from(await upstream.arrayBuffer());
+      const buf = Buffer.from(await picked.upstream.arrayBuffer());
       res.end(buf);
     }
   } catch {
-    res.statusCode = 302;
-    res.setHeader('Location', '/bg-snowy.jpg');
-    res.setHeader('Cache-Control', 'no-store, max-age=0');
-    res.end();
+    redirectToLocal(res);
   }
 }

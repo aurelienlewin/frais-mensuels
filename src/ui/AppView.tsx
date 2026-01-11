@@ -605,7 +605,7 @@ export function AppView({
           </div>
 
           <nav
-            className="mt-4 flex items-center gap-2 overflow-x-auto overscroll-x-contain pb-1 max-[360px]:mt-3 max-[360px]:gap-1.5"
+            className="mt-4 flex flex-wrap items-center gap-2 pb-1 max-[360px]:mt-3 max-[360px]:gap-1.5"
             aria-label="Navigation par mois"
           >
             {visibleMonths.map((m) => {
