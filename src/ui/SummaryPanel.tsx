@@ -80,7 +80,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3">
+      <div className="mt-6 grid gap-3 max-[360px]:mt-4 max-[360px]:gap-2">
         <label className="grid gap-1">
           <div className="text-xs text-slate-400">Salaire</div>
           <div className="relative">
@@ -151,7 +151,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-3xl border border-white/15 bg-white/7 p-4">
+      <div className="mt-6 overflow-hidden rounded-3xl border border-white/15 bg-white/7 p-4 max-[360px]:mt-4 max-[360px]:p-3">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-sm font-medium text-slate-200">Répartition</div>
@@ -195,7 +195,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8 max-[360px]:mt-6">
           <div className="text-sm font-medium text-slate-200">Par compte</div>
         <div className="mt-3 space-y-2">
           {byAccount.map((a) => (
@@ -217,7 +217,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 	        </div>
 	      </div>
 
-	      <details className="mt-6 rounded-3xl border border-white/15 bg-white/7 p-4">
+	      <details className="mt-6 rounded-3xl border border-white/15 bg-white/7 p-4 max-[360px]:mt-4 max-[360px]:p-3">
 	        <summary className="cursor-pointer select-none text-sm font-medium text-slate-200">Comptes</summary>
 	        <div className="mt-3 space-y-2">
 	          <AccountsEditor />

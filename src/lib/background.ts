@@ -1,6 +1,6 @@
 type SavedBgV1 = {
   v: 1;
-  url: string;
+  css: string;
   savedAt: number;
   expiresAt: number;
 };
@@ -20,12 +20,41 @@ const THEMES: BgTheme[] = [
   { id: 'glacier', keywords: 'glacier,ice,mountains,landscape' },
 ];
 
+const LOCAL_FALLBACK = 'url("/bg-snowy.jpg")';
+
+const PRESET_BACKGROUNDS: string[] = [
+  `radial-gradient(1200px circle at 12% 8%, rgba(167, 139, 250, 0.26), transparent 58%),
+radial-gradient(900px circle at 84% 28%, rgba(56, 189, 248, 0.18), transparent 56%),
+radial-gradient(800px circle at 52% 92%, rgba(52, 211, 153, 0.13), transparent 60%),
+linear-gradient(180deg, rgb(11 16 32), rgb(7 8 20))`,
+  `radial-gradient(1200px circle at 80% 12%, rgba(244, 114, 182, 0.22), transparent 58%),
+radial-gradient(900px circle at 18% 34%, rgba(251, 191, 36, 0.16), transparent 56%),
+radial-gradient(700px circle at 52% 90%, rgba(56, 189, 248, 0.12), transparent 60%),
+linear-gradient(180deg, rgb(11 16 32), rgb(6 8 20))`,
+  `radial-gradient(1200px circle at 16% 16%, rgba(56, 189, 248, 0.22), transparent 58%),
+radial-gradient(900px circle at 86% 36%, rgba(34, 211, 238, 0.14), transparent 56%),
+radial-gradient(800px circle at 50% 90%, rgba(167, 139, 250, 0.12), transparent 60%),
+linear-gradient(180deg, rgb(9 13 27), rgb(6 8 20))`,
+  `radial-gradient(1200px circle at 22% 12%, rgba(34, 197, 94, 0.18), transparent 58%),
+radial-gradient(900px circle at 78% 32%, rgba(45, 212, 191, 0.14), transparent 56%),
+radial-gradient(800px circle at 56% 92%, rgba(147, 197, 253, 0.11), transparent 60%),
+linear-gradient(180deg, rgb(10 14 28), rgb(6 8 20))`,
+  `radial-gradient(1100px circle at 72% 18%, rgba(129, 140, 248, 0.22), transparent 58%),
+radial-gradient(900px circle at 22% 40%, rgba(56, 189, 248, 0.14), transparent 56%),
+radial-gradient(800px circle at 52% 92%, rgba(244, 114, 182, 0.10), transparent 60%),
+linear-gradient(180deg, rgb(10 14 28), rgb(6 8 20))`,
+  `radial-gradient(1200px circle at 18% 18%, rgba(167, 139, 250, 0.20), transparent 58%),
+radial-gradient(900px circle at 82% 34%, rgba(74, 222, 128, 0.12), transparent 56%),
+radial-gradient(800px circle at 54% 92%, rgba(56, 189, 248, 0.12), transparent 60%),
+linear-gradient(180deg, rgb(9 13 27), rgb(6 8 20))`,
+].map((s) => s.replace(/\s*\n\s*/g, ' '));
+
 let requestSeq = 0;
 let activeRequest = 0;
 
 type SessionBgV1 = {
   v: 1;
-  url: string;
+  css: string;
   savedAt: number;
 };
 
@@ -35,9 +64,9 @@ function readSaved(): SavedBgV1 | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<SavedBgV1>;
     if (!parsed || parsed.v !== 1) return null;
-    if (typeof parsed.url !== 'string' || !parsed.url) return null;
+    if (typeof parsed.css !== 'string' || !parsed.css) return null;
     if (typeof parsed.expiresAt !== 'number' || !Number.isFinite(parsed.expiresAt)) return null;
-    return { v: 1, url: parsed.url, savedAt: typeof parsed.savedAt === 'number' ? parsed.savedAt : 0, expiresAt: parsed.expiresAt };
+    return { v: 1, css: parsed.css, savedAt: typeof parsed.savedAt === 'number' ? parsed.savedAt : 0, expiresAt: parsed.expiresAt };
   } catch {
     return null;
   }
@@ -49,27 +78,27 @@ function readSessionSaved(): SessionBgV1 | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<SessionBgV1>;
     if (!parsed || parsed.v !== 1) return null;
-    if (typeof parsed.url !== 'string' || !parsed.url) return null;
-    return { v: 1, url: parsed.url, savedAt: typeof parsed.savedAt === 'number' ? parsed.savedAt : 0 };
+    if (typeof parsed.css !== 'string' || !parsed.css) return null;
+    return { v: 1, css: parsed.css, savedAt: typeof parsed.savedAt === 'number' ? parsed.savedAt : 0 };
   } catch {
     return null;
   }
 }
 
-function save(url: string, ttlMs: number) {
+function save(css: string, ttlMs: number) {
   try {
     const now = Date.now();
-    const next: SavedBgV1 = { v: 1, url, savedAt: now, expiresAt: now + ttlMs };
+    const next: SavedBgV1 = { v: 1, css, savedAt: now, expiresAt: now + ttlMs };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch {
     // ignore (private mode / quota)
   }
 }
 
-function saveSession(url: string) {
+function saveSession(css: string) {
   try {
     const now = Date.now();
-    const next: SessionBgV1 = { v: 1, url, savedAt: now };
+    const next: SessionBgV1 = { v: 1, css, savedAt: now };
     window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
   } catch {
     // ignore (private mode / quota)
@@ -91,12 +120,15 @@ function pickTheme(): BgTheme {
   return THEMES[Math.floor(Math.random() * THEMES.length)] ?? THEMES[0]!;
 }
 
-function applyBackgroundUrl(url: string) {
-  const escaped = url.replace(/"/g, '\\"');
-  // Always keep a local fallback behind the dynamic image.
-  const value = `url("${escaped}"), url("/bg-snowy.jpg")`;
-  document.documentElement.style.setProperty('--bg-image', value);
-  document.body?.style?.setProperty('--bg-image', value);
+function pickPreset(excludeCss?: string) {
+  const pool = PRESET_BACKGROUNDS.filter((s) => s !== excludeCss);
+  return pool[Math.floor(Math.random() * pool.length)] ?? PRESET_BACKGROUNDS[0] ?? `linear-gradient(180deg, rgb(11 16 32), rgb(6 8 20))`;
+}
+
+function applyBackgroundCss(css: string) {
+  document.documentElement.style.setProperty('--bg-image', css);
+  document.body?.style?.setProperty('--bg-image', css);
+  if (document.body) document.body.style.backgroundImage = css;
 }
 
 function buildUnsplashUrl(theme: BgTheme, w: number, h: number) {
@@ -112,26 +144,26 @@ export function initDynamicBackground(options?: { force?: boolean; ttlMs?: numbe
   const ttlMs = typeof options?.ttlMs === 'number' && options.ttlMs > 0 ? options.ttlMs : DEFAULT_TTL_MS;
 
   const session = readSessionSaved();
-  if (!options?.force && session?.url) {
-    applyBackgroundUrl(session.url);
+  if (!options?.force && session?.css) {
+    applyBackgroundCss(session.css);
     return;
   }
 
   const existing = readSaved();
 
-  // If we're offline but we do have a previously saved URL, keep it.
-  if (!options?.force && existing && typeof navigator !== 'undefined' && navigator.onLine === false) {
-    applyBackgroundUrl(existing.url);
-    saveSession(existing.url);
-    return;
-  }
+  const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+
+  // Always apply a new local preset first so the UI changes immediately (even if third-party images are blocked).
+  const preset = pickPreset(session?.css ?? existing?.css);
+  applyBackgroundCss(preset);
+  saveSession(preset);
+
+  // If we're offline, stop here (we already applied a visible background).
+  if (offline) return;
 
   const { w, h } = computeSize();
   const theme = pickTheme();
   const src = buildUnsplashUrl(theme, w, h);
-
-  // Start loading via CSS immediately (keeps the local fallback visible until loaded).
-  applyBackgroundUrl(src);
 
   const requestId = (requestSeq += 1);
   activeRequest = requestId;
@@ -142,16 +174,18 @@ export function initDynamicBackground(options?: { force?: boolean; ttlMs?: numbe
     if (activeRequest !== requestId) return;
     const finalUrl = img.currentSrc || img.src;
     if (!finalUrl) return;
-    applyBackgroundUrl(finalUrl);
-    saveSession(finalUrl);
-    save(finalUrl, ttlMs);
+    const escaped = finalUrl.replace(/"/g, '\\"');
+    const css = `url("${escaped}"), ${LOCAL_FALLBACK}`;
+    applyBackgroundCss(css);
+    saveSession(css);
+    save(css, ttlMs);
   };
   img.onerror = () => {
     if (activeRequest !== requestId) return;
-    // If we have a previously saved background, revert to it (better than the local default).
-    if (existing?.url) {
-      applyBackgroundUrl(existing.url);
-      saveSession(existing.url);
+    // If we have a previously saved background, use it (better than the default photo).
+    if (existing?.css) {
+      applyBackgroundCss(existing.css);
+      saveSession(existing.css);
     }
   };
   img.src = src;

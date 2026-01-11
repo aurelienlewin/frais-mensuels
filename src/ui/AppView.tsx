@@ -318,14 +318,14 @@ export function AppView({
         Aller au contenu
       </a>
 	      <header className="sticky top-0 z-10 border-b border-white/15 bg-ink-950/95 pt-[env(safe-area-inset-top)]">
-	        <div className="mx-auto max-w-6xl py-3 max-[360px]:py-2 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
+	        <div className="mx-auto max-w-6xl py-3 max-[360px]:py-2 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
 	          <div className="sr-only" aria-live="polite">
 	            {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
 	          </div>
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-baseline gap-3">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-2">
               <h1 className="text-base font-semibold tracking-tight">Frais mensuels</h1>
-              <div className="h-4 min-w-[120px] text-xs text-slate-400" aria-hidden="true">
+              <div className="h-4 min-w-[120px] text-xs text-slate-400 max-[360px]:hidden" aria-hidden="true">
                 {saving.status === 'saving' ? 'Sauvegarde…' : saving.status === 'error' ? 'Sauvegarde en erreur' : ''}
               </div>
               {!online ? <div className="rounded-full bg-rose-400/10 px-3 py-1 text-xs text-rose-200">Offline</div> : null}
@@ -338,7 +338,8 @@ export function AppView({
                 onClick={() => setYm(todayYm)}
                 type="button"
               >
-                Aujourd’hui
+                <span className="max-[360px]:hidden">Aujourd’hui</span>
+                <span className="hidden max-[360px]:inline">Ajd</span>
               </button>
 
               {(() => {
@@ -373,6 +374,7 @@ export function AppView({
                 className={cx(
                   'h-10 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10 max-[360px]:h-9 max-[360px]:px-2 max-[360px]:text-xs',
                   archivedMonths.length === 0 && 'opacity-50',
+                  'hidden sm:block',
                 )}
                 defaultValue=""
                 disabled={archivedMonths.length === 0}
@@ -460,6 +462,59 @@ export function AppView({
                         Nouveau fond (random)
                       </button>
 
+                      <div className="block px-3 pb-2 pt-1 text-[11px] text-slate-400 sm:hidden">
+                        <div className="font-semibold uppercase tracking-wide text-slate-500">Actions</div>
+                      </div>
+
+                      <button
+                        className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10 sm:hidden"
+                        onClick={() => {
+                          if (!archived) {
+                            const ok = window.confirm('Archiver ce mois ? Les montants seront figés (modifiable en réouvrant).');
+                            if (!ok) return;
+                            dispatch({ type: 'ARCHIVE_MONTH', ym });
+                          } else {
+                            const ok = window.confirm('Réouvrir ce mois (désarchiver) ?');
+                            if (!ok) return;
+                            dispatch({ type: 'UNARCHIVE_MONTH', ym });
+                          }
+                          menuRef.current?.removeAttribute('open');
+                        }}
+                        type="button"
+                      >
+                        {archived ? 'Réouvrir le mois' : 'Archiver le mois'}
+                      </button>
+
+                      <div className="px-3 pb-2 pt-2 text-[11px] text-slate-400 sm:hidden">
+                        <div className="font-semibold uppercase tracking-wide text-slate-500">Historique</div>
+                      </div>
+                      <div className="px-3 pb-2 sm:hidden">
+                        <select
+                          className={cx(
+                            'h-10 w-full rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10',
+                            archivedMonths.length === 0 && 'opacity-60 hover:bg-white/7',
+                          )}
+                          defaultValue=""
+                          disabled={archivedMonths.length === 0}
+                          onChange={(e) => {
+                            const next = e.target.value as YM;
+                            if (next) setYm(next);
+                            e.target.value = '';
+                            menuRef.current?.removeAttribute('open');
+                          }}
+                          aria-label="Historique (mois archivés)"
+                        >
+                          <option value="" disabled>
+                            {archivedMonths.length === 0 ? 'Aucun mois archivé' : 'Choisir…'}
+                          </option>
+                          {archivedMonths.map((m) => (
+                            <option key={m} value={m}>
+                              {monthLabelFr(m)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
 		                  <button
 		                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-rose-400/10"
 		                    onClick={async () => {
@@ -533,7 +588,7 @@ export function AppView({
               </details>
 
               <button
-                className="ml-2 rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs"
+                className="ml-2 hidden rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs sm:inline-flex"
                 onClick={() => {
                   if (!archived) {
                     const ok = window.confirm('Archiver ce mois ? Les montants seront figés (modifiable en réouvrant).');
@@ -629,7 +684,7 @@ export function AppView({
 	      <main
 	        id="main"
 	        tabIndex={-1}
-	        className="mx-auto max-w-6xl pt-6 pb-24 max-[360px]:pt-4 max-[360px]:pb-20 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]"
+	        className="mx-auto max-w-6xl pt-6 pb-24 max-[360px]:pt-4 max-[360px]:pb-20 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]"
 	      >
 	        <div className="grid gap-4 max-[360px]:gap-3 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
 	          <SummaryPanel ym={ym} />
