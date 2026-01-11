@@ -448,11 +448,7 @@ export function AppView({
 		                  </button>
 
                       <button
-                        className={cx(
-                          'w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10',
-                          !online && 'opacity-50 hover:bg-transparent',
-                        )}
-                        disabled={!online}
+                        className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
                         onClick={() => {
                           initDynamicBackground({ force: true });
                           menuRef.current?.removeAttribute('open');
