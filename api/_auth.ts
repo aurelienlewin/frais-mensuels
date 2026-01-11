@@ -53,7 +53,7 @@ async function sha256Base64Url(input: string): Promise<string> {
   return BufferCtor.from(new Uint8Array(digest)).toString('base64url');
 }
 
-async function pbkdf2Sha256Base64Url(password: string, salt: Uint8Array, iter: number): Promise<string> {
+async function pbkdf2Sha256Base64Url(password: string, salt: Uint8Array<ArrayBuffer>, iter: number): Promise<string> {
   const enc = new TextEncoder();
   const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, baseKey, 256);
@@ -114,7 +114,8 @@ export async function createPasswordHash(password: string): Promise<PasswordHash
 export async function verifyPassword(password: string, stored: PasswordHash): Promise<boolean> {
   if (!stored || stored.v !== 1 || stored.kdf !== 'PBKDF2-SHA256') return false;
   const salt = BufferCtor.from(stored.saltB64Url, 'base64url');
-  const derived = await pbkdf2Sha256Base64Url(password, new Uint8Array(salt), stored.iter);
+  const saltBytes = new Uint8Array(salt.buffer, salt.byteOffset, salt.byteLength);
+  const derived = await pbkdf2Sha256Base64Url(password, saltBytes, stored.iter);
   return timingSafeEqualStr(derived, stored.hashB64Url);
 }
 
