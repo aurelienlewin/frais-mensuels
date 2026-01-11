@@ -115,3 +115,27 @@ body::before {
     }
   }
 }
+
+/* Ultra-small screens: shrink rem-based sizing and avoid horizontal clipping. */
+@media (max-width: 340px) {
+  html {
+    font-size: 15px;
+  }
+
+  #root,
+  #root * {
+    min-width: 0;
+  }
+
+  #root,
+  #root .font-mono {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+@media (max-width: 320px) {
+  html {
+    font-size: 14px;
+  }
+}
