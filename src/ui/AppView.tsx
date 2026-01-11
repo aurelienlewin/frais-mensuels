@@ -451,6 +451,7 @@ export function AppView({
                         className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
                         onClick={() => {
                           initDynamicBackground({ force: true });
+                          showToast('Fond mis à jour', 'success');
                           menuRef.current?.removeAttribute('open');
                         }}
                         type="button"
