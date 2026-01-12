@@ -17,7 +17,10 @@ function isFuelBudget(name: string) {
 
 export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state } = useStore();
-  const budgets = budgetsForMonth(state, ym);
+  const budgets = useMemo(
+    () => budgetsForMonth(state, ym),
+    [state.accounts, state.budgets, state.months, ym],
+  );
   const modelById = useMemo(() => new Map(state.budgets.map((b) => [b.id, b])), [state.budgets]);
 
   return (
@@ -169,7 +172,10 @@ function BudgetCard({
   const ratio = budget.amountCents > 0 ? Math.min(1, Math.max(0, budget.spentCents / budget.amountCents)) : 0;
   const over = budget.remainingCents < 0;
 
-  const sortedExpenses = [...budget.expenses].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const sortedExpenses = useMemo(
+    () => [...budget.expenses].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
+    [budget.expenses],
+  );
   const defaultLabelPlaceholder = isFuelBudget(budget.name) ? 'ex: plein / essence / gasoil' : 'ex: resto';
   const minDate = `${ym}-01`;
   const maxDate = `${ym}-${pad2(daysInMonth(ym))}`;

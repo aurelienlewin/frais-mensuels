@@ -1,10 +1,11 @@
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { StoreProvider } from './state/store';
-import { AppView } from './ui/AppView';
-import { AuthView } from './ui/AuthView';
 import { authLogout, authMe, type AuthUser } from './lib/authApi';
 import { ymFromDate } from './lib/date';
-import { useEffect, useState } from 'react';
 import { clearCachedUser, readCachedUser, writeCachedUser } from './lib/authCache';
+
+const AuthView = lazy(() => import('./ui/AuthView'));
+const AppView = lazy(() => import('./ui/AppView'));
 
 export default function App() {
   const initialYm = ymFromDate(new Date());
@@ -64,7 +65,13 @@ export default function App() {
 
   if (!user) {
     return (
-      <>
+      <Suspense
+        fallback={
+          <div className="min-h-dvh px-6 py-10 text-center text-sm text-slate-300">
+            Chargement de l’interface…
+          </div>
+        }
+      >
         {bootError ? (
           <div className="mx-auto max-w-md px-4 pt-6 text-center text-xs text-rose-200">
             {bootError}
@@ -79,26 +86,34 @@ export default function App() {
             writeCachedUser(u);
           }}
         />
-      </>
+      </Suspense>
     );
   }
 
   return (
     <StoreProvider storageKey={user.id}>
-      <AppView
-        initialYm={initialYm}
-        user={user}
-        sessionUnverified={sessionUnverified}
-        onLogout={async () => {
-          try {
-            await authLogout();
-          } finally {
-            clearCachedUser();
-            setUser(null);
-            setSessionUnverified(false);
-          }
-        }}
-      />
+      <Suspense
+        fallback={
+          <div className="min-h-dvh px-6 py-10 text-center text-sm text-slate-300">
+            Chargement de l’interface…
+          </div>
+        }
+      >
+        <AppView
+          initialYm={initialYm}
+          user={user}
+          sessionUnverified={sessionUnverified}
+          onLogout={async () => {
+            try {
+              await authLogout();
+            } finally {
+              clearCachedUser();
+              setUser(null);
+              setSessionUnverified(false);
+            }
+          }}
+        />
+      </Suspense>
     </StoreProvider>
   );
 }

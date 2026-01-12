@@ -5,6 +5,27 @@ import './styles.css';
 import { initDynamicBackground, startBackgroundRotation } from './lib/background';
 
 let swRegistration: ServiceWorkerRegistration | null = null;
+let backgroundStarted = false;
+
+function kickBackground(options?: { force?: boolean }) {
+  if (!backgroundStarted) {
+    backgroundStarted = true;
+    startBackgroundRotation();
+  }
+  initDynamicBackground(options);
+}
+
+function scheduleBackgroundWarmup() {
+  const runner = () => kickBackground();
+  if ('requestIdleCallback' in window) {
+    (window as typeof window & { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => void }).requestIdleCallback?.(
+      runner,
+      { timeout: 1200 },
+    );
+    return;
+  }
+  window.setTimeout(runner, 200);
+}
 
 function installOverflowDebug() {
   try {
@@ -52,18 +73,15 @@ function installOverflowDebug() {
   }
 }
 
-initDynamicBackground();
-startBackgroundRotation();
+scheduleBackgroundWarmup();
 installOverflowDebug();
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
-  initDynamicBackground();
-  startBackgroundRotation();
+  kickBackground({ force: true });
   swRegistration?.update().catch(() => undefined);
 });
 window.addEventListener('pageshow', () => {
-  initDynamicBackground();
-  startBackgroundRotation();
+  kickBackground();
   swRegistration?.update().catch(() => undefined);
 });
 

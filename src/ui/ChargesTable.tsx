@@ -9,7 +9,10 @@ import { InlineNumberInput, InlineTextInput } from './components/InlineInput';
 
 export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state, dispatch } = useStore();
-  const rows = chargesForMonth(state, ym);
+  const rows = useMemo(
+    () => chargesForMonth(state, ym),
+    [state.accounts, state.charges, state.months, ym],
+  );
   const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
   const activeAccountIds = useMemo(() => new Set(activeAccounts.map((a) => a.id)), [activeAccounts]);
   const accountsById = useMemo(() => new Map(state.accounts.map((a) => [a.id, a])), [state.accounts]);

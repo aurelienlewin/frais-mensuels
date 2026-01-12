@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { centsToEuros, eurosToCents, formatEUR, parseEuroAmount } from '../lib/money';
 import { totalsByAccount, totalsForMonth } from '../state/selectors';
 import { useStore } from '../state/store';
@@ -10,8 +10,14 @@ import type { Account } from '../state/types';
 
 export function SummaryPanel({ ym }: { ym: YM }) {
   const { state, dispatch } = useStore();
-  const totals = totalsForMonth(state, ym);
-  const byAccount = totalsByAccount(state, ym);
+  const totals = useMemo(
+    () => totalsForMonth(state, ym),
+    [state.accounts, state.budgets, state.charges, state.months, ym],
+  );
+  const byAccount = useMemo(
+    () => totalsByAccount(state, ym),
+    [state.accounts, state.charges, state.months, ym],
+  );
   const [salaryDraft, setSalaryDraft] = useState(() => String(centsToEuros(totals.salaryCents)));
   const [salaryEditing, setSalaryEditing] = useState(false);
 
