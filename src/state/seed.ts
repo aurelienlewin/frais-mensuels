@@ -136,6 +136,7 @@ export function seedState(now = new Date()): AppState {
       name: 'Budget perso',
       amountCents: eurosToCents(200),
       accountId: 'PERSONAL_MAIN',
+      scope: 'perso',
       active: true,
     },
     {
@@ -143,6 +144,7 @@ export function seedState(now = new Date()): AppState {
       name: 'Essence',
       amountCents: eurosToCents(120),
       accountId: 'PERSONAL_MAIN',
+      scope: 'perso',
       active: true,
     },
   ];

@@ -213,41 +213,47 @@ export function reducer(state: AppState, action: Action): AppState {
           delete nextCharges[action.chargeId];
           return { ...m, charges: nextCharges };
         });
-      case 'ARCHIVE_MONTH':
-        return withMonth(state, action.ym, (m) => {
+	      case 'ARCHIVE_MONTH':
+	        return withMonth(state, action.ym, (m) => {
           const today = todayIsoLocal();
           const chargesWithSnapshots = { ...m.charges };
           for (const ch of state.charges) {
             if (!ch.active) continue;
             const current = chargesWithSnapshots[ch.id];
             if (current?.snapshot) continue;
-            chargesWithSnapshots[ch.id] = {
-              paid: current?.paid ?? (ch.payment === 'auto' && dueDateIso(action.ym, ch.dayOfMonth) <= today),
-              snapshot: {
-                name: ch.name,
-                amountCents: ch.amountCents,
-                sortOrder: ch.sortOrder,
-                dayOfMonth: ch.dayOfMonth,
-                accountId: ch.accountId,
-                scope: ch.scope,
-                splitPercent: ch.scope === 'commun' ? 50 : undefined,
-                payment: ch.payment,
-                destination: ch.destination,
-              },
-            };
-          }
-          const budgetsWithSnapshots = { ...m.budgets };
-          for (const b of state.budgets) {
-            if (!b.active) continue;
-            const current = budgetsWithSnapshots[b.id];
-            if (current?.snapshot) continue;
-            budgetsWithSnapshots[b.id] = {
-              expenses: current?.expenses ?? [],
-              snapshot: { name: b.name, amountCents: b.amountCents, accountId: b.accountId },
-            };
-          }
-          return { ...m, archived: true, charges: chargesWithSnapshots, budgets: budgetsWithSnapshots };
-        });
+	            chargesWithSnapshots[ch.id] = {
+	              paid: current?.paid ?? (ch.payment === 'auto' && dueDateIso(action.ym, ch.dayOfMonth) <= today),
+	              snapshot: {
+	                name: ch.name,
+	                amountCents: ch.amountCents,
+	                sortOrder: ch.sortOrder,
+	                dayOfMonth: ch.dayOfMonth,
+	                accountId: ch.accountId,
+	                scope: ch.scope,
+	                splitPercent: ch.scope === 'commun' ? (ch.splitPercent ?? 50) : undefined,
+	                payment: ch.payment,
+	                destination: ch.destination,
+	              },
+	            };
+	          }
+	          const budgetsWithSnapshots = { ...m.budgets };
+	          for (const b of state.budgets) {
+	            if (!b.active) continue;
+	            const current = budgetsWithSnapshots[b.id];
+	            if (current?.snapshot) continue;
+	            budgetsWithSnapshots[b.id] = {
+	              expenses: current?.expenses ?? [],
+	              snapshot: {
+	                name: b.name,
+	                amountCents: b.amountCents,
+	                accountId: b.accountId,
+	                scope: b.scope,
+	                splitPercent: b.scope === 'commun' ? (b.splitPercent ?? 50) : undefined,
+	              },
+	            };
+	          }
+	          return { ...m, archived: true, charges: chargesWithSnapshots, budgets: budgetsWithSnapshots };
+	        });
       case 'UNARCHIVE_MONTH':
         return withMonth(state, action.ym, (m) => ({ ...m, archived: false }));
       case 'ADD_BUDGET_EXPENSE':
@@ -303,13 +309,35 @@ export function reducer(state: AppState, action: Action): AppState {
             },
           };
         });
-      case 'ADD_BUDGET':
-        return { ...state, budgets: [...state.budgets, { ...action.budget, id: uid('bud') }] };
-      case 'UPDATE_BUDGET':
-        return {
-          ...state,
-          budgets: state.budgets.map((b) => (b.id === action.budgetId ? { ...b, ...action.patch } : b)),
-        };
+	      case 'ADD_BUDGET':
+	        return {
+	          ...state,
+	          budgets: [
+	            ...state.budgets,
+	            {
+	              ...action.budget,
+	              id: uid('bud'),
+	              scope: action.budget.scope === 'commun' ? 'commun' : 'perso',
+	              splitPercent: action.budget.scope === 'commun' ? (action.budget.splitPercent ?? 50) : undefined,
+	            },
+	          ],
+	        };
+	      case 'UPDATE_BUDGET':
+	        return {
+	          ...state,
+	          budgets: state.budgets.map((b) => {
+	            if (b.id !== action.budgetId) return b;
+	            const merged = { ...b, ...action.patch } as Budget;
+	            const scope: Budget['scope'] = merged.scope === 'commun' ? 'commun' : 'perso';
+	            const splitPercent =
+	              scope === 'commun'
+	                ? typeof merged.splitPercent === 'number' && Number.isFinite(merged.splitPercent)
+	                  ? Math.max(0, Math.min(100, Math.round(merged.splitPercent)))
+	                  : 50
+	                : undefined;
+	            return { ...merged, scope, splitPercent };
+	          }),
+	        };
       case 'REMOVE_BUDGET':
         return {
           ...state,

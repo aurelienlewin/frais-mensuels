@@ -39,6 +39,8 @@ export type Budget = {
   name: string;
   amountCents: number;
   accountId: AccountId;
+  scope: ChargeScope;
+  splitPercent?: number; // commun only (default 50)
   inactiveFromYm?: YM;
   active: boolean;
 };
@@ -53,7 +55,7 @@ export type MonthChargeState = {
   snapshot?: MonthChargeSnapshot;
 };
 
-export type MonthBudgetSnapshot = Pick<Budget, 'name' | 'amountCents' | 'accountId'>;
+export type MonthBudgetSnapshot = Pick<Budget, 'name' | 'amountCents' | 'accountId' | 'scope' | 'splitPercent'>;
 
 export type BudgetExpense = {
   id: string;

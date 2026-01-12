@@ -37,6 +37,9 @@ export type BudgetResolved = {
   amountCents: number;
   accountId: AccountId;
   accountName: string;
+  scope: ChargeScope;
+  splitPercent: number;
+  myShareCents: number;
   expenses: BudgetExpense[];
   spentCents: number;
   remainingCents: number;
@@ -176,7 +179,7 @@ function resolveBudgetSnapshot(
 
   const b = state.budgets.find((x) => x.id === budgetId);
   if (!b) return { expenses, snap: null };
-  return { expenses, snap: { name: b.name, amountCents: b.amountCents, accountId: b.accountId } };
+  return { expenses, snap: { name: b.name, amountCents: b.amountCents, accountId: b.accountId, scope: b.scope, splitPercent: b.splitPercent } };
 }
 
 export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
@@ -216,12 +219,23 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     const spentCents = expenses.reduce((acc, e) => acc + e.amountCents, 0);
     const remainingCents = snap.amountCents - spentCents;
     const accName = accounts.get(snap.accountId)?.name ?? snap.accountId;
+    const scope: ChargeScope = snap.scope === 'commun' ? 'commun' : 'perso';
+    const splitPercent =
+      scope === 'commun'
+        ? typeof snap.splitPercent === 'number' && Number.isFinite(snap.splitPercent)
+          ? Math.max(0, Math.min(100, Math.round(snap.splitPercent)))
+          : 50
+        : 100;
+    const myShareCents = scope === 'commun' ? Math.round((snap.amountCents * splitPercent) / 100) : snap.amountCents;
     rows.push({
       id,
       name: snap.name,
       amountCents: snap.amountCents,
       accountId: snap.accountId,
       accountName: accName,
+      scope,
+      splitPercent,
+      myShareCents,
       expenses,
       spentCents,
       remainingCents,
@@ -255,7 +269,7 @@ export function totalsForMonth(state: AppState, ym: YM) {
   }
 
   const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
-  const totalBudgetsCents = budgets.reduce((acc, b) => acc + b.amountCents, 0);
+  const totalBudgetsCents = budgets.reduce((acc, b) => acc + b.myShareCents, 0);
   const totalBudgetSpentCents = budgets.reduce((acc, b) => acc + b.spentCents, 0);
   const totalPourMoiAvecEnveloppesCents = totalPourMoiCents + totalBudgetsCents;
 
@@ -277,13 +291,22 @@ export function totalsForMonth(state: AppState, ym: YM) {
 
 export function totalsByAccount(state: AppState, ym: YM) {
   const rows = chargesForMonth(state, ym);
-  const byAccount = new Map<AccountId, { totalCents: number; paidCents: number }>();
+  const budgets = budgetsForMonth(state, ym);
+
+  const byAccount = new Map<AccountId, { chargesTotalCents: number; chargesPaidCents: number; budgetsCents: number }>();
   for (const r of rows) {
     const key: AccountId = r.destination?.kind === 'account' ? r.destination.accountId : r.accountId;
-    const prev = byAccount.get(key) ?? { totalCents: 0, paidCents: 0 };
+    const prev = byAccount.get(key) ?? { chargesTotalCents: 0, chargesPaidCents: 0, budgetsCents: 0 };
     const mineCents = r.scope === 'commun' ? r.myShareCents : r.amountCents;
-    prev.totalCents += mineCents;
-    if (r.paid) prev.paidCents += mineCents;
+    prev.chargesTotalCents += mineCents;
+    if (r.paid) prev.chargesPaidCents += mineCents;
+    byAccount.set(key, prev);
+  }
+
+  for (const b of budgets) {
+    const key: AccountId = b.accountId;
+    const prev = byAccount.get(key) ?? { chargesTotalCents: 0, chargesPaidCents: 0, budgetsCents: 0 };
+    prev.budgetsCents += b.myShareCents;
     byAccount.set(key, prev);
   }
 
@@ -291,8 +314,16 @@ export function totalsByAccount(state: AppState, ym: YM) {
   return order
     .map((id) => {
       const a = state.accounts.find((x) => x.id === id);
-      const t = byAccount.get(id) ?? { totalCents: 0, paidCents: 0 };
-      return { accountId: id, accountName: a?.name ?? id, kind: a?.kind ?? 'perso', ...t };
+      const t = byAccount.get(id) ?? { chargesTotalCents: 0, chargesPaidCents: 0, budgetsCents: 0 };
+      return {
+        accountId: id,
+        accountName: a?.name ?? id,
+        kind: a?.kind ?? 'perso',
+        chargesTotalCents: t.chargesTotalCents,
+        chargesPaidCents: t.chargesPaidCents,
+        budgetsCents: t.budgetsCents,
+        totalCents: t.chargesTotalCents + t.budgetsCents,
+      };
     })
     .filter((x) => x.totalCents !== 0);
 }

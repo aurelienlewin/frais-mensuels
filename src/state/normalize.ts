@@ -1,4 +1,4 @@
-import type { Account, AppState, Charge, ChargeScope } from './types';
+import type { Account, AppState, Budget, Charge, ChargeScope } from './types';
 
 const DEFAULT_ACCOUNTS: Account[] = [
   { id: 'PERSONAL_MAIN', name: 'PERSONAL_MAIN', kind: 'perso', active: true },
@@ -75,6 +75,24 @@ export function normalizeState(state: AppState): AppState {
       })()
     : state.charges;
 
+  // Budgets: ensure scope exists (older saves won't have it)
+  const budgetsNeedScope = state.budgets.some((b) => typeof (b as Budget).scope !== 'string');
+  const budgets = budgetsNeedScope
+    ? (() => {
+        changed = true;
+        return state.budgets.map((b) => {
+          const scope: Budget['scope'] = (b as Budget).scope === 'commun' ? 'commun' : 'perso';
+          const splitPercent =
+            scope === 'commun'
+              ? typeof (b as Budget).splitPercent === 'number' && Number.isFinite((b as Budget).splitPercent)
+                ? Math.max(0, Math.min(100, Math.round((b as Budget).splitPercent as number)))
+                : 50
+              : undefined;
+          return { ...b, scope, splitPercent };
+        });
+      })()
+    : state.budgets;
+
   // Archived month snapshots: ensure snapshot.sortOrder exists for stable display.
   const chargeById = new Map<string, Charge>(charges.map((c) => [c.id, c]));
   const months = (() => {
@@ -118,6 +136,7 @@ export function normalizeState(state: AppState): AppState {
     salaryCents: nextSalaryCents,
     accounts,
     charges,
+    budgets,
     months,
     ui,
   };

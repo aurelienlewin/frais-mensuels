@@ -52,6 +52,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [accountId, setAccountId] = useState(defaultAccountId);
+  const [scope, setScope] = useState<'perso' | 'commun'>('perso');
 
   useEffect(() => {
     setAccountId((cur) => cur || defaultAccountId);
@@ -99,7 +100,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
         </div>
       </div>
 
-      <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_140px]">
+      <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_140px_140px]">
         <select
           className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none focus:border-white/25"
           value={accountId}
@@ -112,6 +113,17 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
               {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
             </option>
           ))}
+        </select>
+
+        <select
+          className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none focus:border-white/25"
+          value={scope}
+          disabled={disabled}
+          onChange={(e) => setScope(e.target.value === 'commun' ? 'commun' : 'perso')}
+          aria-label="Type enveloppe"
+        >
+          <option value="perso">Perso</option>
+          <option value="commun">Commun</option>
         </select>
 
         <button
@@ -128,7 +140,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
             if (!cleanName || euros === null || euros < 0) return;
             dispatch({
               type: 'ADD_BUDGET',
-              budget: { name: cleanName, amountCents: eurosToCents(euros), accountId, active: true },
+              budget: { name: cleanName, amountCents: eurosToCents(euros), accountId, scope, active: true },
             });
             setName('');
             setAmount('');
@@ -170,6 +182,8 @@ function BudgetCard({
 
   const canEdit = !archived && Boolean(model);
   const canDelete = !archived && Boolean(model?.active);
+  const typeSelect =
+    'h-8 rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
   const ratio = budget.amountCents > 0 ? Math.min(1, Math.max(0, budget.spentCents / budget.amountCents)) : 0;
   const over = budget.remainingCents < 0;
 
@@ -195,6 +209,21 @@ function BudgetCard({
           <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-400 max-[360px]:flex-col max-[360px]:items-start max-[360px]:justify-start max-[360px]:gap-1">
             <div className="flex min-w-0 flex-1 items-center gap-2 truncate max-[360px]:w-full">
               <div className="min-w-0 flex-1 truncate">{budget.accountName}</div>
+              {canEdit ? (
+                <select
+                  className={typeSelect}
+                  value={budget.scope}
+                  onChange={(e) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { scope: e.target.value as 'perso' | 'commun' } })}
+                  aria-label="Type enveloppe"
+                >
+                  <option value="perso">Perso</option>
+                  <option value="commun">Commun</option>
+                </select>
+              ) : (
+                <span className="inline-flex h-6 flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
+                  {budget.scope === 'commun' ? 'commun' : 'perso'}
+                </span>
+              )}
               {model && !model.active ? (
                 <span className="inline-flex h-6 flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
                   supprimée

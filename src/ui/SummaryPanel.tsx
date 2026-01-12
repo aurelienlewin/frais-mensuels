@@ -125,14 +125,14 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 
 	        <div className="mt-2 grid gap-2">
 	          <Row label="Charges communes (total)" value={formatEUR(totals.totalCommunCents)} />
-	          <Row label="Ma part (commun)" value={formatEUR(totals.totalCommunPartCents)} />
-	          <Row label="Charges perso" value={formatEUR(totals.totalPersoCents)} />
-	          <div className="my-2 h-px bg-white/10" />
-	          <Row label="Total charges (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
-	          <Row label="Enveloppes (budgets)" value={formatEUR(totals.totalBudgetsCents)} />
-          <Row label="Total (charges + enveloppes)" value={formatEUR(totals.totalPourMoiAvecEnveloppesCents)} strong />
-          <Row
-            label="Reste à vivre (après enveloppes)"
+		          <Row label="Ma part (commun)" value={formatEUR(totals.totalCommunPartCents)} />
+		          <Row label="Charges perso" value={formatEUR(totals.totalPersoCents)} />
+		          <div className="my-2 h-px bg-white/10" />
+		          <Row label="Total charges (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
+		          <Row label="Enveloppes (ma part)" value={formatEUR(totals.totalBudgetsCents)} />
+	          <Row label="Total (charges + enveloppes)" value={formatEUR(totals.totalPourMoiAvecEnveloppesCents)} strong />
+	          <Row
+	            label="Reste à vivre (après enveloppes)"
             value={formatEUR(totals.resteAVivreApresEnveloppesCents)}
             strong
             valueClassName={totals.resteAVivreApresEnveloppesCents < 0 ? 'text-rose-200' : 'text-emerald-200'}
@@ -202,23 +202,24 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       </div>
 
       <div className="mt-8 max-[360px]:mt-6">
-          <div className="text-sm font-medium text-slate-200">Par compte</div>
+	          <div className="text-sm font-medium text-slate-200">Par compte (charges + enveloppes)</div>
         <div className="mt-3 space-y-2">
-          {byAccount.map((a) => (
-            <div key={a.accountId} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/15 bg-white/7 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm text-slate-100" title={a.accountName}>
-                  {a.accountName}
-                </div>
-                <div className="mt-0.5 truncate text-xs text-slate-400">
-                  {formatEUR(a.paidCents)} / {formatEUR(a.totalCents)} cochés
-                </div>
-              </div>
-              <div className={cx('flex-none text-sm font-medium tabular-nums', a.kind === 'commun' ? 'text-sky-200' : 'text-emerald-200')}>
-                {formatEUR(a.totalCents)}
-              </div>
-            </div>
-          ))}
+	          {byAccount.map((a) => (
+	            <div key={a.accountId} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/15 bg-white/7 px-4 py-3">
+	              <div className="min-w-0 flex-1">
+	                <div className="truncate text-sm text-slate-100" title={a.accountName}>
+	                  {a.accountName}
+	                </div>
+	                <div className="mt-0.5 truncate text-xs text-slate-400">
+	                  {formatEUR(a.chargesPaidCents)} / {formatEUR(a.chargesTotalCents)} charges cochées
+	                  {a.budgetsCents ? ` · enveloppes ${formatEUR(a.budgetsCents)}` : ''}
+	                </div>
+	              </div>
+	              <div className={cx('flex-none text-sm font-medium tabular-nums', a.kind === 'commun' ? 'text-sky-200' : 'text-emerald-200')}>
+	                {formatEUR(a.totalCents)}
+	              </div>
+	            </div>
+	          ))}
 	          {byAccount.length === 0 ? <div className="text-sm text-slate-400">Aucune charge ce mois-ci.</div> : null}
 	        </div>
 	      </div>

@@ -214,13 +214,17 @@ function BudgetSetupCard({
 	            if (euros === null || euros < 0) return;
 	            const amountCents = eurosToCents(euros);
 
-            if (existing) {
-              dispatch({ type: 'UPDATE_BUDGET', budgetId: existing.id, patch: { name: cleanName, amountCents, accountId, active: true } });
-              return;
-            }
-            dispatch({ type: 'ADD_BUDGET', budget: { name: cleanName, amountCents, accountId, active: true } });
-          }}
-        >
+	            if (existing) {
+	              dispatch({
+	                type: 'UPDATE_BUDGET',
+	                budgetId: existing.id,
+	                patch: { name: cleanName, amountCents, accountId, scope: 'perso', active: true },
+	              });
+	              return;
+	            }
+	            dispatch({ type: 'ADD_BUDGET', budget: { name: cleanName, amountCents, accountId, scope: 'perso', active: true } });
+	          }}
+	        >
           {existing ? 'Mettre à jour' : 'Créer'}
         </button>
       </div>
