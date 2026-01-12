@@ -412,7 +412,10 @@ export function AppView({
                 >
                   ⋯
 	                </summary>
-		                <div className="absolute right-0 mt-2 w-[280px] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]">
+                <div
+                  className="absolute left-1/2 right-auto z-20 mt-2 w-[min(320px,calc(100vw-1.5rem))] -translate-x-1/2 rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)] sm:left-auto sm:right-0 sm:translate-x-0 sm:w-[280px]"
+                  style={{ maxWidth: 'calc(100vw - 1.5rem)' }}
+                >
 		                  <div className="px-3 py-2 text-xs text-slate-400">
 		                    Connecté: <span className="font-mono text-slate-200">{user.email}</span>
 		                  </div>
