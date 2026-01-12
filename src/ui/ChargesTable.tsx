@@ -7,6 +7,10 @@ import type { Charge, ChargeScope } from '../state/types';
 import { cx } from './cx';
 import { InlineNumberInput, InlineTextInput } from './components/InlineInput';
 
+function normalizeSearch(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state, dispatch } = useStore();
   const rows = useMemo(
@@ -20,6 +24,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const monthChargeStateById = state.months[ym]?.charges ?? {};
   const tableRef = useRef<HTMLTableElement | null>(null);
   const mobileRef = useRef<HTMLDivElement | null>(null);
+  const filterBarRef = useRef<HTMLDivElement | null>(null);
   const [isTableUp, setIsTableUp] = useState<boolean>(() => {
     try {
       return window.matchMedia('(min-width: 768px)').matches;
@@ -32,6 +37,13 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const pendingFocusCellRef = useRef<{ chargeId: string; col: string } | null>(null);
   const [dragging, setDragging] = useState<{ id: string; scope: ChargeScope } | null>(null);
   const [dragOver, setDragOver] = useState<{ id: string; pos: 'before' | 'after' } | null>(null);
+  const [filter, setFilter] = useState('');
+  const filterNorm = useMemo(() => normalizeSearch(filter.trim()), [filter]);
+  const isFiltering = filterNorm.length > 0;
+  const [stickyTopPx, setStickyTopPx] = useState(0);
+  const [filterBarHeightPx, setFilterBarHeightPx] = useState(0);
+  const [flashRowId, setFlashRowId] = useState<string | null>(null);
+  const flashTimerRef = useRef<number | null>(null);
 
   const canEdit = !archived;
   const isMonthOnlyCharge = (chargeId: string) => !chargesById.has(chargeId) && Boolean(monthChargeStateById[chargeId]?.snapshot);
@@ -73,9 +85,10 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
     const focusCell = (chargeId: string, col: string) => {
       window.requestAnimationFrame(() => {
         const root = isTableUp ? tableRef.current : mobileRef.current;
-        root
-          ?.querySelector<HTMLElement>(`[data-grid="charges"][data-charge-id="${chargeId}"][data-col="${col}"]`)
-          ?.focus();
+        const el = root?.querySelector<HTMLElement>(`[data-grid="charges"][data-charge-id="${chargeId}"][data-col="${col}"]`) ?? null;
+        if (!el) return;
+        el.scrollIntoView({ block: 'center' });
+        el.focus();
       });
     };
 
@@ -94,6 +107,40 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
       focusCell(pendingCell.chargeId, pendingCell.col);
     }
   }, [isTableUp, rows]);
+
+  useEffect(() => {
+    const headerEl = document.querySelector('header');
+    const measure = () => {
+      const headerH = headerEl?.getBoundingClientRect().height ?? 0;
+      const barH = filterBarRef.current?.getBoundingClientRect().height ?? 0;
+      setStickyTopPx(Math.max(0, Math.round(headerH)));
+      setFilterBarHeightPx(Math.max(0, Math.round(barH)));
+    };
+
+    measure();
+    window.addEventListener('resize', measure);
+
+    const ro = 'ResizeObserver' in window ? new ResizeObserver(measure) : null;
+    if (ro) {
+      if (headerEl) ro.observe(headerEl);
+      if (filterBarRef.current) ro.observe(filterBarRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', measure);
+      ro?.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!flashRowId) return;
+    if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
+    flashTimerRef.current = window.setTimeout(() => setFlashRowId(null), 1400);
+    return () => {
+      if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = null;
+    };
+  }, [flashRowId]);
 
   const onGridKeyDown: KeyboardEventHandler<HTMLTableElement> = (e) => {
     if (e.key !== 'Enter') return;
@@ -153,8 +200,24 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
     dispatch({ type: 'REORDER_CHARGES', scope, orderedIds: next });
   };
 
-  const communRows = rows.filter((r) => r.scope === 'commun');
-  const persoRows = rows.filter((r) => r.scope === 'perso');
+  const visibleRows = useMemo(() => {
+    if (!filterNorm) return rows;
+    return rows.filter((r) => {
+      const hay = normalizeSearch(
+        [
+          r.name,
+          r.accountName,
+          r.destinationLabel ?? '',
+          r.scope === 'commun' ? 'commun' : 'perso',
+          r.payment === 'auto' ? 'auto' : 'manuel',
+        ].join(' '),
+      );
+      return hay.includes(filterNorm);
+    });
+  }, [filterNorm, rows]);
+
+  const communRows = visibleRows.filter((r) => r.scope === 'commun');
+  const persoRows = visibleRows.filter((r) => r.scope === 'perso');
   const communReorderIds = communRows.filter((r) => chargesById.has(r.id)).map((r) => r.id);
   const persoReorderIds = persoRows.filter((r) => chargesById.has(r.id)).map((r) => r.id);
 
@@ -164,10 +227,13 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
 	    >
 	      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
-        <div>
-          <h2 className="text-sm text-slate-300">Charges</h2>
-          <div className="mt-1 text-xl font-semibold tracking-tight">{rows.length} lignes</div>
-        </div>
+	        <div>
+	          <h2 className="text-sm text-slate-300">Charges</h2>
+	          <div className="mt-1 text-xl font-semibold tracking-tight">
+              {visibleRows.length} lignes
+              {isFiltering ? <span className="ml-2 text-sm font-medium text-slate-400">/ {rows.length}</span> : null}
+            </div>
+	        </div>
 
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
 	          <button
@@ -225,9 +291,42 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
             + Ponctuelle
           </button>
         </div>
-      </div>
+	      </div>
 
-      {isTableUp ? (
+        <div
+          ref={filterBarRef}
+          className="sticky z-20 border-b border-white/10 bg-ink-950/85 px-4 py-3 backdrop-blur max-[360px]:px-3 max-[360px]:py-2.5 sm:px-6"
+          style={{ top: stickyTopPx }}
+        >
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <input
+                className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+                placeholder="Rechercher une charge…"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                inputMode="search"
+                aria-label="Rechercher une charge"
+              />
+              {filter ? (
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-2 my-auto h-8 w-8 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-200 transition-colors hover:bg-white/10"
+                  onClick={() => setFilter('')}
+                  aria-label="Effacer la recherche"
+                >
+                  ✕
+                </button>
+              ) : null}
+            </div>
+            <div className="flex-none text-xs text-slate-400 tabular-nums">{visibleRows.length}</div>
+          </div>
+          {isFiltering ? (
+            <div className="mt-2 text-[11px] text-slate-400">Astuce: libellé, compte, destination, “commun/perso”, “auto/manuel”.</div>
+          ) : null}
+        </div>
+
+	      {isTableUp ? (
         <div className="overflow-x-auto overscroll-x-contain">
           <table ref={tableRef} onKeyDown={onGridKeyDown} className="min-w-full table-fixed border-separate border-spacing-0">
             <caption className="sr-only">
@@ -237,7 +336,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 <span className="font-mono">Alt</span>+<span className="font-mono">↑</span>/<span className="font-mono">↓</span>).
               </span>
             </caption>
-	            <thead className="sticky top-0 z-10 bg-ink-950/95">
+		            <thead className="sticky z-10 bg-ink-950/95" style={{ top: stickyTopPx + filterBarHeightPx }}>
               <tr className="text-left text-xs text-slate-400">
                 <Th className="w-[76px] sm:w-[88px]">OK</Th>
                 <Th>Libellé</Th>
@@ -247,12 +346,12 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
               </tr>
             </thead>
 	            <tbody className="text-[13px] leading-tight">
-              {rows.map((r) => {
-              const model = chargesById.get(r.id) ?? null;
-              const isMonthOnly = isMonthOnlyCharge(r.id);
-              const editable = canEdit && (Boolean(model) || isMonthOnly);
-              const canReorder = canEdit && Boolean(model);
-              const isInactive = Boolean(model && !model.active);
+	              {visibleRows.map((r) => {
+	              const model = chargesById.get(r.id) ?? null;
+	              const isMonthOnly = isMonthOnlyCharge(r.id);
+	              const editable = canEdit && (Boolean(model) || isMonthOnly);
+	              const canReorder = canEdit && Boolean(model) && !isFiltering;
+	              const isInactive = Boolean(model && !model.active);
               const monthOnlyChip = 'border-fuchsia-200/30 bg-fuchsia-400/15 text-fuchsia-50';
               const tint =
                 r.scope === 'commun'
@@ -292,15 +391,16 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                <tr
                   key={r.id}
                   data-row-id={r.id}
-                  className={cx(
-                    'border-t border-white/5 transition-colors transition-opacity duration-150',
-                    tint,
-                    paidFx,
-                    dragging?.id === r.id && 'opacity-60',
-                    dragOver?.id === r.id && dragging?.scope === r.scope
-                      ? dragOver.pos === 'before'
-                        ? 'shadow-[inset_0_2px_0_rgba(189,147,249,0.85)]'
-                        : 'shadow-[inset_0_-2px_0_rgba(189,147,249,0.85)]'
+	                  className={cx(
+	                    'border-t border-white/5 transition-colors transition-opacity duration-150',
+	                    tint,
+	                    paidFx,
+                      r.id === flashRowId && 'ring-2 ring-fuchsia-200/30 ring-inset',
+	                    dragging?.id === r.id && 'opacity-60',
+	                    dragOver?.id === r.id && dragging?.scope === r.scope
+	                      ? dragOver.pos === 'before'
+	                        ? 'shadow-[inset_0_2px_0_rgba(189,147,249,0.85)]'
+	                        : 'shadow-[inset_0_-2px_0_rgba(189,147,249,0.85)]'
                       : null,
 	                  )}
                   onDragOver={(e) => {
@@ -446,16 +546,20 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                            </span>
 		                          )}
 
-		                          {editable ? (
-		                            <select
-		                              className={cx(metaSelect, typeChip)}
-		                              value={r.scope}
-		                              onChange={(e) => updateCharge(r.id, { scope: e.target.value as ChargeScope })}
-		                              aria-label="Type"
-		                              data-grid="charges"
-		                              data-charge-id={r.id}
-		                              data-col="3"
-	                            >
+			                          {editable ? (
+			                            <select
+			                              className={cx(metaSelect, typeChip)}
+			                              value={r.scope}
+			                              onChange={(e) => {
+			                                pendingFocusCellRef.current = { chargeId: r.id, col: '3' };
+			                                setFlashRowId(r.id);
+			                                updateCharge(r.id, { scope: e.target.value as ChargeScope });
+			                              }}
+			                              aria-label="Type"
+			                              data-grid="charges"
+			                              data-charge-id={r.id}
+			                              data-col="3"
+		                            >
 	                              <option value="commun">Commun</option>
 	                              <option value="perso">Perso</option>
 	                            </select>
@@ -692,57 +796,66 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 </tr>
               );
             })}
-            {rows.length === 0 ? (
-              <tr>
-                <Td colSpan={5} className="py-10 text-center text-slate-400">
-                  Aucune charge. Ajoute une ligne pour commencer.
-                </Td>
-              </tr>
-            ) : null}
+	            {visibleRows.length === 0 ? (
+	              <tr>
+	                <Td colSpan={5} className="py-10 text-center text-slate-400">
+	                  {rows.length === 0 ? 'Aucune charge. Ajoute une ligne pour commencer.' : 'Aucun résultat.'}
+	                </Td>
+	              </tr>
+	            ) : null}
             </tbody>
           </table>
         </div>
-      ) : (
-        <div ref={mobileRef}>
-          {rows.length === 0 ? (
-            <div className="px-4 py-10 text-center text-slate-400">Aucune charge. Ajoute une ligne pour commencer.</div>
-          ) : (
-	            <div className="space-y-5 px-4 py-4 max-[360px]:space-y-4 max-[360px]:px-3 max-[360px]:py-3">
-		              {communRows.length ? (
-		                <div>
+	      ) : (
+	        <div ref={mobileRef}>
+	          {visibleRows.length === 0 ? (
+	            <div className="px-4 py-10 text-center text-slate-400">
+                {rows.length === 0 ? 'Aucune charge. Ajoute une ligne pour commencer.' : 'Aucun résultat.'}
+              </div>
+	          ) : (
+		            <div className="space-y-5 px-4 py-4 max-[360px]:space-y-4 max-[360px]:px-3 max-[360px]:py-3">
+			              {communRows.length ? (
+			                <div>
 	                  <div className="mb-2 flex items-center justify-between">
 	                    <div className="text-xs font-semibold uppercase tracking-wide text-sky-200">Commun</div>
 	                    <div className="text-xs text-slate-400">{communRows.length}</div>
 	                  </div>
-		                  <div className="space-y-3">
-		                    {communRows.map((r) => {
-                        const canReorder = chargesById.has(r.id);
-                        const reorderIdx = canReorder ? communReorderIds.indexOf(r.id) : -1;
-                        const isMonthOnly = isMonthOnlyCharge(r.id);
-                        const editable = canEdit && (canReorder || isMonthOnly);
-                        return (
-		                      <MobileCard
-		                        key={r.id}
-		                        r={r}
-	                          isMonthOnly={isMonthOnly}
-	                        canEdit={editable}
-	                        activeAccounts={activeAccounts}
-		                        pendingFocusCellRef={pendingFocusCellRef}
+			                  <div className="space-y-3">
+			                    {communRows.map((r) => {
+	                        const canReorder = chargesById.has(r.id) && !isFiltering;
+	                        const reorderIdx = canReorder ? communReorderIds.indexOf(r.id) : -1;
+	                        const isMonthOnly = isMonthOnlyCharge(r.id);
+	                        const editable = canEdit && (canReorder || isMonthOnly);
+	                        return (
+			                      <MobileCard
+			                        key={r.id}
+			                        r={r}
+                              highlight={r.id === flashRowId}
+		                          isMonthOnly={isMonthOnly}
+		                        canEdit={editable}
+		                        activeAccounts={activeAccounts}
+			                        pendingFocusCellRef={pendingFocusCellRef}
 		                        canMoveUp={canReorder && reorderIdx > 0}
 		                        canMoveDown={canReorder && reorderIdx >= 0 && reorderIdx < communReorderIds.length - 1}
 		                        onReorder={(dir) => {
-	                            if (!canReorder) return;
-		                          const targetId = dir === 'up' ? communReorderIds[reorderIdx - 1] : communReorderIds[reorderIdx + 1];
-		                          if (!targetId) return;
-		                          reorderInScope('commun', r.id, targetId, dir === 'up' ? 'before' : 'after');
+		                            if (!canReorder) return;
+			                          const targetId = dir === 'up' ? communReorderIds[reorderIdx - 1] : communReorderIds[reorderIdx + 1];
+			                          if (!targetId) return;
+			                          reorderInScope('commun', r.id, targetId, dir === 'up' ? 'before' : 'after');
+			                        }}
+		                        onTogglePaid={(paid) => dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: r.id, paid })}
+		                        onUpdate={(patch) => {
+		                          if ('scope' in patch) {
+		                            pendingFocusCellRef.current = { chargeId: r.id, col: '3' };
+		                            setFlashRowId(r.id);
+		                          }
+		                          updateCharge(r.id, patch);
 		                        }}
-	                        onTogglePaid={(paid) => dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: r.id, paid })}
-	                        onUpdate={(patch) => updateCharge(r.id, patch)}
-	                        onRemove={() => removeCharge(r.id)}
-	                      />
-                      );
-                    })}
-	                  </div>
+		                        onRemove={() => removeCharge(r.id)}
+		                      />
+	                      );
+	                    })}
+		                  </div>
 	                </div>
 	              ) : null}
 
@@ -752,35 +865,42 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                    <div className="text-xs font-semibold uppercase tracking-wide text-emerald-200">Perso</div>
 	                    <div className="text-xs text-slate-400">{persoRows.length}</div>
 	                  </div>
-		                  <div className="space-y-3">
-		                    {persoRows.map((r) => {
-                        const canReorder = chargesById.has(r.id);
-                        const reorderIdx = canReorder ? persoReorderIds.indexOf(r.id) : -1;
-                        const isMonthOnly = isMonthOnlyCharge(r.id);
-                        const editable = canEdit && (canReorder || isMonthOnly);
-                        return (
-		                      <MobileCard
-		                        key={r.id}
-		                        r={r}
-                          isMonthOnly={isMonthOnly}
-	                        canEdit={editable}
-	                        activeAccounts={activeAccounts}
-		                        pendingFocusCellRef={pendingFocusCellRef}
+			                  <div className="space-y-3">
+			                    {persoRows.map((r) => {
+	                        const canReorder = chargesById.has(r.id) && !isFiltering;
+	                        const reorderIdx = canReorder ? persoReorderIds.indexOf(r.id) : -1;
+	                        const isMonthOnly = isMonthOnlyCharge(r.id);
+	                        const editable = canEdit && (canReorder || isMonthOnly);
+	                        return (
+			                      <MobileCard
+			                        key={r.id}
+			                        r={r}
+                              highlight={r.id === flashRowId}
+		                          isMonthOnly={isMonthOnly}
+		                        canEdit={editable}
+		                        activeAccounts={activeAccounts}
+			                        pendingFocusCellRef={pendingFocusCellRef}
 		                        canMoveUp={canReorder && reorderIdx > 0}
 		                        canMoveDown={canReorder && reorderIdx >= 0 && reorderIdx < persoReorderIds.length - 1}
 		                        onReorder={(dir) => {
-	                            if (!canReorder) return;
-		                          const targetId = dir === 'up' ? persoReorderIds[reorderIdx - 1] : persoReorderIds[reorderIdx + 1];
-		                          if (!targetId) return;
-		                          reorderInScope('perso', r.id, targetId, dir === 'up' ? 'before' : 'after');
+		                            if (!canReorder) return;
+			                          const targetId = dir === 'up' ? persoReorderIds[reorderIdx - 1] : persoReorderIds[reorderIdx + 1];
+			                          if (!targetId) return;
+			                          reorderInScope('perso', r.id, targetId, dir === 'up' ? 'before' : 'after');
+			                        }}
+		                        onTogglePaid={(paid) => dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: r.id, paid })}
+		                        onUpdate={(patch) => {
+		                          if ('scope' in patch) {
+		                            pendingFocusCellRef.current = { chargeId: r.id, col: '3' };
+		                            setFlashRowId(r.id);
+		                          }
+		                          updateCharge(r.id, patch);
 		                        }}
-	                        onTogglePaid={(paid) => dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: r.id, paid })}
-	                        onUpdate={(patch) => updateCharge(r.id, patch)}
-	                        onRemove={() => removeCharge(r.id)}
-	                      />
-                      );
-                    })}
-	                  </div>
+		                        onRemove={() => removeCharge(r.id)}
+		                      />
+	                      );
+	                    })}
+		                  </div>
 	                </div>
 	              ) : null}
             </div>
@@ -799,24 +919,26 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 }
 
 function MobileCard({
-  r,
-  isMonthOnly,
-  canEdit,
-  activeAccounts,
-  pendingFocusCellRef,
-  canMoveUp,
-  canMoveDown,
-  onReorder,
-  onTogglePaid,
+	r,
+  highlight,
+	isMonthOnly,
+	canEdit,
+	activeAccounts,
+	pendingFocusCellRef,
+	canMoveUp,
+	canMoveDown,
+	onReorder,
+	onTogglePaid,
 	  onUpdate,
 	  onRemove,
-		}: {
-		  r: ReturnType<typeof chargesForMonth>[number];
+			}: {
+			  r: ReturnType<typeof chargesForMonth>[number];
+        highlight: boolean;
       isMonthOnly: boolean;
-		  canEdit: boolean;
-		  activeAccounts: Array<{ id: Charge['accountId']; name: string; active: boolean }>;
-		  pendingFocusCellRef: MutableRefObject<{ chargeId: string; col: string } | null>;
-		  canMoveUp: boolean;
+			  canEdit: boolean;
+			  activeAccounts: Array<{ id: Charge['accountId']; name: string; active: boolean }>;
+			  pendingFocusCellRef: MutableRefObject<{ chargeId: string; col: string } | null>;
+			  canMoveUp: boolean;
 	  canMoveDown: boolean;
 	  onReorder: (dir: 'up' | 'down') => void;
   onTogglePaid: (paid: boolean) => void;
@@ -858,14 +980,15 @@ function MobileCard({
   const destinationInActiveList = destinationAccountId ? activeAccounts.some((a) => a.id === destinationAccountId) : false;
   const destinationValue = destinationInActiveList ? destinationAccountId : destinationAccountId ? '__UNAVAILABLE__' : '';
 
-  return (
-    <div
-      className={cx(
-        'rounded-2xl border p-2.5 shadow-[0_12px_40px_-32px_rgba(0,0,0,0.85)] backdrop-blur',
-        tint,
-        paidFx,
-      )}
-    >
+	  return (
+	    <div
+	      className={cx(
+	        'rounded-2xl border p-2.5 shadow-[0_12px_40px_-32px_rgba(0,0,0,0.85)] backdrop-blur',
+	        tint,
+	        paidFx,
+          highlight && 'ring-2 ring-fuchsia-200/30 ring-inset',
+	      )}
+	    >
       <div className="flex items-start gap-2">
         <div className="pt-1">
           <input
