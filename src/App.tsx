@@ -4,8 +4,8 @@ import { authLogout, authMe, type AuthUser } from './lib/authApi';
 import { ymFromDate } from './lib/date';
 import { clearCachedUser, readCachedUser, writeCachedUser } from './lib/authCache';
 
-const AuthView = lazy(() => import('./ui/AuthView'));
-const AppView = lazy(() => import('./ui/AppView'));
+const AuthView = lazy(() => import('./ui/AuthView').then((m) => ({ default: m.AuthView })));
+const AppView = lazy(() => import('./ui/AppView').then((m) => ({ default: m.AppView })));
 
 export default function App() {
   const initialYm = ymFromDate(new Date());
