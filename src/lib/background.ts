@@ -29,17 +29,15 @@ function buildTarget(w: number, h: number, seed: string) {
   return { url: apiUrl, css: `url("${apiUrl}")` };
 }
 
-type SessionBgV1 = {
-  v: 1;
-  css: string;
-  savedAt: number;
-};
+type SessionBgV1 = { v: 1; css: string; savedAt: number };
+type SessionBgV2 = { v: 2; url: string; savedAt: number };
 
 let currentCss: string | null = null;
+let currentObjectUrl: string | null = null;
 let activeLoadId = 0;
 let pendingLoadId: number | null = null;
 let autoRotateTimer: number | null = null;
-let overlayTimer: number | null = null;
+let activeAbort: AbortController | null = null;
 
 function waitMs(ms: number) {
   return new Promise<void>((resolve) => {
@@ -55,23 +53,35 @@ function prefersReducedMotion() {
   }
 }
 
-function readSessionSaved(): SessionBgV1 | null {
+function extractUrlFromCss(css: string) {
+  const m = css.match(/url\(\s*(['"]?)(.*?)\1\s*\)/i);
+  const raw = m?.[2]?.trim() ?? '';
+  return raw ? raw : null;
+}
+
+function readSessionSaved(): { url: string; savedAt: number } | null {
   try {
     const raw = window.sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<SessionBgV1>;
-    if (!parsed || parsed.v !== 1) return null;
-    if (typeof parsed.css !== 'string' || !parsed.css) return null;
-    return { v: 1, css: parsed.css, savedAt: typeof parsed.savedAt === 'number' ? parsed.savedAt : 0 };
+    const parsed = JSON.parse(raw) as Partial<SessionBgV1 & SessionBgV2>;
+    if (!parsed) return null;
+    const savedAt = typeof parsed.savedAt === 'number' ? parsed.savedAt : 0;
+    if (parsed.v === 2 && typeof parsed.url === 'string' && parsed.url) return { url: parsed.url, savedAt };
+    if (parsed.v === 1 && typeof parsed.css === 'string' && parsed.css) {
+      const url = extractUrlFromCss(parsed.css);
+      if (!url) return null;
+      return { url, savedAt };
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
-function saveSession(css: string) {
+function saveSession(url: string) {
   try {
     const now = Date.now();
-    const next: SessionBgV1 = { v: 1, css, savedAt: now };
+    const next: SessionBgV2 = { v: 2, url, savedAt: now };
     window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
   } catch {
     // ignore (private mode / quota)
@@ -83,6 +93,11 @@ function setBaseBackground(css: string) {
   if (!root) return;
 
   const next = css.trim() || FALLBACK_CSS;
+  const nextUrl = extractUrlFromCss(next);
+  if (currentObjectUrl && nextUrl !== currentObjectUrl) {
+    URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = null;
+  }
   currentCss = next;
   root.style.setProperty('--bg-image', next);
   root.style.setProperty('--bg-overlay-opacity', '0');
@@ -117,7 +132,19 @@ async function preloadImage(url: string) {
   });
 }
 
-async function loadAndSwap(css: string, url: string) {
+async function fetchAsObjectUrl(url: string, signal: AbortSignal) {
+  try {
+    const res = await fetch(url, { method: 'GET', signal });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    if (!blob || !String(blob.type || '').toLowerCase().startsWith('image/')) return null;
+    return URL.createObjectURL(blob);
+  } catch {
+    return null;
+  }
+}
+
+async function loadAndSwap(sourceUrl: string) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
   if (!root) return;
@@ -126,58 +153,87 @@ async function loadAndSwap(css: string, url: string) {
   const loadId = ++activeLoadId;
   pendingLoadId = loadId;
 
-  if (overlayTimer) {
-    window.clearTimeout(overlayTimer);
-    overlayTimer = null;
-  }
+  if (activeAbort) activeAbort.abort();
+  const controller = new AbortController();
+  activeAbort = controller;
 
   if (!reduced) {
     root.style.setProperty('--bg-overlay-opacity', '1');
     await waitMs(OVERLAY_FADE_MS + OVERLAY_SETTLE_MS);
     if (loadId !== activeLoadId) {
       if (pendingLoadId === loadId) pendingLoadId = null;
+      if (activeAbort === controller) activeAbort = null;
       return;
     }
   }
 
-  const ok = await preloadImage(url);
+  const objectUrl = await fetchAsObjectUrl(sourceUrl, controller.signal);
   if (loadId !== activeLoadId) {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
     if (pendingLoadId === loadId) pendingLoadId = null;
+    if (activeAbort === controller) activeAbort = null;
+    return;
+  }
+
+  if (!objectUrl) {
+    if (!currentCss) setBaseBackground(FALLBACK_CSS);
+    if (!reduced) root.style.setProperty('--bg-overlay-opacity', '0');
+    if (pendingLoadId === loadId) pendingLoadId = null;
+    if (activeAbort === controller) activeAbort = null;
+    return;
+  }
+
+  const ok = await preloadImage(objectUrl);
+  if (loadId !== activeLoadId) {
+    URL.revokeObjectURL(objectUrl);
+    if (pendingLoadId === loadId) pendingLoadId = null;
+    if (activeAbort === controller) activeAbort = null;
     return;
   }
 
   if (!ok) {
+    URL.revokeObjectURL(objectUrl);
     if (!currentCss) setBaseBackground(FALLBACK_CSS);
     if (!reduced) root.style.setProperty('--bg-overlay-opacity', '0');
     if (pendingLoadId === loadId) pendingLoadId = null;
+    if (activeAbort === controller) activeAbort = null;
     return;
   }
+
+  const displayCss = `url("${objectUrl}")`;
 
   if (reduced) {
-    setBaseBackground(css);
-    saveSession(css);
+    const prevObjectUrl = currentObjectUrl;
+    currentObjectUrl = objectUrl;
+    setBaseBackground(displayCss);
+    saveSession(sourceUrl);
+    if (prevObjectUrl && prevObjectUrl !== objectUrl) URL.revokeObjectURL(prevObjectUrl);
     if (pendingLoadId === loadId) pendingLoadId = null;
+    if (activeAbort === controller) activeAbort = null;
     return;
   }
 
-  root.style.setProperty('--bg-image', css);
+  root.style.setProperty('--bg-image', displayCss);
   window.requestAnimationFrame(() => {
-    if (loadId !== activeLoadId) {
-      if (pendingLoadId === loadId) pendingLoadId = null;
-      return;
-    }
+    if (loadId !== activeLoadId) return;
     root.style.setProperty('--bg-overlay-opacity', '0');
   });
 
   await waitMs(OVERLAY_FADE_MS + OVERLAY_SETTLE_MS);
   if (loadId !== activeLoadId) {
+    URL.revokeObjectURL(objectUrl);
     if (pendingLoadId === loadId) pendingLoadId = null;
+    if (activeAbort === controller) activeAbort = null;
     return;
   }
-  currentCss = css;
-  saveSession(css);
-  overlayTimer = null;
+
+  const prevObjectUrl = currentObjectUrl;
+  currentObjectUrl = objectUrl;
+  currentCss = displayCss;
+  saveSession(sourceUrl);
+  if (prevObjectUrl && prevObjectUrl !== objectUrl) URL.revokeObjectURL(prevObjectUrl);
   if (pendingLoadId === loadId) pendingLoadId = null;
+  if (activeAbort === controller) activeAbort = null;
 }
 
 export function initDynamicBackground(options?: { force?: boolean }) {
@@ -186,21 +242,26 @@ export function initDynamicBackground(options?: { force?: boolean }) {
   if (pendingLoadId) return;
 
   const session = readSessionSaved();
-  if (!options?.force && session?.css) {
-    if (!currentCss || currentCss !== session.css) {
-      setBaseBackground(session.css);
-    }
+  if (!options?.force && session?.url) {
+    loadAndSwap(session.url).catch(() => {
+      if (currentCss) {
+        setBaseBackground(currentCss);
+      } else {
+        setBaseBackground(FALLBACK_CSS);
+        saveSession(LOCAL_FALLBACK_URL);
+      }
+    });
     return;
   }
 
   const { w, h } = computeSize();
-  const { css, url } = buildTarget(w, h, newSeed());
-  loadAndSwap(css, url).catch(() => {
+  const { url } = buildTarget(w, h, newSeed());
+  loadAndSwap(url).catch(() => {
     if (currentCss) {
       setBaseBackground(currentCss);
     } else {
       setBaseBackground(FALLBACK_CSS);
-      saveSession(FALLBACK_CSS);
+      saveSession(LOCAL_FALLBACK_URL);
     }
   });
 }
