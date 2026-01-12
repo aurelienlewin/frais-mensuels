@@ -473,7 +473,7 @@ export function AppView({
 	
               <details
                 ref={menuRef}
-                className="absolute right-[calc(1rem_+_env(safe-area-inset-right))] top-2 sm:relative sm:right-auto sm:top-auto"
+                className="relative ml-auto flex-shrink-0 sm:ml-0"
                 onKeyDown={(e) => {
                   if (e.key !== 'Escape') return;
                   menuRef.current?.removeAttribute('open');
