@@ -319,7 +319,7 @@ export function AppView({
         Aller au contenu
       </a>
       <header className="sticky top-0 z-10 border-b border-white/15 bg-ink-950/95 pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto max-w-6xl py-2 max-[360px]:py-1.5 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
+        <div className="relative mx-auto max-w-6xl py-2 max-[360px]:py-1.5 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
           <div className="sr-only" aria-live="polite">
             {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
           </div>
@@ -471,9 +471,9 @@ export function AppView({
 	              ))}
 		              </select>
 	
-	              <details
-	                ref={menuRef}
-	                className="relative"
+              <details
+                ref={menuRef}
+                className="absolute right-[calc(1rem_+_env(safe-area-inset-right))] top-2 sm:relative sm:right-auto sm:top-auto"
                 onKeyDown={(e) => {
                   if (e.key !== 'Escape') return;
                   menuRef.current?.removeAttribute('open');
@@ -482,13 +482,26 @@ export function AppView({
               >
                 <summary
                   aria-label="Menu"
-                  className="list-none rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs"
+                  className="list-none rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs inline-flex items-center justify-center"
                   data-tour="menu"
                 >
-                  ⋯
+                  <svg
+                    viewBox="0 0 24 24"
+                    role="img"
+                    aria-hidden="true"
+                    className="h-5 w-5 text-slate-100"
+                  >
+                    <path
+                      d="M4 7.5h16M4 12h16M4 16.5h16"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
 	                </summary>
                 <div
-                  className="absolute left-1/2 right-auto z-20 mt-2 w-[min(320px,calc(100vw-1.5rem))] -translate-x-1/2 rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)] sm:left-auto sm:right-0 sm:translate-x-0 sm:w-[280px]"
+                  className="absolute right-0 z-20 mt-2 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)] sm:left-auto sm:right-0 sm:translate-x-0 sm:w-[280px]"
                   style={{ maxWidth: 'calc(100vw - 1.5rem)' }}
                 >
 		                  <div className="px-3 py-2 text-xs text-slate-400">
