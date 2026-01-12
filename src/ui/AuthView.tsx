@@ -219,7 +219,7 @@ export function AuthView({
                 <label className="grid gap-2">
                   <div className="text-xs text-slate-400">Email</div>
                   <input
-                    className="h-11 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+                    className="h-11 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
                     type="email"
                     inputMode="email"
                     autoComplete="email"
@@ -233,7 +233,7 @@ export function AuthView({
                   <label className="grid gap-2">
                     <div className="text-xs text-slate-400">Mot de passe</div>
                     <input
-                      className="h-11 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+                      className="h-11 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
                       type="password"
                       autoComplete="current-password"
                       value={password}
@@ -250,7 +250,7 @@ export function AuthView({
                     <label className="grid gap-2">
                       <div className="text-xs text-slate-400">Mot de passe</div>
                       <input
-                        className="h-11 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+                        className="h-11 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
                         type="password"
                         autoComplete="new-password"
                         value={password}
@@ -269,7 +269,7 @@ export function AuthView({
                     <label className="grid gap-2">
                       <div className="text-xs text-slate-400">Recovery code</div>
                       <input
-                        className="h-11 w-full rounded-2xl border border-white/15 bg-white/7 px-4 font-mono text-[13px] text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+                        className="h-11 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 font-mono text-[13px] text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
                         value={recoveryCode}
                         onChange={(e) => setRecoveryCode(e.target.value)}
                         placeholder="Colle ton code"
@@ -278,7 +278,7 @@ export function AuthView({
                     <label className="grid gap-2">
                       <div className="text-xs text-slate-400">Nouveau mot de passe</div>
                       <input
-                        className="h-11 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+                        className="h-11 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
                         type="password"
                         autoComplete="new-password"
                         value={password2}

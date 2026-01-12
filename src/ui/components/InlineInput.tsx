@@ -26,7 +26,7 @@ type InlineTextInputProps = BaseProps & {
 };
 
 const DEFAULT_TEXT_INPUT_CLASS =
-  'h-9 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-white/15 focus:bg-white/10';
+  'h-9 w-full rounded-xl border border-white/10 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none ring-0 placeholder:text-slate-400 focus:border-white/15 focus:bg-ink-950/45';
 
 export function InlineTextInput({
   value,
@@ -131,7 +131,7 @@ export function InlineNumberInput({
       <input
         {...inputProps}
         className={cx(
-          'h-9 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-white/15 focus:bg-white/10',
+          'h-9 w-full rounded-xl border border-white/10 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none ring-0 placeholder:text-slate-400 focus:border-white/15 focus:bg-ink-950/45',
           suffix && 'pr-9',
           disabled && 'opacity-60',
           inputClassName,

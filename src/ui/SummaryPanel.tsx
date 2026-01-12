@@ -90,11 +90,11 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         <label className="grid gap-1">
           <div className="text-xs text-slate-400">Salaire</div>
           <div className="relative">
-            <input
-              className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10 sm:text-sm"
-              type="text"
-              inputMode="decimal"
-              value={salaryDraft}
+		            <input
+		              className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45 sm:text-sm"
+		              type="text"
+		              inputMode="decimal"
+		              value={salaryDraft}
               onChange={(e) => {
                 setSalaryDraft(e.target.value);
                 setSalaryEditing(true);
@@ -257,8 +257,8 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       <div className="rounded-2xl border border-white/10 bg-ink-950/35 p-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ajouter un compte</div>
         <div className="mt-2 grid gap-2">
-          <input
-            className="h-8 w-full rounded-xl border border-white/15 bg-white/7 px-3 text-[13px] font-semibold text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+	          <input
+            className="h-8 w-full rounded-xl border border-white/15 bg-ink-950/35 px-3 text-[13px] font-semibold text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
             placeholder="ex: BOURSO_PERSO"
             value={addDraft.rawId}
             onChange={(e) => setAddDraft((s) => ({ ...s, rawId: e.target.value }))}
@@ -308,7 +308,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                     ariaLabel={`Nom du compte: ${a.id}`}
                     value={a.name}
                     disabled={false}
-                    className="h-8 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-[13px] font-semibold text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-white/15 focus:bg-white/10"
+	                    className="h-8 w-full rounded-xl border border-white/10 bg-ink-950/35 px-3 text-[13px] font-semibold text-slate-100 outline-none ring-0 placeholder:text-slate-400 focus:border-white/15 focus:bg-ink-950/45"
                     onCommit={(name) => {
                       const nextName = name.trim() || a.id;
                       if (nextName === a.name) return;

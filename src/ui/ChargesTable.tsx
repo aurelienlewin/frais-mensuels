@@ -270,7 +270,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
             <div className="mt-3 flex items-center gap-2">
               <div className="relative min-w-0 flex-1">
                 <input
-                  className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+                  className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
                   placeholder="Filtrer… (libellé, compte, destination)"
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
@@ -463,7 +463,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                        value={r.name}
 	                        disabled={!editable}
 		                        className={cx(
-		                          'h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10',
+		                          'h-8 w-full rounded-lg border border-white/10 bg-ink-950/35 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-ink-950/45',
 		                          r.paid && 'line-through decoration-white/25',
 		                        )}
 		                        onCommit={(name) => updateCharge(r.id, { name })}
@@ -632,7 +632,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                                  value={r.destination.text}
 		                                  placeholder="Destination…"
 		                                  disabled={!editable}
-		                                  className="h-7 w-full min-w-0 rounded-lg border border-white/15 bg-ink-950/35 px-2 text-[11px] font-medium text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-white/25 focus:bg-ink-950/45"
+		                                  className="h-7 w-full min-w-0 rounded-lg border border-white/15 bg-ink-950/35 px-2 text-[11px] font-medium text-slate-100 outline-none ring-0 placeholder:text-slate-400 focus:border-white/25 focus:bg-ink-950/45"
 		                                  onCommit={(text) => {
 		                                    const next = text.trim();
 		                                    updateCharge(r.id, { destination: next ? { kind: 'text', text: next } : null });
@@ -983,7 +983,7 @@ function MobileCard({
               value={r.name}
               disabled={!canEdit}
               className={cx(
-                'h-9 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 text-[14px] font-semibold text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10',
+                'h-9 min-w-0 flex-1 rounded-xl border border-white/10 bg-ink-950/35 px-3 text-[14px] font-semibold text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-ink-950/45',
                 r.paid && 'line-through decoration-white/25',
               )}
               onCommit={(name) => onUpdate({ name })}
@@ -1174,7 +1174,7 @@ function MobileCard({
                       value={r.destination.text}
                       placeholder="Destination…"
                       disabled={!canEdit}
-                      className="h-10 min-w-0 flex-1 rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[13px] font-medium text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-white/25 focus:bg-ink-950/45"
+                      className="h-10 min-w-0 flex-1 rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[13px] font-medium text-slate-100 outline-none ring-0 placeholder:text-slate-400 focus:border-white/25 focus:bg-ink-950/45"
                       onCommit={(text) => {
                         const next = text.trim();
                         onUpdate({ destination: next ? { kind: 'text', text: next } : null });

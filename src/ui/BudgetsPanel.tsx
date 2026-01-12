@@ -78,7 +78,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
 
       <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_140px]">
         <input
-          className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+          className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
           placeholder="ex: Budget perso"
           value={name}
           disabled={disabled}
@@ -87,7 +87,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
         />
         <div className="relative">
           <input
-            className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 pr-10 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10 sm:text-sm"
+            className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 pr-10 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45 sm:text-sm"
             placeholder="0"
             inputMode="decimal"
             type="text"
@@ -264,22 +264,6 @@ function BudgetCard({
             <div>Reste</div>
             <div className={cx('tabular-nums', over ? 'text-rose-200' : 'text-emerald-200')}>{formatEUR(budget.remainingCents)}</div>
           </div>
-          {canDelete ? (
-            <button
-              type="button"
-              className="mt-3 h-9 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-xs font-semibold text-rose-100 transition-colors hover:bg-rose-400/15"
-              onClick={() => {
-                if (!model) return;
-                const ok = window.confirm(
-                  `Supprimer cette enveloppe ? Elle restera visible dans les mois précédents, mais sera supprimée à partir de ${ym}.`,
-                );
-                if (!ok) return;
-                dispatch({ type: 'REMOVE_BUDGET', ym, budgetId: model.id });
-              }}
-            >
-              Supprimer
-            </button>
-          ) : null}
         </div>
       </div>
 
@@ -289,7 +273,7 @@ function BudgetCard({
         <div className="mt-3 grid gap-2 rounded-2xl border border-white/15 bg-ink-950/45 p-3">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
             <input
-              className="h-9 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
               type="date"
               value={date}
               min={minDate}
@@ -299,7 +283,7 @@ function BudgetCard({
               aria-label="Date"
             />
             <input
-              className="h-9 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
               placeholder={defaultLabelPlaceholder}
               value={label}
               disabled={!canEdit}
@@ -307,7 +291,7 @@ function BudgetCard({
               aria-label="Libellé"
             />
             <input
-              className="h-9 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
               placeholder="10"
               inputMode="decimal"
               type="text"
@@ -354,7 +338,7 @@ function BudgetCard({
                     value={e.date}
                     type="date"
                     disabled={!canEdit}
-                    className="h-8 min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-2 text-[12px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10 max-[360px]:text-[11px]"
+                    className="h-8 min-w-0 flex-1 rounded-lg border border-white/10 bg-ink-950/35 px-2 text-[12px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-ink-950/45 max-[360px]:text-[11px]"
                     inputProps={{ min: minDate, max: maxDate }}
                     onCommit={(next) => {
                       if (!next || next === e.date) return;
@@ -386,7 +370,7 @@ function BudgetCard({
                       ariaLabel="Libellé de dépense"
                       value={e.label}
                       disabled={!canEdit}
-                      className="h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10"
+                      className="h-8 w-full rounded-lg border border-white/10 bg-ink-950/35 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-ink-950/45"
                       onCommit={(next) => {
                         const clean = next.trim();
                         if (!clean || clean === e.label) return;
@@ -451,7 +435,7 @@ function BudgetCard({
                         value={e.date}
                         type="date"
                         disabled={!canEdit}
-                        className="h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10"
+                        className="h-8 w-full rounded-lg border border-white/10 bg-ink-950/35 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-ink-950/45"
                         inputProps={{ min: minDate, max: maxDate }}
                         onCommit={(next) => {
                           if (!next || next === e.date) return;
@@ -469,7 +453,7 @@ function BudgetCard({
                         ariaLabel="Libellé de dépense"
                         value={e.label}
                         disabled={!canEdit}
-                        className="h-8 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-white/10"
+                        className="h-8 w-full rounded-lg border border-white/10 bg-ink-950/35 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-ink-950/45"
                         onCommit={(next) => {
                           const clean = next.trim();
                           if (!clean || clean === e.label) return;
@@ -534,6 +518,25 @@ function BudgetCard({
           </table>
         </div>
       </div>
+
+      {canDelete ? (
+        <div className="mt-6 flex justify-end">
+          <button
+            type="button"
+            className="h-9 rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-xs font-semibold text-rose-100 transition-colors hover:bg-rose-400/15"
+            onClick={() => {
+              if (!model) return;
+              const ok = window.confirm(
+                `Supprimer cette enveloppe ? Elle restera visible dans les mois précédents, mais sera supprimée à partir de ${ym}.`,
+              );
+              if (!ok) return;
+              dispatch({ type: 'REMOVE_BUDGET', ym, budgetId: model.id });
+            }}
+          >
+            Supprimer l’enveloppe
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
