@@ -664,7 +664,9 @@ export function AppView({
                   <button
                     className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-rose-400/10"
                     onClick={() => {
-                      const ok = window.confirm("Réinitialiser l'app (données d'exemple) ?");
+                      const ok = window.confirm(
+                        "Réinitialiser avec les données d'exemple ?\n\nAttention : toutes tes saisies actuelles (charges, budgets, dépenses) seront supprimées."
+                      );
                       if (!ok) return;
                       reset();
                       menuRef.current?.removeAttribute('open');
