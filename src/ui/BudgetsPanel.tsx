@@ -169,6 +169,7 @@ function BudgetCard({
   }, [ym]);
 
   const canEdit = !archived && Boolean(model);
+  const canDelete = !archived && Boolean(model?.active);
   const ratio = budget.amountCents > 0 ? Math.min(1, Math.max(0, budget.spentCents / budget.amountCents)) : 0;
   const over = budget.remainingCents < 0;
 
@@ -192,7 +193,14 @@ function BudgetCard({
             onCommit={(name) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { name } })}
           />
           <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-400 max-[360px]:flex-col max-[360px]:items-start max-[360px]:justify-start max-[360px]:gap-1">
-            <div className="min-w-0 flex-1 truncate max-[360px]:w-full">{budget.accountName}</div>
+            <div className="flex min-w-0 flex-1 items-center gap-2 truncate max-[360px]:w-full">
+              <div className="min-w-0 flex-1 truncate">{budget.accountName}</div>
+              {model && !model.active ? (
+                <span className="inline-flex h-6 flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
+                  supprimée
+                </span>
+              ) : null}
+            </div>
             <div className={cx('tabular-nums whitespace-nowrap max-[360px]:self-end', over ? 'text-rose-200' : 'text-slate-300')}>
               {formatEUR(budget.spentCents)} / {formatEUR(budget.amountCents)}
             </div>
@@ -227,6 +235,22 @@ function BudgetCard({
             <div>Reste</div>
             <div className={cx('tabular-nums', over ? 'text-rose-200' : 'text-emerald-200')}>{formatEUR(budget.remainingCents)}</div>
           </div>
+          {canDelete ? (
+            <button
+              type="button"
+              className="mt-3 h-9 w-full rounded-2xl border border-white/15 bg-white/7 px-4 text-xs font-semibold text-rose-100 transition-colors hover:bg-rose-400/15"
+              onClick={() => {
+                if (!model) return;
+                const ok = window.confirm(
+                  `Supprimer cette enveloppe ? Elle restera visible dans les mois précédents, mais sera supprimée à partir de ${ym}.`,
+                );
+                if (!ok) return;
+                dispatch({ type: 'REMOVE_BUDGET', ym, budgetId: model.id });
+              }}
+            >
+              Supprimer
+            </button>
+          ) : null}
         </div>
       </div>
 

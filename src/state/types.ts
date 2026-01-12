@@ -39,6 +39,7 @@ export type Budget = {
   name: string;
   amountCents: number;
   accountId: AccountId;
+  inactiveFromYm?: YM;
   active: boolean;
 };
 

@@ -21,7 +21,7 @@ export type Action =
   | { type: 'REMOVE_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expenseId: string }
   | { type: 'ADD_BUDGET'; budget: Omit<Budget, 'id'> }
   | { type: 'UPDATE_BUDGET'; budgetId: string; patch: Partial<Omit<Budget, 'id'>> }
-  | { type: 'REMOVE_BUDGET'; budgetId: string }
+  | { type: 'REMOVE_BUDGET'; ym: MonthData['ym']; budgetId: string }
   | { type: 'ADD_CHARGE'; charge: Omit<Charge, 'id' | 'sortOrder'> }
   | { type: 'UPDATE_CHARGE'; chargeId: string; patch: Partial<Omit<Charge, 'id'>> }
   | { type: 'REORDER_CHARGES'; scope: Charge['scope']; orderedIds: string[] }
@@ -313,7 +313,7 @@ export function reducer(state: AppState, action: Action): AppState {
       case 'REMOVE_BUDGET':
         return {
           ...state,
-          budgets: state.budgets.map((b) => (b.id === action.budgetId ? { ...b, active: false } : b)),
+          budgets: state.budgets.map((b) => (b.id === action.budgetId ? { ...b, active: false, inactiveFromYm: action.ym } : b)),
         };
       case 'ADD_CHARGE':
         return {

@@ -3,6 +3,7 @@ import type {
   Account,
   AccountId,
   AppState,
+  Budget,
   BudgetExpense,
   ChargeDestination,
   ChargePayment,
@@ -117,7 +118,12 @@ export function chargesForMonth(state: AppState, ym: YM): ChargeResolved[] {
   for (const id of ids) {
     const { paid, snap } = resolveSnapshot(state, ym, id);
     if (!snap) continue;
-    const splitPercent = snap.scope === 'commun' ? 50 : 100;
+    const splitPercent =
+      snap.scope === 'commun'
+        ? typeof snap.splitPercent === 'number' && Number.isFinite(snap.splitPercent)
+          ? Math.max(0, Math.min(100, Math.round(snap.splitPercent)))
+          : 50
+        : 100;
     const myShareCents = snap.scope === 'commun' ? Math.round((snap.amountCents * splitPercent) / 100) : snap.amountCents;
     const accName = accounts.get(snap.accountId)?.name ?? snap.accountId;
     const sortOrder = typeof (snap as { sortOrder?: unknown }).sortOrder === 'number' ? snap.sortOrder : 9999;
@@ -183,8 +189,23 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       if (st.snapshot) ids.push(id);
     }
   } else {
+    const enabledForMonth = (b: Budget) => {
+      if (b.active) return true;
+      const inactiveFromYm = b.inactiveFromYm;
+      return typeof inactiveFromYm === 'string' ? ym < inactiveFromYm : false;
+    };
+
     for (const b of state.budgets) {
-      if (b.active) ids.push(b.id);
+      if (enabledForMonth(b)) ids.push(b.id);
+    }
+
+    // Keep month expenses visible even if envelope got deleted later.
+    if (month) {
+      for (const [id, st] of Object.entries(month.budgets)) {
+        const hasExpenses = Boolean(st.expenses?.length);
+        if (!hasExpenses) continue;
+        if (!ids.includes(id)) ids.push(id);
+      }
     }
   }
 
@@ -260,8 +281,9 @@ export function totalsByAccount(state: AppState, ym: YM) {
   for (const r of rows) {
     const key: AccountId = r.destination?.kind === 'account' ? r.destination.accountId : r.accountId;
     const prev = byAccount.get(key) ?? { totalCents: 0, paidCents: 0 };
-    prev.totalCents += r.amountCents;
-    if (r.paid) prev.paidCents += r.amountCents;
+    const mineCents = r.scope === 'commun' ? r.myShareCents : r.amountCents;
+    prev.totalCents += mineCents;
+    if (r.paid) prev.paidCents += mineCents;
     byAccount.set(key, prev);
   }
 
