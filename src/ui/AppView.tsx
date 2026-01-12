@@ -394,6 +394,21 @@ export function AppView({
             </div>
 
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 max-[360px]:w-full sm:gap-2">
+              <div className="flex min-w-0 items-center gap-1.5 truncate sm:hidden">
+                <div className="min-w-0 truncate text-xs font-semibold text-slate-200">{monthLabelFr(ym)}</div>
+                <button
+                  type="button"
+                  className="flex flex-none items-center gap-1.5 rounded-full border border-white/15 bg-white/7 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10"
+                  onClick={() => setMonthsNavOpen((v) => !v)}
+                  aria-expanded={monthsNavOpen}
+                  aria-controls="month-nav"
+                >
+                  <span>{monthsNavOpen ? 'Masquer' : 'Mois'}</span>
+                  <span aria-hidden="true" className="text-[11px]">
+                    {monthsNavOpen ? '▴' : '▾'}
+                  </span>
+                </button>
+              </div>
               <button
                 className="rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs"
                 onClick={() => setYm(todayYm)}
@@ -666,22 +681,6 @@ export function AppView({
                 {archived ? 'Réouvrir' : 'Archiver'}
               </button>
             </div>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between gap-2 sm:hidden">
-            <div className="min-w-0 truncate text-xs font-semibold text-slate-200">{monthLabelFr(ym)}</div>
-            <button
-              type="button"
-              className="flex flex-none items-center gap-1.5 rounded-full border border-white/15 bg-white/7 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10"
-              onClick={() => setMonthsNavOpen((v) => !v)}
-              aria-expanded={monthsNavOpen}
-              aria-controls="month-nav"
-            >
-              <span>{monthsNavOpen ? 'Masquer' : 'Mois'}</span>
-              <span aria-hidden="true" className="text-[11px]">
-                {monthsNavOpen ? '▴' : '▾'}
-              </span>
-            </button>
           </div>
 
           <nav
