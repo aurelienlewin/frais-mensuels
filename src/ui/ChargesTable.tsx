@@ -24,7 +24,6 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const monthChargeStateById = state.months[ym]?.charges ?? {};
   const tableRef = useRef<HTMLTableElement | null>(null);
   const mobileRef = useRef<HTMLDivElement | null>(null);
-  const toolbarRef = useRef<HTMLDivElement | null>(null);
   const [isTableUp, setIsTableUp] = useState<boolean>(() => {
     try {
       return window.matchMedia('(min-width: 768px)').matches;
@@ -40,8 +39,6 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const [filter, setFilter] = useState('');
   const filterNorm = useMemo(() => normalizeSearch(filter.trim()), [filter]);
   const isFiltering = filterNorm.length > 0;
-  const [stickyTopPx, setStickyTopPx] = useState(0);
-  const [toolbarHeightPx, setToolbarHeightPx] = useState(0);
   const [flashRowId, setFlashRowId] = useState<string | null>(null);
   const flashTimerRef = useRef<number | null>(null);
 
@@ -107,30 +104,6 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
       focusCell(pendingCell.chargeId, pendingCell.col);
     }
   }, [isTableUp, rows]);
-
-  useEffect(() => {
-    const headerEl = document.querySelector('[data-app-header]');
-    const measure = () => {
-      const headerH = headerEl?.getBoundingClientRect().height ?? 0;
-      const barH = toolbarRef.current?.getBoundingClientRect().height ?? 0;
-      setStickyTopPx(Math.max(0, Math.round(headerH)));
-      setToolbarHeightPx(Math.max(0, Math.round(barH)));
-    };
-
-    measure();
-    window.addEventListener('resize', measure);
-
-    const ro = 'ResizeObserver' in window ? new ResizeObserver(measure) : null;
-    if (ro) {
-      if (headerEl) ro.observe(headerEl);
-      if (toolbarRef.current) ro.observe(toolbarRef.current);
-    }
-
-    return () => {
-      window.removeEventListener('resize', measure);
-      ro?.disconnect();
-    };
-  }, []);
 
   useEffect(() => {
     if (!flashRowId) return;
@@ -221,16 +194,12 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const communReorderIds = communRows.filter((r) => chargesById.has(r.id)).map((r) => r.id);
   const persoReorderIds = persoRows.filter((r) => chargesById.has(r.id)).map((r) => r.id);
 
-		  return (
-		    <section
-		      data-tour="charges"
-		      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
-		    >
-          <div
-            ref={toolbarRef}
-            className="sticky z-20 border-b border-white/15 bg-ink-950/92 px-4 py-4 backdrop-blur max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5"
-            style={{ top: stickyTopPx }}
-          >
+			  return (
+			    <section
+			      data-tour="charges"
+			      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
+			    >
+          <div className="border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm text-slate-300">Charges</h2>
@@ -336,7 +305,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 <span className="font-mono">Alt</span>+<span className="font-mono">↑</span>/<span className="font-mono">↓</span>).
               </span>
             </caption>
-		            <thead className="sticky z-10 bg-ink-950/95" style={{ top: stickyTopPx + toolbarHeightPx }}>
+			            <thead className="bg-ink-950/95">
               <tr className="text-left text-xs text-slate-400">
                 <Th className="w-[76px] sm:w-[88px]">OK</Th>
                 <Th>Libellé</Th>
