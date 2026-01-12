@@ -319,22 +319,22 @@ export function AppView({
         Aller au contenu
       </a>
       <header className="sticky top-0 z-10 border-b border-white/15 bg-ink-950/95 pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto max-w-6xl py-3 max-[360px]:py-2 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
+        <div className="mx-auto max-w-6xl py-2 max-[360px]:py-1.5 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
           <div className="sr-only" aria-live="polite">
             {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
           </div>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex min-w-0 flex-wrap items-center gap-3">
-              <div className="group relative flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl border border-white/12 bg-white/5 px-3 py-2 shadow-[0_12px_55px_-28px_rgba(0,0,0,0.85)]">
+              <div className="group relative flex min-w-0 items-center gap-2.5 overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-2.5 py-1.5 shadow-[0_12px_55px_-28px_rgba(0,0,0,0.85)] sm:gap-3 sm:px-3 sm:py-2">
                 <div className="relative">
                   <div
                     className="pointer-events-none absolute -inset-4 -z-10 bg-[conic-gradient(at_30%_30%,rgba(16,185,129,0.35),rgba(56,189,248,0.4),rgba(236,72,153,0.4),rgba(16,185,129,0.35))] opacity-80 blur-2xl transition duration-700 group-hover:scale-110 group-hover:opacity-100"
                     aria-hidden="true"
                   />
-                  <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-ink-950 ring-1 ring-white/15">
+                  <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-ink-950 ring-1 ring-white/15 sm:h-12 sm:w-12">
                     <div className="absolute inset-px rounded-[14px] bg-gradient-to-br from-white/10 via-white/5 to-white/0" />
                     <svg
-                      className="relative h-9 w-9 text-white drop-shadow-[0_12px_34px_rgba(0,0,0,0.45)]"
+                      className="relative h-8 w-8 text-white drop-shadow-[0_12px_34px_rgba(0,0,0,0.45)] sm:h-9 sm:w-9"
                       viewBox="0 0 64 64"
                       fill="none"
                       role="img"
@@ -373,17 +373,17 @@ export function AppView({
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] uppercase tracking-[0.32em] text-slate-400">Tableau privé</div>
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <h1 className="text-lg font-semibold leading-tight tracking-tight text-slate-50">
+                  <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-[11px] sm:tracking-[0.32em]">Tableau privé</div>
+                  <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+                    <h1 className="text-base font-semibold leading-tight tracking-tight text-slate-50 sm:text-lg">
                       <span className="bg-gradient-to-r from-cyan-200 via-fuchsia-200 to-amber-200 bg-clip-text text-transparent">Frais</span>{' '}
                       mensuels
                     </h1>
-                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-100/90 shadow-[0_10px_28px_-18px_rgba(16,185,129,0.9)]">
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100/90 shadow-[0_10px_28px_-18px_rgba(16,185,129,0.9)] sm:px-2.5 sm:py-1 sm:text-[11px] sm:tracking-[0.18em]">
                       Actif
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">Synthèse perso + coloc · Cloud + hors ligne</p>
+                  <p className="text-[11px] text-slate-400 sm:text-xs">Synthèse perso + coloc · Cloud + hors ligne</p>
                 </div>
               </div>
               <div className="h-4 min-w-[120px] text-xs text-slate-400 max-[360px]:hidden" aria-hidden="true">
