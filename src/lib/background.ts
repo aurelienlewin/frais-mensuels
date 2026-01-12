@@ -1,6 +1,7 @@
 const SESSION_KEY = 'fm:bg:session:v2';
 
 const LOCAL_FALLBACK_URL = '/bg-snowy.jpg';
+const FALLBACK_CSS = `url("${LOCAL_FALLBACK_URL}")`;
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -17,9 +18,9 @@ function newSeed() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function buildCss(w: number, h: number, seed: string) {
+function buildTarget(w: number, h: number, seed: string) {
   const apiUrl = `/api/background?w=${w}&h=${h}&seed=${encodeURIComponent(seed)}`;
-  return `url("${apiUrl}"), url("${LOCAL_FALLBACK_URL}")`;
+  return { url: apiUrl, css: `url("${apiUrl}")` };
 }
 
 type SessionBgV1 = {
@@ -30,6 +31,8 @@ type SessionBgV1 = {
 
 let currentCss: string | null = null;
 let fadeTimer: number | null = null;
+let activeLoadId = 0;
+let pendingLoadId: number | null = null;
 
 function prefersReducedMotion() {
   try {
@@ -62,50 +65,102 @@ function saveSession(css: string) {
   }
 }
 
-function applyBackgroundCss(css: string) {
+function setBaseBackground(css: string) {
   const root = document.documentElement;
   if (!root) return;
 
-  const next = css.trim();
-  if (!next) return;
+  const next = css.trim() || FALLBACK_CSS;
+  currentCss = next;
+  root.style.setProperty('--bg-image-a', next);
+  root.style.setProperty('--bg-image-b', next);
+  root.style.setProperty('--bg-b-opacity', '0');
+  root.style.setProperty('--bg-a-opacity', '1');
+}
+
+async function preloadImage(url: string) {
+  return new Promise<boolean>((resolve) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.loading = 'eager';
+
+    const done = (ok: boolean) => {
+      img.onload = null;
+      img.onerror = null;
+      resolve(ok);
+    };
+
+    img.onload = () => {
+      const finalize = () => done(true);
+      if (typeof img.decode === 'function') {
+        img
+          .decode()
+          .then(finalize)
+          .catch(finalize);
+      } else {
+        finalize();
+      }
+    };
+
+    img.onerror = () => done(false);
+    img.src = url;
+  });
+}
+
+async function loadAndSwap(css: string, url: string) {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  if (!root) return;
+
+  const reduced = prefersReducedMotion();
+  const loadId = ++activeLoadId;
+  pendingLoadId = loadId;
 
   if (fadeTimer) {
     window.clearTimeout(fadeTimer);
     fadeTimer = null;
+  }
 
-    const mid = root.style.getPropertyValue('--bg-image-b').trim();
-    if (mid) {
-      root.style.setProperty('--bg-image-a', mid);
-      currentCss = mid;
-    }
+  if (!reduced) {
+    root.style.setProperty('--bg-a-opacity', '0');
     root.style.setProperty('--bg-b-opacity', '0');
   }
 
-  if (currentCss === next) {
-    root.style.setProperty('--bg-image-a', next);
-    root.style.setProperty('--bg-image-b', next);
-    root.style.setProperty('--bg-b-opacity', '0');
+  const ok = await preloadImage(url);
+  if (loadId !== activeLoadId) {
+    if (pendingLoadId === loadId) pendingLoadId = null;
     return;
   }
 
-  if (prefersReducedMotion()) {
-    currentCss = next;
-    root.style.setProperty('--bg-image-a', next);
-    root.style.setProperty('--bg-image-b', next);
-    root.style.setProperty('--bg-b-opacity', '0');
+  if (!ok) {
+    root.style.setProperty('--bg-a-opacity', '1');
+    if (!currentCss) setBaseBackground(FALLBACK_CSS);
+    if (pendingLoadId === loadId) pendingLoadId = null;
     return;
   }
 
-  root.style.setProperty('--bg-image-b', next);
-  root.style.setProperty('--bg-b-opacity', '0');
+  if (reduced) {
+    setBaseBackground(css);
+    saveSession(css);
+    if (pendingLoadId === loadId) pendingLoadId = null;
+    return;
+  }
 
+  root.style.setProperty('--bg-image-b', css);
   window.requestAnimationFrame(() => {
+    if (loadId !== activeLoadId) {
+      if (pendingLoadId === loadId) pendingLoadId = null;
+      return;
+    }
     root.style.setProperty('--bg-b-opacity', '1');
     fadeTimer = window.setTimeout(() => {
-      currentCss = next;
-      root.style.setProperty('--bg-image-a', next);
-      root.style.setProperty('--bg-b-opacity', '0');
+      if (loadId !== activeLoadId) {
+        if (pendingLoadId === loadId) pendingLoadId = null;
+        return;
+      }
+      setBaseBackground(css);
+      saveSession(css);
       fadeTimer = null;
+      if (pendingLoadId === loadId) pendingLoadId = null;
     }, 620);
   });
 }
@@ -113,14 +168,24 @@ function applyBackgroundCss(css: string) {
 export function initDynamicBackground(options?: { force?: boolean }) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
+  if (pendingLoadId && !options?.force) return;
+
   const session = readSessionSaved();
   if (!options?.force && session?.css) {
-    applyBackgroundCss(session.css);
+    if (!currentCss || currentCss !== session.css) {
+      setBaseBackground(session.css);
+    }
     return;
   }
 
   const { w, h } = computeSize();
-  const css = buildCss(w, h, newSeed());
-  applyBackgroundCss(css);
-  saveSession(css);
+  const { css, url } = buildTarget(w, h, newSeed());
+  loadAndSwap(css, url).catch(() => {
+    if (currentCss) {
+      setBaseBackground(currentCss);
+    } else {
+      setBaseBackground(FALLBACK_CSS);
+      saveSession(FALLBACK_CSS);
+    }
+  });
 }
