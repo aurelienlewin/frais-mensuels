@@ -473,7 +473,7 @@ export function AppView({
 	
               <details
                 ref={menuRef}
-                className="relative ml-auto flex-shrink-0 sm:ml-0"
+                className="absolute right-[calc(0.75rem_+_env(safe-area-inset-right))] top-2 flex-shrink-0 sm:relative sm:right-auto sm:top-auto"
                 onKeyDown={(e) => {
                   if (e.key !== 'Escape') return;
                   menuRef.current?.removeAttribute('open');
@@ -502,7 +502,7 @@ export function AppView({
 	                </summary>
                 <div
                   className="absolute right-0 z-20 mt-2 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)] sm:left-auto sm:right-0 sm:translate-x-0 sm:w-[280px]"
-                  style={{ maxWidth: 'calc(100vw - 1.5rem)' }}
+                  style={{ maxWidth: 'calc(100vw - 1.5rem - env(safe-area-inset-right))' }}
                 >
 		                  <div className="px-3 py-2 text-xs text-slate-400">
 		                    Connecté: <span className="font-mono text-slate-200">{user.email}</span>
