@@ -3,17 +3,18 @@ const SESSION_KEY = 'fm:bg:session:v2';
 const LOCAL_FALLBACK_URL = '/bg-snowy.jpg';
 const FALLBACK_CSS = `url("${LOCAL_FALLBACK_URL}")`;
 
-const AUTO_ROTATE_MS = 1000 * 60 * 12; // base interval for background refresh
-const AUTO_ROTATE_JITTER_MS = 1000 * 60 * 3; // add some jitter to avoid sync spikes
+const AUTO_ROTATE_MS = 1000 * 60 * 4; // base interval for background refresh
+const AUTO_ROTATE_JITTER_MS = 1000 * 60 * 1.5; // jitter to avoid sync spikes
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
 function computeSize() {
-  const dpr = clamp(typeof window.devicePixelRatio === 'number' ? window.devicePixelRatio : 1, 1, 2);
-  const w = clamp(Math.round(window.innerWidth * dpr), 720, 1920);
-  const h = clamp(Math.round(window.innerHeight * dpr), 720, 1920);
+  const dpr = clamp(typeof window.devicePixelRatio === 'number' ? window.devicePixelRatio : 1, 1, 1.2);
+  const scale = 0.78; // request smaller images and upscale client-side
+  const w = clamp(Math.round(window.innerWidth * dpr * scale), 720, 1600);
+  const h = clamp(Math.round(window.innerHeight * dpr * scale), 720, 1600);
   return { w, h };
 }
 

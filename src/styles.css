@@ -44,6 +44,7 @@ body::after {
   background-size: cover;
   background-repeat: no-repeat;
   background-image: linear-gradient(180deg, rgba(6, 8, 20, 0.72), rgba(6, 8, 20, 0.92)), var(--bg-image-a, url('/bg-snowy.jpg'));
+  will-change: opacity, background-image;
 }
 
 body::after {
