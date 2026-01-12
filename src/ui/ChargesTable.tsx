@@ -24,7 +24,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const monthChargeStateById = state.months[ym]?.charges ?? {};
   const tableRef = useRef<HTMLTableElement | null>(null);
   const mobileRef = useRef<HTMLDivElement | null>(null);
-  const filterBarRef = useRef<HTMLDivElement | null>(null);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
   const [isTableUp, setIsTableUp] = useState<boolean>(() => {
     try {
       return window.matchMedia('(min-width: 768px)').matches;
@@ -41,7 +41,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const filterNorm = useMemo(() => normalizeSearch(filter.trim()), [filter]);
   const isFiltering = filterNorm.length > 0;
   const [stickyTopPx, setStickyTopPx] = useState(0);
-  const [filterBarHeightPx, setFilterBarHeightPx] = useState(0);
+  const [toolbarHeightPx, setToolbarHeightPx] = useState(0);
   const [flashRowId, setFlashRowId] = useState<string | null>(null);
   const flashTimerRef = useRef<number | null>(null);
 
@@ -109,12 +109,12 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   }, [isTableUp, rows]);
 
   useEffect(() => {
-    const headerEl = document.querySelector('header');
+    const headerEl = document.querySelector('[data-app-header]');
     const measure = () => {
       const headerH = headerEl?.getBoundingClientRect().height ?? 0;
-      const barH = filterBarRef.current?.getBoundingClientRect().height ?? 0;
+      const barH = toolbarRef.current?.getBoundingClientRect().height ?? 0;
       setStickyTopPx(Math.max(0, Math.round(headerH)));
-      setFilterBarHeightPx(Math.max(0, Math.round(barH)));
+      setToolbarHeightPx(Math.max(0, Math.round(barH)));
     };
 
     measure();
@@ -123,7 +123,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
     const ro = 'ResizeObserver' in window ? new ResizeObserver(measure) : null;
     if (ro) {
       if (headerEl) ro.observe(headerEl);
-      if (filterBarRef.current) ro.observe(filterBarRef.current);
+      if (toolbarRef.current) ro.observe(toolbarRef.current);
     }
 
     return () => {
@@ -221,110 +221,110 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const communReorderIds = communRows.filter((r) => chargesById.has(r.id)).map((r) => r.id);
   const persoReorderIds = persoRows.filter((r) => chargesById.has(r.id)).map((r) => r.id);
 
-	  return (
-	    <section
-	      data-tour="charges"
-	      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
-	    >
-	      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
-	        <div>
-	          <h2 className="text-sm text-slate-300">Charges</h2>
-	          <div className="mt-1 text-xl font-semibold tracking-tight">
-              {visibleRows.length} lignes
-              {isFiltering ? <span className="ml-2 text-sm font-medium text-slate-400">/ {rows.length}</span> : null}
-            </div>
-	        </div>
-
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
-	          <button
-	            data-tour="add-charge"
-	            className={cx(
-	              'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
-	              !canEdit && 'opacity-50',
-	            )}
-            disabled={!canEdit}
-            onClick={() => {
-              const defaultAccount = activeAccounts[0]?.id ?? state.accounts[0]?.id ?? 'PERSONAL_MAIN';
-              pendingFocusColRef.current = '1';
-              dispatch({
-                type: 'ADD_CHARGE',
-                charge: {
-                  name: 'Nouvelle charge',
-                  amountCents: 0,
-                  dayOfMonth: 1,
-                  accountId: defaultAccount,
-                  scope: 'perso',
-                  splitPercent: 50,
-                  payment: 'manuel',
-                  active: true,
-                },
-              });
-            }}
+		  return (
+		    <section
+		      data-tour="charges"
+		      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
+		    >
+          <div
+            ref={toolbarRef}
+            className="sticky z-20 border-b border-white/15 bg-ink-950/92 px-4 py-4 backdrop-blur max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5"
+            style={{ top: stickyTopPx }}
           >
-            + Ajouter
-          </button>
-          <button
-            className={cx(
-              'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
-              !canEdit && 'opacity-50',
-            )}
-            disabled={!canEdit}
-            title="Ajoute une charge uniquement pour ce mois (ponctuelle)"
-            onClick={() => {
-              const defaultAccount = activeAccounts[0]?.id ?? state.accounts[0]?.id ?? 'PERSONAL_MAIN';
-              pendingFocusColRef.current = '1';
-              dispatch({
-                type: 'ADD_MONTH_CHARGE',
-                ym,
-                charge: {
-                  name: 'Dépense ponctuelle',
-                  amountCents: 0,
-                  dayOfMonth: 1,
-                  accountId: defaultAccount,
-                  scope: 'perso',
-                  payment: 'manuel',
-                  destination: null,
-                },
-              });
-            }}
-          >
-            + Ponctuelle
-          </button>
-        </div>
-	      </div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="text-sm text-slate-300">Charges</h2>
+                <div className="mt-1 text-xl font-semibold tracking-tight">
+                  {visibleRows.length} lignes
+                  {isFiltering ? <span className="ml-2 text-sm font-medium text-slate-400">/ {rows.length}</span> : null}
+                </div>
+              </div>
 
-        <div
-          ref={filterBarRef}
-          className="sticky z-20 border-b border-white/10 bg-ink-950/85 px-4 py-3 backdrop-blur max-[360px]:px-3 max-[360px]:py-2.5 sm:px-6"
-          style={{ top: stickyTopPx }}
-        >
-          <div className="flex items-center gap-2">
-            <div className="relative min-w-0 flex-1">
-              <input
-                className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
-                placeholder="Rechercher une charge…"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                inputMode="search"
-                aria-label="Rechercher une charge"
-              />
-              {filter ? (
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
                 <button
-                  type="button"
-                  className="absolute inset-y-0 right-2 my-auto h-8 w-8 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-200 transition-colors hover:bg-white/10"
-                  onClick={() => setFilter('')}
-                  aria-label="Effacer la recherche"
+                  data-tour="add-charge"
+                  className={cx(
+                    'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
+                    !canEdit && 'opacity-50',
+                  )}
+                  disabled={!canEdit}
+                  onClick={() => {
+                    const defaultAccount = activeAccounts[0]?.id ?? state.accounts[0]?.id ?? 'PERSONAL_MAIN';
+                    pendingFocusColRef.current = '1';
+                    dispatch({
+                      type: 'ADD_CHARGE',
+                      charge: {
+                        name: 'Nouvelle charge',
+                        amountCents: 0,
+                        dayOfMonth: 1,
+                        accountId: defaultAccount,
+                        scope: 'perso',
+                        splitPercent: 50,
+                        payment: 'manuel',
+                        active: true,
+                      },
+                    });
+                  }}
                 >
-                  ✕
+                  + Ajouter
                 </button>
-              ) : null}
+                <button
+                  className={cx(
+                    'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
+                    !canEdit && 'opacity-50',
+                  )}
+                  disabled={!canEdit}
+                  title="Ajoute une charge uniquement pour ce mois (ponctuelle)"
+                  onClick={() => {
+                    const defaultAccount = activeAccounts[0]?.id ?? state.accounts[0]?.id ?? 'PERSONAL_MAIN';
+                    pendingFocusColRef.current = '1';
+                    dispatch({
+                      type: 'ADD_MONTH_CHARGE',
+                      ym,
+                      charge: {
+                        name: 'Dépense ponctuelle',
+                        amountCents: 0,
+                        dayOfMonth: 1,
+                        accountId: defaultAccount,
+                        scope: 'perso',
+                        payment: 'manuel',
+                        destination: null,
+                      },
+                    });
+                  }}
+                >
+                  + Ponctuelle
+                </button>
+              </div>
             </div>
-            <div className="flex-none text-xs text-slate-400 tabular-nums">{visibleRows.length}</div>
+
+            <div className="mt-3 flex items-center gap-2">
+              <div className="relative min-w-0 flex-1">
+                <input
+                  className="h-10 w-full rounded-2xl border border-white/15 bg-white/7 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-fuchsia-200/40 focus:bg-white/10"
+                  placeholder="Filtrer… (libellé, compte, destination)"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  inputMode="search"
+                  aria-label="Filtrer les charges"
+                />
+                {filter ? (
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-2 my-auto h-8 w-8 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-200 transition-colors hover:bg-white/10"
+                    onClick={() => setFilter('')}
+                    aria-label="Effacer le filtre"
+                  >
+                    ✕
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex-none text-xs text-slate-400 tabular-nums">{visibleRows.length}</div>
+            </div>
+            {isFiltering ? (
+              <div className="mt-2 text-[11px] text-slate-400">Réordonnancement désactivé pendant le filtre.</div>
+            ) : null}
           </div>
-          {isFiltering ? (
-            <div className="mt-2 text-[11px] text-slate-400">Astuce: libellé, compte, destination, “commun/perso”, “auto/manuel”.</div>
-          ) : null}
-        </div>
 
 	      {isTableUp ? (
         <div className="overflow-x-auto overscroll-x-contain">
@@ -336,7 +336,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 <span className="font-mono">Alt</span>+<span className="font-mono">↑</span>/<span className="font-mono">↓</span>).
               </span>
             </caption>
-		            <thead className="sticky z-10 bg-ink-950/95" style={{ top: stickyTopPx + filterBarHeightPx }}>
+		            <thead className="sticky z-10 bg-ink-950/95" style={{ top: stickyTopPx + toolbarHeightPx }}>
               <tr className="text-left text-xs text-slate-400">
                 <Th className="w-[76px] sm:w-[88px]">OK</Th>
                 <Th>Libellé</Th>

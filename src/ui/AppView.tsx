@@ -318,7 +318,10 @@ export function AppView({
       >
         Aller au contenu
       </a>
-      <header className="sticky top-0 z-10 border-b border-white/15 bg-ink-950/95 pt-[env(safe-area-inset-top)]">
+	      <header
+          data-app-header="1"
+          className="sticky top-0 z-30 border-b border-white/15 bg-ink-950/95 pt-[env(safe-area-inset-top)]"
+        >
         <div className="relative mx-auto max-w-6xl py-2 max-[360px]:py-1.5 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
           <div className="sr-only" aria-live="polite">
             {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
