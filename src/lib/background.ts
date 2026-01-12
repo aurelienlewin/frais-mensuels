@@ -5,6 +5,8 @@ const FALLBACK_CSS = `url("${LOCAL_FALLBACK_URL}")`;
 
 const AUTO_ROTATE_MS = 1000 * 60 * 4; // base interval for background refresh
 const AUTO_ROTATE_JITTER_MS = 1000 * 60 * 1.5; // jitter to avoid sync spikes
+const OVERLAY_FADE_MS = 420;
+const OVERLAY_SETTLE_MS = 60;
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -38,6 +40,12 @@ let activeLoadId = 0;
 let pendingLoadId: number | null = null;
 let autoRotateTimer: number | null = null;
 let overlayTimer: number | null = null;
+
+function waitMs(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
 
 function prefersReducedMotion() {
   try {
@@ -123,7 +131,14 @@ async function loadAndSwap(css: string, url: string) {
     overlayTimer = null;
   }
 
-  if (!reduced) root.style.setProperty('--bg-overlay-opacity', '1');
+  if (!reduced) {
+    root.style.setProperty('--bg-overlay-opacity', '1');
+    await waitMs(OVERLAY_FADE_MS + OVERLAY_SETTLE_MS);
+    if (loadId !== activeLoadId) {
+      if (pendingLoadId === loadId) pendingLoadId = null;
+      return;
+    }
+  }
 
   const ok = await preloadImage(url);
   if (loadId !== activeLoadId) {
@@ -133,6 +148,7 @@ async function loadAndSwap(css: string, url: string) {
 
   if (!ok) {
     if (!currentCss) setBaseBackground(FALLBACK_CSS);
+    if (!reduced) root.style.setProperty('--bg-overlay-opacity', '0');
     if (pendingLoadId === loadId) pendingLoadId = null;
     return;
   }
@@ -151,17 +167,17 @@ async function loadAndSwap(css: string, url: string) {
       return;
     }
     root.style.setProperty('--bg-overlay-opacity', '0');
-    overlayTimer = window.setTimeout(() => {
-      if (loadId !== activeLoadId) {
-        if (pendingLoadId === loadId) pendingLoadId = null;
-        return;
-      }
-      currentCss = css;
-      saveSession(css);
-      overlayTimer = null;
-      if (pendingLoadId === loadId) pendingLoadId = null;
-    }, 620);
   });
+
+  await waitMs(OVERLAY_FADE_MS + OVERLAY_SETTLE_MS);
+  if (loadId !== activeLoadId) {
+    if (pendingLoadId === loadId) pendingLoadId = null;
+    return;
+  }
+  currentCss = css;
+  saveSession(css);
+  overlayTimer = null;
+  if (pendingLoadId === loadId) pendingLoadId = null;
 }
 
 export function initDynamicBackground(options?: { force?: boolean }) {
