@@ -3,6 +3,9 @@ const SESSION_KEY = 'fm:bg:session:v2';
 const LOCAL_FALLBACK_URL = '/bg-snowy.jpg';
 const FALLBACK_CSS = `url("${LOCAL_FALLBACK_URL}")`;
 
+const AUTO_ROTATE_MS = 1000 * 60 * 12; // base interval for background refresh
+const AUTO_ROTATE_JITTER_MS = 1000 * 60 * 3; // add some jitter to avoid sync spikes
+
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
@@ -33,6 +36,7 @@ let currentCss: string | null = null;
 let fadeTimer: number | null = null;
 let activeLoadId = 0;
 let pendingLoadId: number | null = null;
+let autoRotateTimer: number | null = null;
 
 function prefersReducedMotion() {
   try {
@@ -121,7 +125,6 @@ async function loadAndSwap(css: string, url: string) {
   }
 
   if (!reduced) {
-    root.style.setProperty('--bg-a-opacity', '0');
     root.style.setProperty('--bg-b-opacity', '0');
   }
 
@@ -132,7 +135,6 @@ async function loadAndSwap(css: string, url: string) {
   }
 
   if (!ok) {
-    root.style.setProperty('--bg-a-opacity', '1');
     if (!currentCss) setBaseBackground(FALLBACK_CSS);
     if (pendingLoadId === loadId) pendingLoadId = null;
     return;
@@ -151,6 +153,7 @@ async function loadAndSwap(css: string, url: string) {
       if (pendingLoadId === loadId) pendingLoadId = null;
       return;
     }
+    root.style.setProperty('--bg-a-opacity', '0');
     root.style.setProperty('--bg-b-opacity', '1');
     fadeTimer = window.setTimeout(() => {
       if (loadId !== activeLoadId) {
@@ -168,7 +171,7 @@ async function loadAndSwap(css: string, url: string) {
 export function initDynamicBackground(options?: { force?: boolean }) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-  if (pendingLoadId && !options?.force) return;
+  if (pendingLoadId) return;
 
   const session = readSessionSaved();
   if (!options?.force && session?.css) {
@@ -188,4 +191,31 @@ export function initDynamicBackground(options?: { force?: boolean }) {
       saveSession(FALLBACK_CSS);
     }
   });
+}
+
+function scheduleAutoRotate() {
+  if (typeof window === 'undefined') return;
+  if (autoRotateTimer) window.clearTimeout(autoRotateTimer);
+  const jitter = Math.random() * AUTO_ROTATE_JITTER_MS;
+  const delay = AUTO_ROTATE_MS + jitter;
+  autoRotateTimer = window.setTimeout(() => {
+    autoRotateTimer = null;
+    if (document.visibilityState === 'hidden') {
+      scheduleAutoRotate();
+      return;
+    }
+    initDynamicBackground({ force: true });
+    scheduleAutoRotate();
+  }, delay);
+}
+
+export function startBackgroundRotation() {
+  scheduleAutoRotate();
+}
+
+export function stopBackgroundRotation() {
+  if (autoRotateTimer) {
+    window.clearTimeout(autoRotateTimer);
+    autoRotateTimer = null;
+  }
 }

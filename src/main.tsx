@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './styles.css';
-import { initDynamicBackground } from './lib/background';
+import { initDynamicBackground, startBackgroundRotation } from './lib/background';
 
 let swRegistration: ServiceWorkerRegistration | null = null;
 
@@ -53,14 +53,17 @@ function installOverflowDebug() {
 }
 
 initDynamicBackground();
+startBackgroundRotation();
 installOverflowDebug();
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   initDynamicBackground();
+  startBackgroundRotation();
   swRegistration?.update().catch(() => undefined);
 });
 window.addEventListener('pageshow', () => {
   initDynamicBackground();
+  startBackgroundRotation();
   swRegistration?.update().catch(() => undefined);
 });
 
