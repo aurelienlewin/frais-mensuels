@@ -34,10 +34,10 @@ type SessionBgV1 = {
 };
 
 let currentCss: string | null = null;
-let fadeTimer: number | null = null;
 let activeLoadId = 0;
 let pendingLoadId: number | null = null;
 let autoRotateTimer: number | null = null;
+let overlayTimer: number | null = null;
 
 function prefersReducedMotion() {
   try {
@@ -76,10 +76,8 @@ function setBaseBackground(css: string) {
 
   const next = css.trim() || FALLBACK_CSS;
   currentCss = next;
-  root.style.setProperty('--bg-image-a', next);
-  root.style.setProperty('--bg-image-b', next);
-  root.style.setProperty('--bg-b-opacity', '0');
-  root.style.setProperty('--bg-a-opacity', '1');
+  root.style.setProperty('--bg-image', next);
+  root.style.setProperty('--bg-overlay-opacity', '0');
 }
 
 async function preloadImage(url: string) {
@@ -120,14 +118,12 @@ async function loadAndSwap(css: string, url: string) {
   const loadId = ++activeLoadId;
   pendingLoadId = loadId;
 
-  if (fadeTimer) {
-    window.clearTimeout(fadeTimer);
-    fadeTimer = null;
+  if (overlayTimer) {
+    window.clearTimeout(overlayTimer);
+    overlayTimer = null;
   }
 
-  if (!reduced) {
-    root.style.setProperty('--bg-b-opacity', '0');
-  }
+  if (!reduced) root.style.setProperty('--bg-overlay-opacity', '1');
 
   const ok = await preloadImage(url);
   if (loadId !== activeLoadId) {
@@ -148,22 +144,21 @@ async function loadAndSwap(css: string, url: string) {
     return;
   }
 
-  root.style.setProperty('--bg-image-b', css);
+  root.style.setProperty('--bg-image', css);
   window.requestAnimationFrame(() => {
     if (loadId !== activeLoadId) {
       if (pendingLoadId === loadId) pendingLoadId = null;
       return;
     }
-    root.style.setProperty('--bg-a-opacity', '0');
-    root.style.setProperty('--bg-b-opacity', '1');
-    fadeTimer = window.setTimeout(() => {
+    root.style.setProperty('--bg-overlay-opacity', '0');
+    overlayTimer = window.setTimeout(() => {
       if (loadId !== activeLoadId) {
         if (pendingLoadId === loadId) pendingLoadId = null;
         return;
       }
-      setBaseBackground(css);
+      currentCss = css;
       saveSession(css);
-      fadeTimer = null;
+      overlayTimer = null;
       if (pendingLoadId === loadId) pendingLoadId = null;
     }, 620);
   });
