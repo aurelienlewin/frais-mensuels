@@ -213,11 +213,15 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
               <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
                 <button
                   type="button"
-                  className="rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs"
+                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/7 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:h-9 max-[360px]:w-9"
                   onClick={() => setChargesOpen((v) => !v)}
                   aria-expanded={chargesOpen}
+                  aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+                  title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
                 >
-                  {chargesOpen ? 'Masquer' : 'Afficher'}
+                  <span aria-hidden="true" className="text-[13px] leading-none">
+                    {chargesOpen ? '▴' : '▾'}
+                  </span>
                 </button>
                 <button
                   data-tour="add-charge"

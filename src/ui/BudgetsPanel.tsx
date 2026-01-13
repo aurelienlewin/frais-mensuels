@@ -257,11 +257,15 @@ function BudgetCard({
           <div className="text-sm font-medium text-slate-200">Dépenses</div>
           <button
             type="button"
-            className="h-8 rounded-xl border border-white/12 bg-white/5 px-3 text-xs font-medium text-slate-200 transition-colors hover:bg-white/10"
+            className="flex h-8 w-10 items-center justify-center rounded-xl border border-white/12 bg-white/5 text-xs font-medium text-slate-200 transition-colors hover:bg-white/10"
             onClick={() => setExpensesOpen((v) => !v)}
             aria-expanded={expensesOpen}
+            aria-label={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
+            title={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
           >
-            {expensesOpen ? 'Masquer' : 'Afficher'}
+            <span aria-hidden="true" className="text-[13px] leading-none">
+              {expensesOpen ? '▴' : '▾'}
+            </span>
           </button>
         </div>
 

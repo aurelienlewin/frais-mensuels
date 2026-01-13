@@ -20,6 +20,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   );
   const [salaryDraft, setSalaryDraft] = useState(() => String(centsToEuros(totals.salaryCents)));
   const [salaryEditing, setSalaryEditing] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(true);
 
   useEffect(() => {
     if (!salaryEditing) setSalaryDraft(String(centsToEuros(totals.salaryCents)));
@@ -81,155 +82,178 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           <div className="text-sm text-slate-300">Résumé</div>
           <h2 className="mt-1 text-xl font-semibold tracking-tight">Totaux</h2>
         </div>
-        <div className={cx('rounded-full px-3 py-1 text-xs', totals.pendingCount ? 'bg-amber-400/10 text-amber-200' : 'bg-emerald-400/10 text-emerald-200')}>
-          {totals.pendingCount ? `${totals.pendingCount} à cocher` : 'Tout coché'}
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-3 max-[360px]:mt-4 max-[360px]:gap-2">
-        <label className="grid gap-1">
-          <div className="text-xs text-slate-400">Salaire</div>
-          <div className="relative">
-		            <input
-		              className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45 sm:text-sm"
-		              type="text"
-		              inputMode="decimal"
-		              value={salaryDraft}
-              onChange={(e) => {
-                setSalaryDraft(e.target.value);
-                setSalaryEditing(true);
-              }}
-              onBlur={() => {
-                setSalaryEditing(false);
-                const euros = salaryDraft.trim() === '' ? 0 : parseEuroAmount(salaryDraft);
-                if (euros === null || euros < 0) {
-                  setSalaryDraft(String(centsToEuros(totals.salaryCents)));
-                  return;
-                }
-                const next = eurosToCents(euros);
-                if (next !== totals.salaryCents) dispatch({ type: 'SET_SALARY', salaryCents: next });
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
-                if (e.key === 'Escape') {
-                  setSalaryDraft(String(centsToEuros(totals.salaryCents)));
-                  setSalaryEditing(false);
-                  (e.currentTarget as HTMLInputElement).blur();
-                }
-              }}
-              aria-label="Salaire"
-            />
-            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs text-slate-400">€</div>
-          </div>
-        </label>
-
-	        <div className="mt-2 grid gap-2">
-	          <Row label="Charges communes (total)" value={formatEUR(totals.totalCommunCents)} />
-		          <Row label="Ma part (commun)" value={formatEUR(totals.totalCommunPartCents)} />
-		          <Row label="Charges perso" value={formatEUR(totals.totalPersoCents)} />
-		          <div className="my-2 h-px bg-white/10" />
-		          <Row label="Total charges (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
-		          <Row label="Enveloppes (ma part)" value={formatEUR(totals.totalBudgetsCents)} />
-	          <Row label="Total (charges + enveloppes)" value={formatEUR(totals.totalPourMoiAvecEnveloppesCents)} strong />
-	          <Row
-	            label="Reste à vivre (après enveloppes)"
-            value={formatEUR(totals.resteAVivreApresEnveloppesCents)}
-            strong
-            valueClassName={totals.resteAVivreApresEnveloppesCents < 0 ? 'text-rose-200' : 'text-emerald-200'}
-          />
-        </div>
-
-        <div className="mt-4">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <div>Charges + enveloppes / salaire</div>
-            <div>{Math.round(ratio * 100)}%</div>
-          </div>
+        <div className="flex items-center gap-2">
           <div
-            className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
-            role="progressbar"
-            aria-label="Charges + enveloppes / salaire"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(ratio * 100)}
+            className={cx(
+              'rounded-full px-3 py-1 text-xs',
+              totals.pendingCount ? 'bg-amber-400/10 text-amber-200' : 'bg-emerald-400/10 text-emerald-200',
+            )}
           >
-            <div className="h-full rounded-full bg-emerald-400/70" style={{ width: `${Math.round(ratio * 100)}%` }} />
+            {totals.pendingCount ? `${totals.pendingCount} à cocher` : 'Tout coché'}
           </div>
+          <button
+            type="button"
+            className="flex h-8 w-10 items-center justify-center rounded-xl border border-white/12 bg-white/5 text-xs font-medium text-slate-200 transition-colors hover:bg-white/10 sm:hidden"
+            onClick={() => setSummaryOpen((v) => !v)}
+            aria-expanded={summaryOpen}
+            aria-label={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
+            title={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
+          >
+            <span aria-hidden="true" className="text-[13px] leading-none">
+              {summaryOpen ? '▴' : '▾'}
+            </span>
+          </button>
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-3xl border border-white/15 bg-white/7 p-4 max-[360px]:mt-4 max-[360px]:p-3">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="text-sm font-medium text-slate-200">Répartition</div>
-            <div className="mt-0.5 text-xs text-slate-400">{repartition.label}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-xs font-semibold tabular-nums text-slate-200">{formatEUR(repartition.baseCents)}</div>
-            <div className="text-[11px] text-slate-400">base</div>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-[132px_1fr]">
-          <DonutChart
-            ariaLabel="Répartition du budget"
-            segments={repartition.segments}
-            total={repartition.baseCents}
-            activeSegmentId={activeSegId}
-            onActiveSegmentIdChange={setActiveSegId}
-            className="motion-hover"
-            centerContainerClassName="-translate-y-4"
-            centerTop={centerTop}
-            centerBottom={centerBottom}
-            centerBottomClassName={centerTone}
-          />
-
-          <div className="min-w-0 space-y-2">
-            {repartition.segments.map((s) => (
-              <LegendRow
-                key={s.id}
-                label={s.label}
-                valueCents={s.value}
-                color={s.color}
-                baseCents={repartition.baseCents}
-                active={activeSegId === s.id}
-                onActivate={() => setActiveSegId(s.id)}
-                onDeactivate={() => setActiveSegId(null)}
+      <div className={cx(!summaryOpen && 'hidden sm:block')}>
+        <div className="mt-6 grid gap-3 max-[360px]:mt-4 max-[360px]:gap-2">
+          <label className="grid gap-1">
+            <div className="text-xs text-slate-400">Salaire</div>
+            <div className="relative">
+              <input
+                className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45 sm:text-sm"
+                type="text"
+                inputMode="decimal"
+                value={salaryDraft}
+                onChange={(e) => {
+                  setSalaryDraft(e.target.value);
+                  setSalaryEditing(true);
+                }}
+                onBlur={() => {
+                  setSalaryEditing(false);
+                  const euros = salaryDraft.trim() === '' ? 0 : parseEuroAmount(salaryDraft);
+                  if (euros === null || euros < 0) {
+                    setSalaryDraft(String(centsToEuros(totals.salaryCents)));
+                    return;
+                  }
+                  const next = eurosToCents(euros);
+                  if (next !== totals.salaryCents) dispatch({ type: 'SET_SALARY', salaryCents: next });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                  if (e.key === 'Escape') {
+                    setSalaryDraft(String(centsToEuros(totals.salaryCents)));
+                    setSalaryEditing(false);
+                    (e.currentTarget as HTMLInputElement).blur();
+                  }
+                }}
+                aria-label="Salaire"
               />
-            ))}
-            {repartition.segments.length === 0 ? <div className="text-sm text-slate-400">Aucune donnée.</div> : null}
+              <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs text-slate-400">€</div>
+            </div>
+          </label>
+
+          <div className="mt-2 grid gap-2">
+            <Row label="Charges communes (total)" value={formatEUR(totals.totalCommunCents)} />
+            <Row label="Ma part (commun)" value={formatEUR(totals.totalCommunPartCents)} />
+            <Row label="Charges perso" value={formatEUR(totals.totalPersoCents)} />
+            <div className="my-2 h-px bg-white/10" />
+            <Row label="Total charges (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
+            <Row label="Enveloppes (ma part)" value={formatEUR(totals.totalBudgetsCents)} />
+            <Row label="Total (charges + enveloppes)" value={formatEUR(totals.totalPourMoiAvecEnveloppesCents)} strong />
+            <Row
+              label="Reste à vivre (après enveloppes)"
+              value={formatEUR(totals.resteAVivreApresEnveloppesCents)}
+              strong
+              valueClassName={totals.resteAVivreApresEnveloppesCents < 0 ? 'text-rose-200' : 'text-emerald-200'}
+            />
+          </div>
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <div>Charges + enveloppes / salaire</div>
+              <div>{Math.round(ratio * 100)}%</div>
+            </div>
+            <div
+              className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
+              role="progressbar"
+              aria-label="Charges + enveloppes / salaire"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(ratio * 100)}
+            >
+              <div className="h-full rounded-full bg-emerald-400/70" style={{ width: `${Math.round(ratio * 100)}%` }} />
+            </div>
           </div>
         </div>
+
+        <div className="mt-6 overflow-hidden rounded-3xl border border-white/15 bg-white/7 p-4 max-[360px]:mt-4 max-[360px]:p-3">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="text-sm font-medium text-slate-200">Répartition</div>
+              <div className="mt-0.5 text-xs text-slate-400">{repartition.label}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs font-semibold tabular-nums text-slate-200">{formatEUR(repartition.baseCents)}</div>
+              <div className="text-[11px] text-slate-400">base</div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-[132px_1fr]">
+            <DonutChart
+              ariaLabel="Répartition du budget"
+              segments={repartition.segments}
+              total={repartition.baseCents}
+              activeSegmentId={activeSegId}
+              onActiveSegmentIdChange={setActiveSegId}
+              className="motion-hover"
+              centerContainerClassName="-translate-y-4"
+              centerTop={centerTop}
+              centerBottom={centerBottom}
+              centerBottomClassName={centerTone}
+            />
+
+            <div className="min-w-0 space-y-2">
+              {repartition.segments.map((s) => (
+                <LegendRow
+                  key={s.id}
+                  label={s.label}
+                  valueCents={s.value}
+                  color={s.color}
+                  baseCents={repartition.baseCents}
+                  active={activeSegId === s.id}
+                  onActivate={() => setActiveSegId(s.id)}
+                  onDeactivate={() => setActiveSegId(null)}
+                />
+              ))}
+              {repartition.segments.length === 0 ? <div className="text-sm text-slate-400">Aucune donnée.</div> : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 max-[360px]:mt-6">
+          <div className="text-sm font-medium text-slate-200">Par compte (charges + enveloppes)</div>
+          <div className="mt-3 space-y-2">
+            {byAccount.map((a) => (
+              <div key={a.accountId} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/15 bg-white/7 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm text-slate-100" title={a.accountName}>
+                    {a.accountName}
+                  </div>
+                  <div className="mt-0.5 truncate text-xs text-slate-400">
+                    {formatEUR(a.chargesPaidCents)} / {formatEUR(a.chargesTotalCents)} charges cochées
+                    {a.budgetsCents ? ` · enveloppes ${formatEUR(a.budgetsCents)}` : ''}
+                  </div>
+                </div>
+                <div
+                  className={cx('flex-none text-sm font-medium tabular-nums', a.kind === 'commun' ? 'text-sky-200' : 'text-emerald-200')}
+                >
+                  {formatEUR(a.totalCents)}
+                </div>
+              </div>
+            ))}
+            {byAccount.length === 0 ? <div className="text-sm text-slate-400">Aucune charge ce mois-ci.</div> : null}
+          </div>
+        </div>
+
+        <details className="mt-6 rounded-3xl border border-white/15 bg-white/7 p-4 max-[360px]:mt-4 max-[360px]:p-3">
+          <summary className="cursor-pointer select-none text-sm font-medium text-slate-200">Comptes</summary>
+          <div className="mt-3 space-y-2">
+            <AccountsEditor />
+          </div>
+        </details>
       </div>
-
-      <div className="mt-8 max-[360px]:mt-6">
-	          <div className="text-sm font-medium text-slate-200">Par compte (charges + enveloppes)</div>
-        <div className="mt-3 space-y-2">
-	          {byAccount.map((a) => (
-	            <div key={a.accountId} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/15 bg-white/7 px-4 py-3">
-	              <div className="min-w-0 flex-1">
-	                <div className="truncate text-sm text-slate-100" title={a.accountName}>
-	                  {a.accountName}
-	                </div>
-	                <div className="mt-0.5 truncate text-xs text-slate-400">
-	                  {formatEUR(a.chargesPaidCents)} / {formatEUR(a.chargesTotalCents)} charges cochées
-	                  {a.budgetsCents ? ` · enveloppes ${formatEUR(a.budgetsCents)}` : ''}
-	                </div>
-	              </div>
-	              <div className={cx('flex-none text-sm font-medium tabular-nums', a.kind === 'commun' ? 'text-sky-200' : 'text-emerald-200')}>
-	                {formatEUR(a.totalCents)}
-	              </div>
-	            </div>
-	          ))}
-	          {byAccount.length === 0 ? <div className="text-sm text-slate-400">Aucune charge ce mois-ci.</div> : null}
-	        </div>
-	      </div>
-
-	      <details className="mt-6 rounded-3xl border border-white/15 bg-white/7 p-4 max-[360px]:mt-4 max-[360px]:p-3">
-	        <summary className="cursor-pointer select-none text-sm font-medium text-slate-200">Comptes</summary>
-	        <div className="mt-3 space-y-2">
-	          <AccountsEditor />
-	        </div>
-	      </details>
 	    </section>
 	  );
 }
