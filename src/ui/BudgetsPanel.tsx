@@ -169,6 +169,7 @@ function BudgetCard({
   archived: boolean;
 }) {
   const { state, dispatch } = useStore();
+  const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
 
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
@@ -186,6 +187,10 @@ function BudgetCard({
     'h-8 rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
   const ratio = budget.amountCents > 0 ? Math.min(1, Math.max(0, budget.spentCents / budget.amountCents)) : 0;
   const over = budget.remainingCents < 0;
+
+  const hasAccountId = typeof budget.accountId === 'string' && budget.accountId.length > 0;
+  const accountInActiveList = hasAccountId ? activeAccounts.some((a) => a.id === budget.accountId) : false;
+  const accountValue = accountInActiveList ? budget.accountId : hasAccountId ? '__UNAVAILABLE__' : '';
 
   const sortedExpenses = useMemo(
     () => [...budget.expenses].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
@@ -206,31 +211,8 @@ function BudgetCard({
             disabled={!canEdit}
             onCommit={(name) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { name } })}
           />
-          <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-400 max-[360px]:flex-col max-[360px]:items-start max-[360px]:justify-start max-[360px]:gap-1">
-            <div className="flex min-w-0 flex-1 items-center gap-2 truncate max-[360px]:w-full">
-              <div className="min-w-0 flex-1 truncate">{budget.accountName}</div>
-              {canEdit ? (
-                <select
-                  className={typeSelect}
-                  value={budget.scope}
-                  onChange={(e) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { scope: e.target.value as 'perso' | 'commun' } })}
-                  aria-label="Type enveloppe"
-                >
-                  <option value="perso">Perso</option>
-                  <option value="commun">Commun</option>
-                </select>
-              ) : (
-                <span className="inline-flex h-6 flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
-                  {budget.scope === 'commun' ? 'commun' : 'perso'}
-                </span>
-              )}
-              {model && !model.active ? (
-                <span className="inline-flex h-6 flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
-                  supprimée
-                </span>
-              ) : null}
-            </div>
-            <div className={cx('tabular-nums whitespace-nowrap max-[360px]:self-end', over ? 'text-rose-200' : 'text-slate-300')}>
+          <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-400">
+            <div className={cx('tabular-nums whitespace-nowrap', over ? 'text-rose-200' : 'text-slate-300')}>
               {formatEUR(budget.spentCents)} / {formatEUR(budget.amountCents)}
             </div>
           </div>
@@ -519,8 +501,67 @@ function BudgetCard({
         </div>
       </div>
 
-      {canDelete ? (
-        <div className="mt-6 flex justify-end">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-slate-400">
+          <span className="flex-none">Compte</span>
+          {canEdit ? (
+            <select
+              className={typeSelect}
+              value={accountValue}
+              disabled={!canEdit || activeAccounts.length === 0}
+              onChange={(e) => {
+                const next = e.target.value;
+                if (!next || next === '__UNAVAILABLE__') return;
+                dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { accountId: next } });
+              }}
+              aria-label="Compte du budget"
+            >
+              {accountValue === '__UNAVAILABLE__' ? (
+                <option value="__UNAVAILABLE__" disabled>
+                  Compte indisponible ({budget.accountId})
+                </option>
+              ) : null}
+              {activeAccounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="min-w-0 truncate text-slate-200">{budget.accountName}</span>
+          )}
+
+          <span className="flex-none">Type</span>
+          {canEdit ? (
+            <select
+              className={typeSelect}
+              value={budget.scope}
+              onChange={(e) =>
+                dispatch({
+                  type: 'UPDATE_BUDGET',
+                  budgetId: budget.id,
+                  patch: { scope: e.target.value as 'perso' | 'commun' },
+                })
+              }
+              aria-label="Type enveloppe"
+            >
+              <option value="perso">Perso</option>
+              <option value="commun">Commun</option>
+            </select>
+          ) : (
+            <span className="inline-flex h-6 flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
+              {budget.scope === 'commun' ? 'commun' : 'perso'}
+            </span>
+          )}
+
+          {model && !model.active ? (
+            <span className="inline-flex h-6 flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
+              supprimée
+            </span>
+          ) : null}
+        </div>
+
+        {canDelete ? (
           <button
             type="button"
             className="h-9 rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-xs font-semibold text-rose-100 transition-colors hover:bg-rose-400/15"
@@ -535,8 +576,8 @@ function BudgetCard({
           >
             Supprimer l’enveloppe
           </button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

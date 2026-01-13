@@ -310,18 +310,16 @@ export function reducer(state: AppState, action: Action): AppState {
           };
         });
 	      case 'ADD_BUDGET':
-	        return {
-	          ...state,
-	          budgets: [
-	            ...state.budgets,
-	            {
-	              ...action.budget,
-	              id: uid('bud'),
-	              scope: action.budget.scope === 'commun' ? 'commun' : 'perso',
-	              splitPercent: action.budget.scope === 'commun' ? (action.budget.splitPercent ?? 50) : undefined,
-	            },
-	          ],
-	        };
+	        return (() => {
+	          const scope: Budget['scope'] = action.budget.scope === 'commun' ? 'commun' : 'perso';
+	          const next: Budget = {
+	            ...action.budget,
+	            id: uid('bud'),
+	            scope,
+	            splitPercent: scope === 'commun' ? (action.budget.splitPercent ?? 50) : undefined,
+	          };
+	          return { ...state, budgets: [...state.budgets, next] };
+	        })();
 	      case 'UPDATE_BUDGET':
 	        return {
 	          ...state,
