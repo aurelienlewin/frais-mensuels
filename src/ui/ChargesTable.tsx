@@ -223,7 +223,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 </div>
               </div>
 
-              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 pr-12 max-[360px]:w-full max-[360px]:gap-1.5 max-[360px]:pr-11 sm:pr-0">
                 <button
                   type="button"
                   className="hidden h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/7 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:h-9 max-[360px]:w-9 sm:flex"
