@@ -183,6 +183,7 @@ function BudgetCard({
 
   const canEdit = !archived && Boolean(model);
   const canDelete = !archived && Boolean(model?.active);
+  const [expensesOpen, setExpensesOpen] = useState(true);
   const footerSelectBase =
     'h-9 rounded-xl border border-white/12 bg-ink-950/35 px-2.5 text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45 sm:h-8 sm:px-3';
   const footerSelectAccount = `${footerSelectBase} text-[12px] font-medium`;
@@ -252,9 +253,20 @@ function BudgetCard({
       </div>
 
       <div className="mt-5">
-        <div className="text-sm font-medium text-slate-200">Dépenses</div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm font-medium text-slate-200">Dépenses</div>
+          <button
+            type="button"
+            className="h-8 rounded-xl border border-white/12 bg-white/5 px-3 text-xs font-medium text-slate-200 transition-colors hover:bg-white/10"
+            onClick={() => setExpensesOpen((v) => !v)}
+            aria-expanded={expensesOpen}
+          >
+            {expensesOpen ? 'Masquer' : 'Afficher'}
+          </button>
+        </div>
 
-        <div className="mt-3 grid gap-2 rounded-2xl border border-white/15 bg-ink-950/45 p-3">
+        {expensesOpen ? (
+          <div className="mt-3 grid gap-2 rounded-2xl border border-white/15 bg-ink-950/45 p-3">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
             <input
               className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
@@ -311,7 +323,9 @@ function BudgetCard({
           </div>
           <div className="text-xs text-slate-400">Les montants sont des dépenses (ex: 10€ = -10€).</div>
         </div>
+        ) : null}
 
+        {expensesOpen ? (
         <div className="mt-3 space-y-2 sm:hidden">
           {sortedExpenses.map((e) => (
             <div key={e.id} className="rounded-2xl border border-white/15 bg-ink-950/35 p-3">
@@ -398,7 +412,9 @@ function BudgetCard({
           ))}
           {sortedExpenses.length === 0 ? <div className="py-4 text-center text-sm text-slate-400">Aucune dépense.</div> : null}
         </div>
+        ) : null}
 
+        {expensesOpen ? (
         <div className="mt-3 hidden overflow-hidden rounded-2xl border border-white/15 sm:block">
           <table className="min-w-full">
             <thead className="bg-ink-950/50 text-left text-xs text-slate-400">
@@ -501,65 +517,74 @@ function BudgetCard({
             </tbody>
           </table>
         </div>
+        ) : null}
       </div>
 
-      <div className="mt-6 grid gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
-        <div className="grid min-w-0 grid-cols-2 items-center gap-2 text-xs text-slate-400 sm:flex sm:flex-nowrap sm:items-center">
-          <span className="hidden flex-none sm:inline">Compte</span>
-          {canEdit ? (
-            <select
-              className={cx('w-full sm:w-60', footerSelectAccount)}
-              value={accountValue}
-              disabled={!canEdit || activeAccounts.length === 0}
-              onChange={(e) => {
-                const next = e.target.value;
-                if (!next || next === '__UNAVAILABLE__') return;
-                dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { accountId: next } });
-              }}
-              aria-label="Compte du budget"
-            >
-              {accountValue === '__UNAVAILABLE__' ? (
-                <option value="__UNAVAILABLE__" disabled>
-                  Compte indisponible ({budget.accountId})
-                </option>
-              ) : null}
-              {activeAccounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <span className="min-w-0 truncate text-slate-200">{budget.accountName}</span>
-          )}
+      <div className="mt-6 grid gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-2">
+        <div className="min-w-0">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="min-w-0">
+              <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Compte</div>
+              {canEdit ? (
+                <select
+                  className={cx('w-full min-w-0 truncate sm:w-44', footerSelectAccount)}
+                  value={accountValue}
+                  disabled={!canEdit || activeAccounts.length === 0}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    if (!next || next === '__UNAVAILABLE__') return;
+                    dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { accountId: next } });
+                  }}
+                  aria-label="Compte du budget"
+                >
+                  {accountValue === '__UNAVAILABLE__' ? (
+                    <option value="__UNAVAILABLE__" disabled>
+                      Compte indisponible ({budget.accountId})
+                    </option>
+                  ) : null}
+                  {activeAccounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span className="block h-9 w-full min-w-0 truncate rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[12px] font-medium leading-9 text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:w-44 sm:px-3 sm:leading-8">
+                  {budget.accountName}
+                </span>
+              )}
+            </div>
 
-          <span className="hidden flex-none sm:inline">Type</span>
-          {canEdit ? (
-            <select
-              className={cx('w-full sm:w-32', footerSelectType)}
-              value={budget.scope}
-              onChange={(e) =>
-                dispatch({
-                  type: 'UPDATE_BUDGET',
-                  budgetId: budget.id,
-                  patch: { scope: e.target.value as 'perso' | 'commun' },
-                })
-              }
-              aria-label="Type enveloppe"
-            >
-              <option value="perso">Perso</option>
-              <option value="commun">Commun</option>
-            </select>
-          ) : (
-            <span className="inline-flex h-6 flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
-              {budget.scope === 'commun' ? 'commun' : 'perso'}
-            </span>
-          )}
+            <div className="min-w-0">
+              <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Type</div>
+              {canEdit ? (
+                <select
+                  className={cx('w-full sm:w-28', footerSelectType)}
+                  value={budget.scope}
+                  onChange={(e) =>
+                    dispatch({
+                      type: 'UPDATE_BUDGET',
+                      budgetId: budget.id,
+                      patch: { scope: e.target.value as 'perso' | 'commun' },
+                    })
+                  }
+                  aria-label="Type enveloppe"
+                >
+                  <option value="perso">Perso</option>
+                  <option value="commun">Commun</option>
+                </select>
+              ) : (
+                <span className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:w-28 sm:px-3">
+                  {budget.scope === 'commun' ? 'commun' : 'perso'}
+                </span>
+              )}
+            </div>
+          </div>
 
           {model && !model.active ? (
-            <span className="col-span-full inline-flex h-6 w-fit flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200 sm:col-auto">
+            <div className="mt-2 inline-flex h-6 w-fit flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
               supprimée
-            </span>
+            </div>
           ) : null}
         </div>
 
