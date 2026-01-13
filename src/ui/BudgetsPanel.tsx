@@ -263,7 +263,7 @@ function BudgetCard({
             aria-label={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
             title={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
           >
-            <span aria-hidden="true" className="text-[13px] leading-none">
+            <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
               {expensesOpen ? '▴' : '▾'}
             </span>
           </button>

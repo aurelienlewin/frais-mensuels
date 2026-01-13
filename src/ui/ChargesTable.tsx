@@ -219,7 +219,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                   aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
                   title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
                 >
-                  <span aria-hidden="true" className="text-[13px] leading-none">
+                  <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
                     {chargesOpen ? '▴' : '▾'}
                   </span>
                 </button>

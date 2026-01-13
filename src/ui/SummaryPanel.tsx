@@ -99,7 +99,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             aria-label={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
             title={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
           >
-            <span aria-hidden="true" className="text-[13px] leading-none">
+            <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
               {summaryOpen ? '▴' : '▾'}
             </span>
           </button>
