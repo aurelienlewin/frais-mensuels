@@ -12,6 +12,15 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
+function hash32(input: string) {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
 function computeSize() {
   const dpr = clamp(typeof window.devicePixelRatio === 'number' ? window.devicePixelRatio : 1, 1, 1.2);
   const scale = 0.78; // request smaller images and upscale client-side
@@ -26,7 +35,9 @@ function newSeed() {
 
 function buildTarget(w: number, h: number, seed: string) {
   const apiUrl = `/api/background?w=${w}&h=${h}&seed=${encodeURIComponent(seed)}`;
-  return { url: apiUrl, css: `url("${apiUrl}")` };
+  const picsumSeed = hash32(seed).toString(16);
+  const directUrl = `https://picsum.photos/seed/${picsumSeed}/${w}/${h}`;
+  return { url: apiUrl, directUrl, css: `url("${apiUrl}")` };
 }
 
 type SessionBgV1 = { v: 1; css: string; savedAt: number };
@@ -63,7 +74,7 @@ function readSessionSaved(): { url: string; savedAt: number } | null {
   try {
     const raw = window.sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<SessionBgV1 & SessionBgV2>;
+    const parsed = JSON.parse(raw) as Partial<SessionBgV1 | SessionBgV2>;
     if (!parsed) return null;
     const savedAt = typeof parsed.savedAt === 'number' ? parsed.savedAt : 0;
     if (parsed.v === 2 && typeof parsed.url === 'string' && parsed.url) return { url: parsed.url, savedAt };
@@ -134,14 +145,43 @@ async function preloadImage(url: string) {
 
 async function fetchAsObjectUrl(url: string, signal: AbortSignal) {
   try {
-    const res = await fetch(url, { method: 'GET', signal });
+    const res = await fetch(url, { method: 'GET', signal, cache: 'no-store' });
     if (!res.ok) return null;
     const blob = await res.blob();
-    if (!blob || !String(blob.type || '').toLowerCase().startsWith('image/')) return null;
+    if (!blob || blob.size <= 0) return null;
     return URL.createObjectURL(blob);
   } catch {
     return null;
   }
+}
+
+function parseApiParams(url: string) {
+  try {
+    if (!url.startsWith('/api/background')) return null;
+    const u = new URL(url, window.location.origin);
+    const w = Number.parseInt(u.searchParams.get('w') || '', 10);
+    const h = Number.parseInt(u.searchParams.get('h') || '', 10);
+    const seed = u.searchParams.get('seed') || u.searchParams.get('sig') || '';
+    if (!Number.isFinite(w) || !Number.isFinite(h) || !seed.trim()) return null;
+    return { w, h, seed: seed.trim() };
+  } catch {
+    return null;
+  }
+}
+
+function buildCandidateUrls(primaryUrl: string) {
+  const out: string[] = [];
+  if (primaryUrl) out.push(primaryUrl);
+
+  const api = parseApiParams(primaryUrl);
+  if (api) {
+    const picsumSeed = hash32(api.seed).toString(16);
+    const directUrl = `https://picsum.photos/seed/${picsumSeed}/${api.w}/${api.h}`;
+    if (!out.includes(directUrl)) out.push(directUrl);
+  }
+
+  if (!out.includes(LOCAL_FALLBACK_URL)) out.push(LOCAL_FALLBACK_URL);
+  return out;
 }
 
 async function loadAndSwap(sourceUrl: string) {
@@ -167,53 +207,76 @@ async function loadAndSwap(sourceUrl: string) {
     }
   }
 
-  const objectUrl = await fetchAsObjectUrl(sourceUrl, controller.signal);
-  if (loadId !== activeLoadId) {
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
-    if (pendingLoadId === loadId) pendingLoadId = null;
-    if (activeAbort === controller) activeAbort = null;
-    return;
+  const candidates = buildCandidateUrls(sourceUrl);
+
+  let chosenDisplayCss: string | null = null;
+  let chosenObjectUrl: string | null = null;
+  let chosenSaveUrl: string | null = null;
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+
+    const objectUrl = await fetchAsObjectUrl(candidate, controller.signal);
+    if (loadId !== activeLoadId) {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      if (pendingLoadId === loadId) pendingLoadId = null;
+      if (activeAbort === controller) activeAbort = null;
+      return;
+    }
+
+    if (objectUrl) {
+      const ok = await preloadImage(objectUrl);
+      if (loadId !== activeLoadId) {
+        URL.revokeObjectURL(objectUrl);
+        if (pendingLoadId === loadId) pendingLoadId = null;
+        if (activeAbort === controller) activeAbort = null;
+        return;
+      }
+
+      if (ok) {
+        chosenDisplayCss = `url("${objectUrl}")`;
+        chosenObjectUrl = objectUrl;
+        chosenSaveUrl = candidate;
+        break;
+      }
+
+      URL.revokeObjectURL(objectUrl);
+    }
+
+    const okDirect = await preloadImage(candidate);
+    if (loadId !== activeLoadId) {
+      if (pendingLoadId === loadId) pendingLoadId = null;
+      if (activeAbort === controller) activeAbort = null;
+      return;
+    }
+
+    if (okDirect) {
+      chosenDisplayCss = `url("${candidate}")`;
+      chosenObjectUrl = null;
+      chosenSaveUrl = candidate;
+      break;
+    }
   }
 
-  if (!objectUrl) {
+  if (!chosenDisplayCss || !chosenSaveUrl) {
     if (!currentCss) setBaseBackground(FALLBACK_CSS);
     if (!reduced) root.style.setProperty('--bg-overlay-opacity', '0');
     if (pendingLoadId === loadId) pendingLoadId = null;
     if (activeAbort === controller) activeAbort = null;
     return;
   }
-
-  const ok = await preloadImage(objectUrl);
-  if (loadId !== activeLoadId) {
-    URL.revokeObjectURL(objectUrl);
-    if (pendingLoadId === loadId) pendingLoadId = null;
-    if (activeAbort === controller) activeAbort = null;
-    return;
-  }
-
-  if (!ok) {
-    URL.revokeObjectURL(objectUrl);
-    if (!currentCss) setBaseBackground(FALLBACK_CSS);
-    if (!reduced) root.style.setProperty('--bg-overlay-opacity', '0');
-    if (pendingLoadId === loadId) pendingLoadId = null;
-    if (activeAbort === controller) activeAbort = null;
-    return;
-  }
-
-  const displayCss = `url("${objectUrl}")`;
 
   if (reduced) {
-    const prevObjectUrl = currentObjectUrl;
-    currentObjectUrl = objectUrl;
-    setBaseBackground(displayCss);
-    saveSession(sourceUrl);
-    if (prevObjectUrl && prevObjectUrl !== objectUrl) URL.revokeObjectURL(prevObjectUrl);
+    setBaseBackground(chosenDisplayCss);
+    currentObjectUrl = chosenObjectUrl;
+    currentCss = chosenDisplayCss;
+    saveSession(chosenSaveUrl);
     if (pendingLoadId === loadId) pendingLoadId = null;
     if (activeAbort === controller) activeAbort = null;
     return;
   }
 
-  root.style.setProperty('--bg-image', displayCss);
+  root.style.setProperty('--bg-image', chosenDisplayCss);
   window.requestAnimationFrame(() => {
     if (loadId !== activeLoadId) return;
     root.style.setProperty('--bg-overlay-opacity', '0');
@@ -221,17 +284,17 @@ async function loadAndSwap(sourceUrl: string) {
 
   await waitMs(OVERLAY_FADE_MS + OVERLAY_SETTLE_MS);
   if (loadId !== activeLoadId) {
-    URL.revokeObjectURL(objectUrl);
+    if (chosenObjectUrl) URL.revokeObjectURL(chosenObjectUrl);
     if (pendingLoadId === loadId) pendingLoadId = null;
     if (activeAbort === controller) activeAbort = null;
     return;
   }
 
   const prevObjectUrl = currentObjectUrl;
-  currentObjectUrl = objectUrl;
-  currentCss = displayCss;
-  saveSession(sourceUrl);
-  if (prevObjectUrl && prevObjectUrl !== objectUrl) URL.revokeObjectURL(prevObjectUrl);
+  currentObjectUrl = chosenObjectUrl;
+  currentCss = chosenDisplayCss;
+  saveSession(chosenSaveUrl);
+  if (prevObjectUrl && prevObjectUrl !== chosenObjectUrl) URL.revokeObjectURL(prevObjectUrl);
   if (pendingLoadId === loadId) pendingLoadId = null;
   if (activeAbort === controller) activeAbort = null;
 }

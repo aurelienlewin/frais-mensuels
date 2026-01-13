@@ -17,11 +17,9 @@ function kickBackground(options?: { force?: boolean }) {
 
 function scheduleBackgroundWarmup() {
   const runner = () => kickBackground();
-  if ('requestIdleCallback' in window) {
-    (window as typeof window & { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => void }).requestIdleCallback?.(
-      runner,
-      { timeout: 1200 },
-    );
+  const w = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => void };
+  if (typeof w.requestIdleCallback === 'function') {
+    w.requestIdleCallback(runner, { timeout: 1200 });
     return;
   }
   window.setTimeout(runner, 200);
