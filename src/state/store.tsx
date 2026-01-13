@@ -93,11 +93,25 @@ type Store = {
   reset: () => void;
 };
 
-const StoreContext = createContext<Store | null>(null);
+const StoreStateContext = createContext<Pick<Store, 'state' | 'dispatch'> | null>(null);
+const StoreMetaContext = createContext<Omit<Store, 'state' | 'dispatch'> | null>(null);
 
 export function useStore() {
-  const ctx = useContext(StoreContext);
-  if (!ctx) throw new Error('StoreContext missing');
+  const stateCtx = useContext(StoreStateContext);
+  const metaCtx = useContext(StoreMetaContext);
+  if (!stateCtx || !metaCtx) throw new Error('StoreContext missing');
+  return useMemo(() => ({ ...stateCtx, ...metaCtx }), [metaCtx, stateCtx]);
+}
+
+export function useStoreState() {
+  const ctx = useContext(StoreStateContext);
+  if (!ctx) throw new Error('StoreStateContext missing');
+  return ctx;
+}
+
+export function useStoreMeta() {
+  const ctx = useContext(StoreMetaContext);
+  if (!ctx) throw new Error('StoreMetaContext missing');
   return ctx;
 }
 
@@ -347,13 +361,15 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
     return { status: cloudStatus, lastSyncedAt: cloudLastSyncedAt, lastMessage: cloudLastMessage, syncNow };
   }, [cloudLastMessage, cloudLastSyncedAt, cloudStatus, syncNow]);
 
-  const store = useMemo<Store>(() => {
+  const stateValue = useMemo<Pick<Store, 'state' | 'dispatch'>>(() => {
+    return { state, dispatch };
+  }, [dispatch, state]);
+
+  const metaValue = useMemo<Omit<Store, 'state' | 'dispatch'>>(() => {
     return {
-      state,
-      dispatch,
       saving,
       cloud,
-      exportJson: () => JSON.stringify(state, null, 2),
+      exportJson: () => JSON.stringify(stateRef.current, null, 2),
       importJson: (raw) => {
         const parsed = JSON.parse(raw) as AppState;
         const normalized = normalizeState(parsed);
@@ -365,7 +381,11 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
       },
       reset: () => dispatch({ type: 'HYDRATE', state: seedState() }),
     };
-  }, [cloud, dispatch, saving, state]);
+  }, [cloud, dispatch, saving]);
 
-  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
+  return (
+    <StoreStateContext.Provider value={stateValue}>
+      <StoreMetaContext.Provider value={metaValue}>{children}</StoreMetaContext.Provider>
+    </StoreStateContext.Provider>
+  );
 }

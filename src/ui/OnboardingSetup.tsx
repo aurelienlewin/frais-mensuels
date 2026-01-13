@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { eurosToCents, parseEuroAmount } from '../lib/money';
-import { useStore } from '../state/store';
+import { useStoreState } from '../state/store';
 import type { Account, Budget } from '../state/types';
 import { cx } from './cx';
 
@@ -56,7 +56,7 @@ function Select({
 }
 
 export function AccountsSetupPrompt() {
-  const { state, dispatch } = useStore();
+  const { state, dispatch } = useStoreState();
   const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
 
   const [rawId, setRawId] = useState('');
@@ -135,7 +135,7 @@ function BudgetSetupCard({
   keywords: string[];
   defaultName: string;
 }) {
-  const { state, dispatch } = useStore();
+  const { state, dispatch } = useStoreState();
   const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
   const defaultAccountId = activeAccounts.find((a) => a.kind === 'perso')?.id ?? activeAccounts[0]?.id ?? '';
 

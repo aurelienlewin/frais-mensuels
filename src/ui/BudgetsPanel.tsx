@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { daysInMonth, pad2, type YM } from '../lib/date';
 import { centsToEuros, eurosToCents, formatEUR, parseEuroAmount } from '../lib/money';
 import { budgetsForMonth } from '../state/selectors';
-import { useStore } from '../state/store';
+import { useStoreState } from '../state/store';
 import { cx } from './cx';
 import { InlineNumberInput, InlineTextInput } from './components/InlineInput';
 
@@ -16,7 +16,7 @@ function isFuelBudget(name: string) {
 }
 
 export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
-  const { state } = useStore();
+  const { state } = useStoreState();
   const budgets = useMemo(
     () => budgetsForMonth(state, ym),
     [state.accounts, state.budgets, state.months, ym],
@@ -45,7 +45,7 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
 }
 
 function AddBudgetCard({ disabled }: { disabled: boolean }) {
-  const { state, dispatch } = useStore();
+  const { state, dispatch } = useStoreState();
   const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
   const defaultAccountId = activeAccounts.find((a) => a.kind === 'perso')?.id ?? activeAccounts[0]?.id ?? '';
 
@@ -165,10 +165,10 @@ function BudgetCard({
 }: {
   ym: YM;
   budget: ReturnType<typeof budgetsForMonth>[number];
-  model: ReturnType<typeof useStore>['state']['budgets'][number] | null;
+  model: ReturnType<typeof useStoreState>['state']['budgets'][number] | null;
   archived: boolean;
 }) {
-  const { state, dispatch } = useStore();
+  const { state, dispatch } = useStoreState();
   const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
 
   const [label, setLabel] = useState('');

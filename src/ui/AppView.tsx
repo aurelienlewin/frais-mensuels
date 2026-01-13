@@ -9,7 +9,7 @@ import { Tour, type TourStep } from './Tour';
 import { AccountsSetupPrompt, EssentialBudgetsSetupPrompt } from './OnboardingSetup';
 import { cx } from './cx';
 import type { AuthUser } from '../lib/authApi';
-import { initDynamicBackground } from '../lib/background';
+import { kickDynamicBackground } from '../lib/backgroundClient';
 
 export function AppView({
   initialYm,
@@ -545,7 +545,7 @@ export function AppView({
                       <button
                         className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
                         onClick={() => {
-                          initDynamicBackground({ force: true });
+                          void kickDynamicBackground({ force: true });
                           showToast('Fond mis à jour', 'success');
                           menuRef.current?.removeAttribute('open');
                         }}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEventHandler, type MutableRefObject } from 'react';
 import { centsToEuros, eurosToCents, formatEUR } from '../lib/money';
 import { chargesForMonth } from '../state/selectors';
-import { useStore } from '../state/store';
+import { useStoreState } from '../state/store';
 import { pad2, type YM } from '../lib/date';
 import type { Charge, ChargeScope } from '../state/types';
 import { cx } from './cx';
@@ -12,7 +12,7 @@ function normalizeSearch(s: string) {
 }
 
 export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
-  const { state, dispatch } = useStore();
+  const { state, dispatch } = useStoreState();
   const rows = useMemo(
     () => chargesForMonth(state, ym),
     [state.accounts, state.charges, state.months, ym],

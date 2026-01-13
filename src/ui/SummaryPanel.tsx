@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { centsToEuros, eurosToCents, formatEUR, parseEuroAmount } from '../lib/money';
 import { totalsByAccount, totalsForMonth } from '../state/selectors';
-import { useStore } from '../state/store';
+import { useStoreState } from '../state/store';
 import type { YM } from '../lib/date';
 import { cx } from './cx';
 import { DonutChart, type DonutSegment } from './components/DonutChart';
@@ -9,7 +9,7 @@ import { InlineTextInput } from './components/InlineInput';
 import type { Account } from '../state/types';
 
 export function SummaryPanel({ ym }: { ym: YM }) {
-  const { state, dispatch } = useStore();
+  const { state, dispatch } = useStoreState();
   const totals = useMemo(
     () => totalsForMonth(state, ym),
     [state.accounts, state.budgets, state.charges, state.months, ym],
@@ -259,7 +259,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 }
 
 	function AccountsEditor() {
-	  const { state, dispatch } = useStore();
+	  const { state, dispatch } = useStoreState();
 	  const activeAccounts = state.accounts.filter((a) => a.active);
 	  const inactiveAccounts = state.accounts.filter((a) => !a.active);
     const [addDraft, setAddDraft] = useState<{ rawId: string; kind: Account['kind'] }>({

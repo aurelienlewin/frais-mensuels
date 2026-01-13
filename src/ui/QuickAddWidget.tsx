@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { pad2, ymFromDate, type YM } from '../lib/date';
 import { eurosToCents, parseEuroAmount } from '../lib/money';
-import { useStore } from '../state/store';
+import { useStoreState } from '../state/store';
 import { cx } from './cx';
 
 type Mode = 'perso' | 'essence';
@@ -35,7 +35,7 @@ function prefersReducedMotion() {
 }
 
 export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) {
-  const { state, dispatch } = useStore();
+  const { state, dispatch } = useStoreState();
   const [open, setOpen] = useState<Mode | null>(null);
   const [chooserOpen, setChooserOpen] = useState(false);
   const [showTop, setShowTop] = useState(false);

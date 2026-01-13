@@ -107,6 +107,21 @@ export default defineConfig(({ command, mode }) => {
     define: {
       __APP_BUILD_ID__: JSON.stringify(buildId),
     },
+    esbuild:
+      command === 'build'
+        ? {
+            drop: ['console', 'debugger'],
+          }
+        : undefined,
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) return 'vendor';
+          },
+        },
+      },
+    },
     plugins: [react(), command === 'serve' ? apiJsToTsDevPlugin() : null, command === 'serve' ? vercelApiDevPlugin() : null].filter(
       Boolean,
     ) as Plugin[],

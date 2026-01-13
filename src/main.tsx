@@ -2,17 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './styles.css';
-import { initDynamicBackground, startBackgroundRotation } from './lib/background';
+import { kickDynamicBackground } from './lib/backgroundClient';
 
 let swRegistration: ServiceWorkerRegistration | null = null;
-let backgroundStarted = false;
 
 function kickBackground(options?: { force?: boolean }) {
-  if (!backgroundStarted) {
-    backgroundStarted = true;
-    startBackgroundRotation();
-  }
-  initDynamicBackground(options);
+  void kickDynamicBackground(options);
 }
 
 function scheduleBackgroundWarmup() {
@@ -26,6 +21,7 @@ function scheduleBackgroundWarmup() {
 }
 
 function installOverflowDebug() {
+  if (!import.meta.env.DEV) return;
   try {
     const params = new URLSearchParams(window.location.search);
     if (params.get('debugOverflow') !== '1') return;
