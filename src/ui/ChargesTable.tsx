@@ -37,6 +37,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const [dragging, setDragging] = useState<{ id: string; scope: ChargeScope } | null>(null);
   const [dragOver, setDragOver] = useState<{ id: string; pos: 'before' | 'after' } | null>(null);
   const [filter, setFilter] = useState('');
+  const [chargesOpen, setChargesOpen] = useState(true);
   const filterNorm = useMemo(() => normalizeSearch(filter.trim()), [filter]);
   const isFiltering = filterNorm.length > 0;
   const [flashRowId, setFlashRowId] = useState<string | null>(null);
@@ -211,6 +212,14 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 
               <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
                 <button
+                  type="button"
+                  className="rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs"
+                  onClick={() => setChargesOpen((v) => !v)}
+                  aria-expanded={chargesOpen}
+                >
+                  {chargesOpen ? 'Masquer' : 'Afficher'}
+                </button>
+                <button
                   data-tour="add-charge"
                   className={cx(
                     'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
@@ -267,35 +276,39 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-2">
-              <div className="relative min-w-0 flex-1">
-                <input
-                  className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
-                  placeholder="Filtrer… (libellé, compte, destination)"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  inputMode="search"
-                  aria-label="Filtrer les charges"
-                />
-                {filter ? (
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-2 my-auto h-8 w-8 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-200 transition-colors hover:bg-white/10"
-                    onClick={() => setFilter('')}
-                    aria-label="Effacer le filtre"
-                  >
-                    ✕
-                  </button>
+            {chargesOpen ? (
+              <>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="relative min-w-0 flex-1">
+                    <input
+                      className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
+                      placeholder="Filtrer… (libellé, compte, destination)"
+                      value={filter}
+                      onChange={(e) => setFilter(e.target.value)}
+                      inputMode="search"
+                      aria-label="Filtrer les charges"
+                    />
+                    {filter ? (
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-2 my-auto h-8 w-8 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-200 transition-colors hover:bg-white/10"
+                        onClick={() => setFilter('')}
+                        aria-label="Effacer le filtre"
+                      >
+                        ✕
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="flex-none text-xs text-slate-400 tabular-nums">{visibleRows.length}</div>
+                </div>
+                {isFiltering ? (
+                  <div className="mt-2 text-[11px] text-slate-400">Réordonnancement désactivé pendant le filtre.</div>
                 ) : null}
-              </div>
-              <div className="flex-none text-xs text-slate-400 tabular-nums">{visibleRows.length}</div>
-            </div>
-            {isFiltering ? (
-              <div className="mt-2 text-[11px] text-slate-400">Réordonnancement désactivé pendant le filtre.</div>
+              </>
             ) : null}
           </div>
 
-	      {isTableUp ? (
+        {chargesOpen ? isTableUp ? (
         <div className="overflow-x-auto overscroll-x-contain">
           <table ref={tableRef} onKeyDown={onGridKeyDown} className="min-w-full table-fixed border-separate border-spacing-0">
             <caption className="sr-only">
@@ -873,9 +886,9 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                </div>
 	              ) : null}
             </div>
-          )}
+	      )}
         </div>
-      )}
+      ) : null}
 
       <div className="border-t border-white/15 px-4 py-4 text-xs text-slate-400 max-[360px]:px-3 max-[360px]:py-3 sm:px-6">
         <span className="sm:hidden">Astuce: ↑/↓ pour réordonner, coche OK quand c’est prélevé.</span>
