@@ -183,8 +183,10 @@ function BudgetCard({
 
   const canEdit = !archived && Boolean(model);
   const canDelete = !archived && Boolean(model?.active);
-  const typeSelect =
-    'h-8 rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
+  const footerSelectBase =
+    'h-9 rounded-xl border border-white/12 bg-ink-950/35 px-2.5 text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45 sm:h-8 sm:px-3';
+  const footerSelectAccount = `${footerSelectBase} text-[12px] font-medium`;
+  const footerSelectType = `${footerSelectBase} text-[11px] font-semibold uppercase tracking-wide`;
   const ratio = budget.amountCents > 0 ? Math.min(1, Math.max(0, budget.spentCents / budget.amountCents)) : 0;
   const over = budget.remainingCents < 0;
 
@@ -501,12 +503,12 @@ function BudgetCard({
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-slate-400">
-          <span className="flex-none">Compte</span>
+      <div className="mt-6 grid gap-2 sm:flex sm:items-center sm:justify-between">
+        <div className="grid min-w-0 grid-cols-1 items-center gap-2 text-xs text-slate-400 min-[380px]:grid-cols-[1fr_132px] sm:flex sm:flex-wrap sm:items-center sm:gap-2">
+          <span className="hidden flex-none sm:inline">Compte</span>
           {canEdit ? (
             <select
-              className={typeSelect}
+              className={cx('w-full', footerSelectAccount)}
               value={accountValue}
               disabled={!canEdit || activeAccounts.length === 0}
               onChange={(e) => {
@@ -531,10 +533,10 @@ function BudgetCard({
             <span className="min-w-0 truncate text-slate-200">{budget.accountName}</span>
           )}
 
-          <span className="flex-none">Type</span>
+          <span className="hidden flex-none sm:inline">Type</span>
           {canEdit ? (
             <select
-              className={typeSelect}
+              className={cx('w-full', footerSelectType)}
               value={budget.scope}
               onChange={(e) =>
                 dispatch({
@@ -555,7 +557,7 @@ function BudgetCard({
           )}
 
           {model && !model.active ? (
-            <span className="inline-flex h-6 flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200">
+            <span className="col-span-full inline-flex h-6 w-fit flex-none items-center rounded-full bg-white/10 px-2 text-[10px] text-slate-200 sm:col-auto">
               supprimée
             </span>
           ) : null}
@@ -564,7 +566,7 @@ function BudgetCard({
         {canDelete ? (
           <button
             type="button"
-            className="h-9 rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-xs font-semibold text-rose-100 transition-colors hover:bg-rose-400/15"
+            className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-xs font-semibold text-rose-100 transition-colors hover:bg-rose-400/15 sm:h-9 sm:w-auto"
             onClick={() => {
               if (!model) return;
               const ok = window.confirm(
