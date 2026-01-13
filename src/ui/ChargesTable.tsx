@@ -200,7 +200,20 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 			      data-tour="charges"
 			      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
 			    >
-          <div className="border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
+          <div className="relative border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
+            <button
+              type="button"
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/7 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:right-3 max-[360px]:top-3 max-[360px]:h-9 max-[360px]:w-9 sm:hidden"
+              onClick={() => setChargesOpen((v) => !v)}
+              aria-expanded={chargesOpen}
+              aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+              title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+            >
+              <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
+                {chargesOpen ? '▴' : '▾'}
+              </span>
+            </button>
+
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm text-slate-300">Charges</h2>
@@ -213,7 +226,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
               <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
                 <button
                   type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/7 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:h-9 max-[360px]:w-9"
+                  className="hidden h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/7 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:h-9 max-[360px]:w-9 sm:flex"
                   onClick={() => setChargesOpen((v) => !v)}
                   aria-expanded={chargesOpen}
                   aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
