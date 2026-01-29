@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { centsToEuros, eurosToCents, formatEUR, parseEuroAmount } from '../lib/money';
-import { totalsByAccount, totalsForMonth } from '../state/selectors';
+import { chargesForMonth, totalsByAccount, totalsForMonth } from '../state/selectors';
 import { useStoreState } from '../state/store';
 import type { YM } from '../lib/date';
 import { cx } from './cx';
@@ -14,13 +14,29 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     () => totalsForMonth(state, ym),
     [state.accounts, state.budgets, state.charges, state.months, ym],
   );
-  const byAccount = useMemo(
-    () => totalsByAccount(state, ym),
+  const charges = useMemo(
+    () => chargesForMonth(state, ym),
     [state.accounts, state.charges, state.months, ym],
   );
+  const byAccount = useMemo(
+    () => totalsByAccount(state, ym),
+    [state.accounts, state.budgets, state.charges, state.months, ym],
+  );
+  const chargesByAccount = useMemo(() => {
+    const map = new Map<Account['id'], { ids: string[]; unpaidCount: number }>();
+    for (const r of charges) {
+      const key = r.destination?.kind === 'account' ? r.destination.accountId : r.accountId;
+      const prev = map.get(key) ?? { ids: [], unpaidCount: 0 };
+      prev.ids.push(r.id);
+      if (!r.paid) prev.unpaidCount += 1;
+      map.set(key, prev);
+    }
+    return map;
+  }, [charges]);
   const [salaryDraft, setSalaryDraft] = useState(() => String(centsToEuros(totals.salaryCents)));
   const [salaryEditing, setSalaryEditing] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(true);
+  const archived = state.months[ym]?.archived ?? false;
 
   useEffect(() => {
     if (!salaryEditing) setSalaryDraft(String(centsToEuros(totals.salaryCents)));
@@ -128,7 +144,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                     return;
                   }
                   const next = eurosToCents(euros);
-                  if (next !== totals.salaryCents) dispatch({ type: 'SET_SALARY', salaryCents: next });
+                  if (next !== totals.salaryCents) dispatch({ type: 'SET_SALARY', ym, salaryCents: next });
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
@@ -225,24 +241,55 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         <div className="mt-8 max-[360px]:mt-6">
           <div className="text-sm font-medium text-slate-200">Par compte (charges + enveloppes)</div>
           <div className="mt-3 space-y-2">
-            {byAccount.map((a) => (
-              <div key={a.accountId} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/15 bg-white/7 px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm text-slate-100" title={a.accountName}>
-                    {a.accountName}
-                  </div>
-                  <div className="mt-0.5 truncate text-xs text-slate-400">
-                    {formatEUR(a.chargesPaidCents)} / {formatEUR(a.chargesTotalCents)} charges cochées
-                    {a.budgetsCents ? ` · enveloppes ${formatEUR(a.budgetsCents)}` : ''}
-                  </div>
-                </div>
-                <div
-                  className={cx('flex-none text-sm font-medium tabular-nums', a.kind === 'commun' ? 'text-sky-200' : 'text-emerald-200')}
+            {byAccount.map((a) => {
+              const meta = chargesByAccount.get(a.accountId) ?? null;
+              const allPaid = Boolean(meta && meta.ids.length > 0 && meta.unpaidCount === 0);
+              const canMarkAll = !archived && Boolean(meta && meta.unpaidCount > 0);
+              const bulkLabel = (() => {
+                if (archived) return 'Mois archivé';
+                if (!meta || meta.ids.length === 0) return 'Aucune charge à cocher';
+                if (meta.unpaidCount === 0) return 'Tout est déjà coché';
+                return `Cocher toutes les charges liées à ${a.accountName}`;
+              })();
+              return (
+                <button
+                  key={a.accountId}
+                  type="button"
+                  className={cx(
+                    'flex min-w-0 items-center gap-3 rounded-2xl border border-white/15 bg-white/7 px-4 py-3 text-left transition-colors',
+                    canMarkAll ? 'hover:bg-white/10' : 'opacity-75',
+                    allPaid && 'opacity-60',
+                  )}
+                  disabled={!canMarkAll}
+                  title={bulkLabel}
+                  aria-label={bulkLabel}
+                  onClick={() => {
+                    if (!canMarkAll || !meta) return;
+                    dispatch({ type: 'SET_CHARGES_PAID', ym, chargeIds: meta.ids, paid: true });
+                  }}
                 >
-                  {formatEUR(a.totalCents)}
-                </div>
-              </div>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm text-slate-100" title={a.accountName}>
+                      {a.accountName}
+                    </div>
+                    <div className="mt-0.5 truncate text-xs text-slate-400">
+                      {formatEUR(a.chargesPaidCents)} / {formatEUR(a.chargesTotalCents)} charges cochées
+                      {a.budgetsCents ? ` · enveloppes ${formatEUR(a.budgetsCents)}` : ''}
+                    </div>
+                  </div>
+                  {allPaid ? (
+                    <span className="flex-none rounded-full border border-emerald-200/20 bg-emerald-400/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
+                      OK ✓
+                    </span>
+                  ) : null}
+                  <div
+                    className={cx('flex-none text-sm font-medium tabular-nums', a.kind === 'commun' ? 'text-sky-200' : 'text-emerald-200')}
+                  >
+                    {formatEUR(a.totalCents)}
+                  </div>
+                </button>
+              );
+            })}
             {byAccount.length === 0 ? <div className="text-sm text-slate-400">Aucune charge ce mois-ci.</div> : null}
           </div>
         </div>
