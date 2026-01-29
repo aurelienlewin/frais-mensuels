@@ -206,14 +206,14 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-[132px_1fr]">
+          <div className="mt-4 grid gap-4">
             <DonutChart
               ariaLabel="Répartition du budget"
               segments={repartition.segments}
               total={repartition.baseCents}
               activeSegmentId={activeSegId}
               onActiveSegmentIdChange={setActiveSegId}
-              className="motion-hover"
+              className="motion-hover mx-auto"
               centerContainerClassName="-translate-y-4"
               centerTop={centerTop}
               centerBottom={centerBottom}
@@ -256,7 +256,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   key={a.accountId}
                   type="button"
                   className={cx(
-                    'flex min-w-0 items-center gap-3 rounded-2xl border border-white/15 bg-white/7 px-4 py-3 text-left transition-colors',
+                    'grid min-w-0 grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-2xl border border-white/15 bg-white/7 px-4 py-3 text-left transition-colors sm:grid-cols-[minmax(0,1fr)_120px]',
                     canMarkAll ? 'hover:bg-white/10' : 'opacity-75',
                     allPaid && 'opacity-60',
                   )}
@@ -268,22 +268,27 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                     dispatch({ type: 'SET_CHARGES_PAID', ym, chargeIds: meta.ids, paid: true });
                   }}
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm text-slate-100" title={a.accountName}>
-                      {a.accountName}
+                  <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="truncate text-sm text-slate-100" title={a.accountName}>
+                        {a.accountName}
+                      </div>
+                      {allPaid ? (
+                        <span className="flex-none rounded-full border border-emerald-200/20 bg-emerald-400/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-100">
+                          OK ✓
+                        </span>
+                      ) : null}
                     </div>
                     <div className="mt-0.5 truncate text-xs text-slate-400">
                       {formatEUR(a.chargesPaidCents)} / {formatEUR(a.chargesTotalCents)} charges cochées
                       {a.budgetsCents ? ` · enveloppes ${formatEUR(a.budgetsCents)}` : ''}
                     </div>
                   </div>
-                  {allPaid ? (
-                    <span className="flex-none rounded-full border border-emerald-200/20 bg-emerald-400/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
-                      OK ✓
-                    </span>
-                  ) : null}
                   <div
-                    className={cx('flex-none text-sm font-medium tabular-nums', a.kind === 'commun' ? 'text-sky-200' : 'text-emerald-200')}
+                    className={cx(
+                      'text-right text-sm font-medium tabular-nums',
+                      a.kind === 'commun' ? 'text-sky-200' : 'text-emerald-200',
+                    )}
                   >
                     {formatEUR(a.totalCents)}
                   </div>
