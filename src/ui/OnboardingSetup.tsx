@@ -78,7 +78,7 @@ export function AccountsSetupPrompt() {
 
       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_120px_120px]">
         <input
-          className="h-9 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
+          className="h-9 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
           placeholder="ex: BOURSO_PERSO"
           value={rawId}
           onChange={(e) => setRawId(e.target.value)}
@@ -96,8 +96,8 @@ export function AccountsSetupPrompt() {
         <button
           type="button"
           className={cx(
-            'h-9 rounded-2xl border border-fuchsia-200/25 bg-fuchsia-400/12 px-4 text-sm font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/18',
-            !canSubmit && 'opacity-50 hover:bg-fuchsia-400/12',
+            'h-9 rounded-2xl border border-slate-200/25 bg-slate-400/12 px-4 text-sm font-semibold text-slate-100 transition-colors hover:bg-slate-400/18',
+            !canSubmit && 'opacity-50 hover:bg-slate-400/12',
           )}
           disabled={!canSubmit}
           onClick={() => {
@@ -174,14 +174,14 @@ function BudgetSetupCard({
 
       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_140px]">
         <input
-          className="h-9 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
+          className="h-9 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
           value={name}
           onChange={(e) => setName(e.target.value)}
           aria-label={`Nom enveloppe: ${title}`}
         />
 	        <div className="relative">
 	          <input
-	            className="h-9 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
+	            className="h-9 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
 	            placeholder="0"
 	            inputMode="decimal"
 	            type="text"
@@ -203,8 +203,8 @@ function BudgetSetupCard({
         <button
           type="button"
           className={cx(
-            'h-9 rounded-2xl border border-fuchsia-200/25 bg-fuchsia-400/12 px-4 text-sm font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/18',
-            !canSubmit && 'opacity-50 hover:bg-fuchsia-400/12',
+            'h-9 rounded-2xl border border-slate-200/25 bg-slate-400/12 px-4 text-sm font-semibold text-slate-100 transition-colors hover:bg-slate-400/18',
+            !canSubmit && 'opacity-50 hover:bg-slate-400/12',
           )}
 	          disabled={!canSubmit}
 	          onClick={() => {

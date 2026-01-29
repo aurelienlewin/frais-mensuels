@@ -5,11 +5,10 @@ module.exports = {
     extend: {
       colors: {
         ink: {
-          950: '#0b1020'
+          950: '#0d0f14'
         }
       }
     },
   },
   plugins: [],
 };
-

@@ -379,7 +379,7 @@ export function AppView({
                   <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-[11px] sm:tracking-[0.32em]">Tableau privé</div>
                   <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
                     <h1 className="text-[15px] font-semibold leading-tight tracking-tight text-slate-50 sm:text-lg">
-                      <span className="bg-gradient-to-r from-cyan-200 via-fuchsia-200 to-amber-200 bg-clip-text text-transparent">Frais</span>{' '}
+                      <span className="bg-gradient-to-r from-cyan-200 via-slate-200 to-amber-200 bg-clip-text text-transparent">Frais</span>{' '}
                       mensuels
                     </h1>
                     <span className="hidden rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100/90 shadow-[0_10px_28px_-18px_rgba(16,185,129,0.9)] max-[520px]:hidden sm:inline-flex sm:px-2.5 sm:py-1 sm:text-[11px] sm:tracking-[0.18em]">

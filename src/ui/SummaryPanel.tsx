@@ -81,7 +81,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       : activeSeg?.id === 'perso'
         ? 'text-emerald-200'
         : activeSeg?.id === 'envelopes'
-          ? 'text-fuchsia-200'
+          ? 'text-slate-200'
           : activeSeg?.id === 'remaining'
             ? 'text-slate-200'
             : repartition.remainingCents < 0
@@ -128,7 +128,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             <div className="text-xs text-slate-400">Salaire</div>
             <div className="relative">
               <input
-                className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45 sm:text-sm"
+                className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45 sm:text-sm"
                 type="text"
                 inputMode="decimal"
                 value={salaryDraft}
@@ -334,7 +334,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ajouter un compte</div>
         <div className="mt-2 grid gap-2">
 	          <input
-            className="h-8 w-full rounded-xl border border-white/15 bg-ink-950/35 px-3 text-[13px] font-semibold text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
+            className="h-8 w-full rounded-xl border border-white/15 bg-ink-950/35 px-3 text-[13px] font-semibold text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
             placeholder="ex: BOURSO_PERSO"
             value={addDraft.rawId}
             onChange={(e) => setAddDraft((s) => ({ ...s, rawId: e.target.value }))}
@@ -353,8 +353,8 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             <button
               type="button"
               className={cx(
-                'h-8 w-full rounded-xl border border-fuchsia-200/25 bg-fuchsia-400/12 px-3 text-[11px] font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/18',
-                !addId && 'opacity-50 hover:bg-fuchsia-400/12',
+                'h-8 w-full rounded-xl border border-slate-200/25 bg-slate-400/12 px-3 text-[11px] font-semibold text-slate-100 transition-colors hover:bg-slate-400/18',
+                !addId && 'opacity-50 hover:bg-slate-400/12',
               )}
               disabled={!addId}
               onClick={() => {
@@ -446,7 +446,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 	                  </select>
                   <button
                     type="button"
-                    className="h-9 rounded-2xl border border-fuchsia-200/25 bg-fuchsia-400/12 px-4 text-sm font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/18"
+                    className="h-9 rounded-2xl border border-slate-200/25 bg-slate-400/12 px-4 text-sm font-semibold text-slate-100 transition-colors hover:bg-slate-400/18"
                     onClick={() => {
                       dispatch({ type: 'REMOVE_ACCOUNT', accountId: a.id, moveToAccountId: activeRemove.moveToAccountId });
                       setRemoveDraft(null);

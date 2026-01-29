@@ -228,7 +228,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 	            <div className="relative">
 	              <input
 	                ref={amountRef}
-	                className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45 sm:text-sm"
+	                className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45 sm:text-sm"
 	                type="text"
 	                inputMode="decimal"
 	                placeholder="10"
@@ -244,7 +244,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 	
 	            <input
 	              ref={labelRef}
-	              className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45 sm:text-sm"
+	              className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45 sm:text-sm"
 	              placeholder={open === 'perso' ? 'ex: resto' : 'ex: plein'}
 	              value={label}
 	              onChange={(e) => setLabel(e.target.value)}
@@ -288,7 +288,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
             </button>
             <button
               type="button"
-              className="rounded-2xl border border-fuchsia-200/30 bg-fuchsia-400/15 px-4 py-2 text-sm font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/20 disabled:opacity-50"
+              className="rounded-2xl border border-slate-200/30 bg-slate-400/15 px-4 py-2 text-sm font-semibold text-slate-100 transition-colors hover:bg-slate-400/20 disabled:opacity-50"
               onClick={submit}
               disabled={disabledAll}
             >
@@ -368,8 +368,8 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
         <button
           type="button"
           className={cx(
-            'motion-hover motion-pop flex h-12 w-12 touch-manipulation items-center justify-center rounded-full border bg-ink-950/95 text-fuchsia-100 shadow-[0_20px_70px_-42px_rgba(0,0,0,0.95)] backdrop-blur transition-colors max-[360px]:h-11 max-[360px]:w-11',
-            disabledAll ? 'border-white/10 bg-white/5 text-slate-400' : 'border-fuchsia-200/35 hover:bg-ink-950/90',
+            'motion-hover motion-pop flex h-12 w-12 touch-manipulation items-center justify-center rounded-full border bg-ink-950/95 text-slate-100 shadow-[0_20px_70px_-42px_rgba(0,0,0,0.95)] backdrop-blur transition-colors max-[360px]:h-11 max-[360px]:w-11',
+            disabledAll ? 'border-white/10 bg-white/5 text-slate-400' : 'border-slate-200/35 hover:bg-ink-950/90',
           )}
           onClick={() => {
             if (disabledAll) return;

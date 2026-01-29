@@ -303,7 +303,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 <div className="mt-3 flex items-center gap-2">
                   <div className="relative min-w-0 flex-1">
                     <input
-                      className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
+                      className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
                       placeholder="Filtrer… (libellé, compte, destination)"
                       value={filter}
                       onChange={(e) => setFilter(e.target.value)}
@@ -356,7 +356,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	              const editable = canEdit && (Boolean(model) || isMonthOnly);
 	              const canReorder = canEdit && Boolean(model) && !isFiltering;
 	              const isInactive = Boolean(model && !model.active);
-              const monthOnlyChip = 'border-fuchsia-200/30 bg-fuchsia-400/15 text-fuchsia-50';
+              const monthOnlyChip = 'border-slate-200/30 bg-slate-400/15 text-slate-50';
               const tint =
                 r.scope === 'commun'
                   ? 'bg-sky-500/22 hover:bg-sky-500/34'
@@ -399,7 +399,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                    'border-t border-white/5 transition-colors transition-opacity duration-150',
 	                    tint,
 	                    paidFx,
-                      r.id === flashRowId && 'ring-2 ring-fuchsia-200/30 ring-inset',
+                      r.id === flashRowId && 'ring-2 ring-slate-200/30 ring-inset',
 	                    dragging?.id === r.id && 'opacity-60',
 	                    dragOver?.id === r.id && dragging?.scope === r.scope
 	                      ? dragOver.pos === 'before'
@@ -967,7 +967,7 @@ function MobileCard({
     r.scope === 'commun' ? 'border-sky-200/25 bg-sky-400/12 text-sky-100' : 'border-emerald-200/25 bg-emerald-400/12 text-emerald-100';
   const paymentChip =
     r.payment === 'auto' ? 'border-violet-200/25 bg-violet-400/12 text-violet-100' : 'border-amber-200/25 bg-amber-400/12 text-amber-100';
-  const monthOnlyChip = 'border-fuchsia-200/25 bg-fuchsia-400/12 text-fuchsia-100';
+  const monthOnlyChip = 'border-slate-200/25 bg-slate-400/12 text-slate-100';
 
   const chipBase =
     'inline-flex h-6 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 text-[10px] font-semibold text-slate-200';
@@ -990,7 +990,7 @@ function MobileCard({
 	        'rounded-2xl border p-2.5 shadow-[0_12px_40px_-32px_rgba(0,0,0,0.85)] backdrop-blur',
 	        tint,
 	        paidFx,
-          highlight && 'ring-2 ring-fuchsia-200/30 ring-inset',
+          highlight && 'ring-2 ring-slate-200/30 ring-inset',
 	      )}
 	    >
       <div className="flex items-start gap-2">

@@ -246,7 +246,7 @@ export function Tour({
     <div className="fixed inset-0 z-[80]">
       {highlightStyle ? (
         <div
-          className="pointer-events-none absolute rounded-[28px] border border-fuchsia-200/75 shadow-[0_0_0_1px_rgba(56,189,248,0.22),0_0_90px_-40px_rgba(189,147,249,0.85)]"
+          className="pointer-events-none absolute rounded-[28px] border border-slate-200/75 shadow-[0_0_0_1px_rgba(56,189,248,0.22),0_0_90px_-40px_rgba(189,147,249,0.85)]"
           style={{
             ...highlightStyle,
             boxShadow: '0 0 0 9999px rgba(0,0,0,0.72), 0 0 90px -40px rgba(189,147,249,0.85)',
@@ -314,7 +314,7 @@ export function Tour({
               </button>
               <button
                 type="button"
-                className="rounded-2xl border border-fuchsia-200/30 bg-fuchsia-400/15 px-4 py-2 text-sm font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/20"
+                className="rounded-2xl border border-slate-200/30 bg-slate-400/15 px-4 py-2 text-sm font-semibold text-slate-100 transition-colors hover:bg-slate-400/20"
                 onClick={next}
               >
                 {isLast ? 'Terminer' : idx === 0 ? 'Commencer' : 'Suivant'}

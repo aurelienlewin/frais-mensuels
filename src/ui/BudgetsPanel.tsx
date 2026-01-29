@@ -78,7 +78,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
 
       <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_140px]">
         <input
-          className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
+          className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
           placeholder="ex: Budget perso"
           value={name}
           disabled={disabled}
@@ -87,7 +87,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
         />
         <div className="relative">
           <input
-            className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 pr-10 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45 sm:text-sm"
+            className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 pr-10 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45 sm:text-sm"
             placeholder="0"
             inputMode="decimal"
             type="text"
@@ -129,8 +129,8 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
         <button
           type="button"
           className={cx(
-            'h-10 rounded-2xl border border-fuchsia-200/25 bg-fuchsia-400/12 px-4 text-sm font-semibold text-fuchsia-100 transition-colors hover:bg-fuchsia-400/18',
-            !canSubmit && 'opacity-50 hover:bg-fuchsia-400/12',
+            'h-10 rounded-2xl border border-slate-200/25 bg-slate-400/12 px-4 text-sm font-semibold text-slate-100 transition-colors hover:bg-slate-400/18',
+            !canSubmit && 'opacity-50 hover:bg-slate-400/12',
           )}
           disabled={!canSubmit}
           onClick={() => {
@@ -273,7 +273,7 @@ function BudgetCard({
           <div className="mt-3 grid gap-2 rounded-2xl border border-white/15 bg-ink-950/45 p-3">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
             <input
-              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
+              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
               type="date"
               value={date}
               min={minDate}
@@ -283,7 +283,7 @@ function BudgetCard({
               aria-label="Date"
             />
             <input
-              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
+              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
               placeholder={defaultLabelPlaceholder}
               value={label}
               disabled={!canEdit}
@@ -291,7 +291,7 @@ function BudgetCard({
               aria-label="Libellé"
             />
             <input
-              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-fuchsia-200/40 focus:bg-ink-950/45"
+              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
               placeholder="10"
               inputMode="decimal"
               type="text"
