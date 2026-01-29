@@ -71,7 +71,7 @@ scheduleBackgroundWarmup();
 installOverflowDebug();
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
-  kickBackground({ force: true });
+  kickBackground();
   swRegistration?.update().catch(() => undefined);
 });
 window.addEventListener('pageshow', () => {

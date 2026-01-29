@@ -3,8 +3,8 @@ const SESSION_KEY = 'fm:bg:session:v2';
 const LOCAL_FALLBACK_URL = '/bg-snowy.jpg';
 const FALLBACK_CSS = `url("${LOCAL_FALLBACK_URL}")`;
 
-const AUTO_ROTATE_MS = 1000 * 60 * 4; // base interval for background refresh
-const AUTO_ROTATE_JITTER_MS = 1000 * 60 * 1.5; // jitter to avoid sync spikes
+const AUTO_ROTATE_MS = 1000 * 60 * 12; // base interval for background refresh
+const AUTO_ROTATE_JITTER_MS = 1000 * 60 * 3; // jitter to avoid sync spikes
 const OVERLAY_FADE_MS = 420;
 const OVERLAY_SETTLE_MS = 60;
 
@@ -22,10 +22,10 @@ function hash32(input: string) {
 }
 
 function computeSize() {
-  const dpr = clamp(typeof window.devicePixelRatio === 'number' ? window.devicePixelRatio : 1, 1, 1.2);
-  const scale = 0.78; // request smaller images and upscale client-side
-  const w = clamp(Math.round(window.innerWidth * dpr * scale), 720, 1600);
-  const h = clamp(Math.round(window.innerHeight * dpr * scale), 720, 1600);
+  const dpr = clamp(typeof window.devicePixelRatio === 'number' ? window.devicePixelRatio : 1, 1, 1);
+  const scale = 0.65; // request smaller images and upscale client-side
+  const w = clamp(Math.round(window.innerWidth * dpr * scale), 640, 1280);
+  const h = clamp(Math.round(window.innerHeight * dpr * scale), 640, 1280);
   return { w, h };
 }
 
@@ -59,6 +59,18 @@ function waitMs(ms: number) {
 function prefersReducedMotion() {
   try {
     return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+  } catch {
+    return false;
+  }
+}
+
+function shouldSkipDynamicBackground() {
+  try {
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    if (connection?.saveData) return true;
+    const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+    if (typeof mem === 'number' && mem > 0 && mem <= 4) return true;
+    return false;
   } catch {
     return false;
   }
@@ -303,6 +315,10 @@ export function initDynamicBackground(options?: { force?: boolean }) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
   if (pendingLoadId) return;
+  if (shouldSkipDynamicBackground() && !options?.force) {
+    if (!currentCss) setBaseBackground(FALLBACK_CSS);
+    return;
+  }
 
   const session = readSessionSaved();
   if (!options?.force && session?.url) {
@@ -331,6 +347,8 @@ export function initDynamicBackground(options?: { force?: boolean }) {
 
 function scheduleAutoRotate() {
   if (typeof window === 'undefined') return;
+  if (prefersReducedMotion()) return;
+  if (shouldSkipDynamicBackground()) return;
   if (autoRotateTimer) window.clearTimeout(autoRotateTimer);
   const jitter = Math.random() * AUTO_ROTATE_JITTER_MS;
   const delay = AUTO_ROTATE_MS + jitter;
