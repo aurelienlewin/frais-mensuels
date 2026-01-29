@@ -53,6 +53,7 @@ export type MonthChargeSnapshot = Pick<
 export type MonthChargeState = {
   paid: boolean;
   snapshot?: MonthChargeSnapshot;
+  removed?: boolean;
 };
 
 export type MonthBudgetSnapshot = Pick<Budget, 'name' | 'amountCents' | 'accountId' | 'scope' | 'splitPercent'>;

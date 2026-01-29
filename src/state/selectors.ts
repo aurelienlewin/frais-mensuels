@@ -102,17 +102,20 @@ export function chargesForMonth(state: AppState, ym: YM): ChargeResolved[] {
   const ids: string[] = [];
   if (month?.archived) {
     for (const [id, st] of Object.entries(month.charges)) {
-      if (st.snapshot) ids.push(id);
+      if (st.snapshot && !st.removed) ids.push(id);
     }
   } else {
     for (const ch of state.charges) {
-      if (ch.active) ids.push(ch.id);
+      if (!ch.active) continue;
+      if (month?.charges[ch.id]?.removed) continue;
+      ids.push(ch.id);
     }
   }
 
   // In non-archived months, keep any paid markers even if charge got deactivated.
   if (!month?.archived && month) {
     for (const id of Object.keys(month.charges)) {
+      if (month.charges[id]?.removed) continue;
       if (!ids.includes(id)) ids.push(id);
     }
   }

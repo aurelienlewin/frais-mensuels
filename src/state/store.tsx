@@ -19,6 +19,10 @@ function actionSummary(action: Action): string | null {
       return 'Mois désarchivé';
     case 'TOGGLE_CHARGE_PAID':
       return 'OK mis à jour';
+    case 'SET_CHARGES_PAID':
+      return 'OK mis à jour';
+    case 'HIDE_CHARGE_FOR_MONTH':
+      return 'Charge masquée ce mois';
     case 'ADD_CHARGE':
       return 'Charge ajoutée';
     case 'ADD_MONTH_CHARGE':

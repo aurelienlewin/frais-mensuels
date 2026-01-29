@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEventHandler, type M
 import { centsToEuros, eurosToCents, formatEUR } from '../lib/money';
 import { chargesForMonth } from '../state/selectors';
 import { useStoreState } from '../state/store';
-import { pad2, type YM } from '../lib/date';
+import { pad2, ymFromDate, type YM } from '../lib/date';
 import type { Charge, ChargeScope } from '../state/types';
 import { cx } from './cx';
 import { InlineNumberInput, InlineTextInput } from './components/InlineInput';
@@ -42,6 +42,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const isFiltering = filterNorm.length > 0;
   const [flashRowId, setFlashRowId] = useState<string | null>(null);
   const flashTimerRef = useRef<number | null>(null);
+  const todayYm = useMemo(() => ymFromDate(new Date()), []);
 
   const canEdit = !archived;
   const isMonthOnlyCharge = (chargeId: string) => !chargesById.has(chargeId) && Boolean(monthChargeStateById[chargeId]?.snapshot);
@@ -56,7 +57,11 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const removeCharge = (chargeId: string) => {
     if (!canEdit) return;
     if (chargesById.has(chargeId)) {
-      dispatch({ type: 'REMOVE_CHARGE', chargeId });
+      if (ym < todayYm) {
+        dispatch({ type: 'HIDE_CHARGE_FOR_MONTH', ym, chargeId });
+      } else {
+        dispatch({ type: 'REMOVE_CHARGE', chargeId });
+      }
       return;
     }
     dispatch({ type: 'REMOVE_MONTH_CHARGE', ym, chargeId });

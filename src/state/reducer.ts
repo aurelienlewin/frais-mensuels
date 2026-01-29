@@ -4,13 +4,15 @@ import type { Account, AppState, Budget, BudgetExpense, Charge, MonthChargeSnaps
 
 export type Action =
   | { type: 'HYDRATE'; state: AppState }
-  | { type: 'SET_SALARY'; salaryCents: number }
+  | { type: 'SET_SALARY'; ym: MonthData['ym']; salaryCents: number }
   | { type: 'SET_UI'; patch: NonNullable<AppState['ui']> }
   | { type: 'ADD_ACCOUNT'; accountId: Account['id']; kind: Account['kind'] }
   | { type: 'UPDATE_ACCOUNT'; accountId: Account['id']; patch: Partial<Omit<Account, 'id'>> }
   | { type: 'REMOVE_ACCOUNT'; accountId: Account['id']; moveToAccountId: Account['id'] }
   | { type: 'ENSURE_MONTH'; ym: MonthData['ym'] }
   | { type: 'TOGGLE_CHARGE_PAID'; ym: MonthData['ym']; chargeId: string; paid: boolean }
+  | { type: 'SET_CHARGES_PAID'; ym: MonthData['ym']; chargeIds: string[]; paid: boolean }
+  | { type: 'HIDE_CHARGE_FOR_MONTH'; ym: MonthData['ym']; chargeId: string }
   | { type: 'ADD_MONTH_CHARGE'; ym: MonthData['ym']; charge: Omit<Charge, 'id' | 'sortOrder' | 'active'> }
   | { type: 'UPDATE_MONTH_CHARGE'; ym: MonthData['ym']; chargeId: string; patch: Partial<Omit<Charge, 'id' | 'active'>> }
   | { type: 'REMOVE_MONTH_CHARGE'; ym: MonthData['ym']; chargeId: string }
@@ -79,7 +81,33 @@ export function reducer(state: AppState, action: Action): AppState {
       case 'HYDRATE':
         return action.state;
       case 'SET_SALARY':
-        return { ...state, salaryCents: action.salaryCents };
+        return (() => {
+          const ym = action.ym;
+          const nextSalary = action.salaryCents;
+          const prevSalary = state.salaryCents;
+          const now = nowIso();
+          let monthsChanged = false;
+
+          const nextMonths = { ...state.months };
+          for (const [key, month] of Object.entries(state.months)) {
+            if (key >= ym) continue;
+            if (typeof month.salaryCents === 'number') continue;
+            nextMonths[key as keyof typeof nextMonths] = { ...month, salaryCents: prevSalary, updatedAt: now };
+            monthsChanged = true;
+          }
+
+          const current = nextMonths[ym] ?? ensureMonth(state, ym);
+          if (current.salaryCents !== nextSalary || !nextMonths[ym]) {
+            nextMonths[ym] = { ...current, salaryCents: nextSalary, updatedAt: now };
+            monthsChanged = true;
+          }
+
+          return {
+            ...state,
+            salaryCents: nextSalary,
+            months: monthsChanged ? nextMonths : state.months,
+          };
+        })();
       case 'SET_UI':
         return { ...state, ui: { ...state.ui, ...action.patch } };
       case 'ADD_ACCOUNT': {
@@ -148,9 +176,42 @@ export function reducer(state: AppState, action: Action): AppState {
             [action.chargeId]: {
               paid: action.paid,
               snapshot: m.charges[action.chargeId]?.snapshot,
+              removed: m.charges[action.chargeId]?.removed,
             },
           },
         }));
+      case 'SET_CHARGES_PAID':
+        return withMonth(state, action.ym, (m) => {
+          if (m.archived) return m;
+          const nextCharges = { ...m.charges };
+          let changed = false;
+          for (const chargeId of action.chargeIds) {
+            const prev = m.charges[chargeId];
+            const prevPaid = prev?.paid ?? false;
+            if (prevPaid === action.paid) continue;
+            nextCharges[chargeId] = { paid: action.paid, snapshot: prev?.snapshot, removed: prev?.removed };
+            changed = true;
+          }
+          if (!changed) return m;
+          return { ...m, charges: nextCharges };
+        });
+      case 'HIDE_CHARGE_FOR_MONTH':
+        return withMonth(state, action.ym, (m) => {
+          if (m.archived) return m;
+          const existing = m.charges[action.chargeId];
+          if (existing?.removed) return m;
+          return {
+            ...m,
+            charges: {
+              ...m.charges,
+              [action.chargeId]: {
+                paid: existing?.paid ?? false,
+                snapshot: existing?.snapshot,
+                removed: true,
+              },
+            },
+          };
+        });
       case 'ADD_MONTH_CHARGE':
         return withMonth(state, action.ym, (m) => {
           if (m.archived) return m;
@@ -217,10 +278,11 @@ export function reducer(state: AppState, action: Action): AppState {
 	        return withMonth(state, action.ym, (m) => {
           const today = todayIsoLocal();
           const chargesWithSnapshots = { ...m.charges };
-          for (const ch of state.charges) {
-            if (!ch.active) continue;
-            const current = chargesWithSnapshots[ch.id];
-            if (current?.snapshot) continue;
+	          for (const ch of state.charges) {
+	            if (!ch.active) continue;
+              if (chargesWithSnapshots[ch.id]?.removed) continue;
+	            const current = chargesWithSnapshots[ch.id];
+	            if (current?.snapshot) continue;
 	            chargesWithSnapshots[ch.id] = {
 	              paid: current?.paid ?? (ch.payment === 'auto' && dueDateIso(action.ym, ch.dayOfMonth) <= today),
 	              snapshot: {
