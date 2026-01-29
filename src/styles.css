@@ -28,7 +28,7 @@ body {
 
 body {
   /* Background is rendered by fixed pseudo-elements for better mobile Safari support. */
-  background-color: rgb(13 15 20);
+  background-color: rgb(16 17 19);
 }
 
 /* Single background layer + overlay (overlay fades hide progressive loads). */
@@ -45,11 +45,11 @@ body::before {
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  background-image: linear-gradient(180deg, rgba(13, 15, 20, 0.72), rgba(10, 12, 16, 0.92)), var(--bg-image, url('/bg-snowy.jpg'));
+  background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.72), rgba(10, 11, 12, 0.94)), var(--bg-image, url('/bg-snowy.jpg'));
 }
 
 body::after {
-  background: rgb(10 12 16);
+  background: rgb(10 11 12);
   opacity: var(--bg-overlay-opacity, 0);
 }
 

@@ -5,7 +5,7 @@ module.exports = {
     extend: {
       colors: {
         ink: {
-          950: '#0d0f14'
+          950: '#101113'
         }
       }
     },
