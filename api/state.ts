@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { deflateSync, inflateSync } from 'node:zlib';
 import { getSession, getUserById, SESSION_COOKIE, touchSession } from './_auth.js';
-import { kvConfigured, kvGet, kvSet } from './_kv.js';
+import { kvConfigured, kvDel, kvGet, kvSet } from './_kv.js';
 import { badRequest, json, methodNotAllowed, parseCookies, readJsonBody, setCookie, unauthorized } from './_http.js';
 
 const PREFIX = 'fm:state:';
@@ -150,7 +150,7 @@ async function getStateRecord(userId: string): Promise<{ meta: StateMeta; state:
   return { meta, state };
 }
 
-async function putStateRecord(userId: string, modifiedAt: string, state: unknown): Promise<StateMeta> {
+async function putStateRecord(userId: string, modifiedAt: string, state: unknown, prevMeta?: StateMeta | null): Promise<StateMeta> {
   const updatedAt = new Date().toISOString();
   const encoded = encodeStatePayload(state);
   const chunks = chunkString(encoded.payload);
@@ -167,6 +167,11 @@ async function putStateRecord(userId: string, modifiedAt: string, state: unknown
     payloadLen: encoded.payloadLen,
   };
   await kvSet(metaKey(userId), JSON.stringify(meta));
+  if (prevMeta && prevMeta.chunks > chunks.length) {
+    for (let i = chunks.length; i < prevMeta.chunks; i += 1) {
+      await kvDel(partKey(userId, i));
+    }
+  }
   return meta;
 }
 
@@ -226,6 +231,6 @@ export default async function handler(req: any, res: any) {
     return json(res, 409, { ok: false, error: 'CONFLICT', record: remoteMeta });
   }
 
-  const meta = await putStateRecord(user.id, modifiedAt, state);
+  const meta = await putStateRecord(user.id, modifiedAt, state, remoteMeta);
   return json(res, 200, { ok: true, record: meta });
 }
