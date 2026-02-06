@@ -1,57 +1,74 @@
 # Frais mensuels
 
-Webapp pour saisir et suivre des charges mensuelles (perso + communes), avec totaux et enveloppes (budgets).
+Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), avec enveloppes et reste a vivre.
 
-## Fonctionnalités (MVP)
+## Resume rapide
 
-- Charges mensuelles: perso / commun (avec part %) + compte + auto/manuel + checkbox “prélevé”
-- Totaux: commun (total), commun (ma part), perso, total (charges + enveloppes) + reste à vivre
-- Enveloppes: budgets (ex: perso, essence) + saisie des dépenses, reste / dépassement
-- Archivage d’un mois: fige charges + budgets, UI en lecture seule
+- Charges mensuelles avec part %, comptes, auto/manuel, et statut OK.
+- Enveloppes (budgets) + depenses + reste / depassement.
+- Archivage d'un mois: gel des charges et budgets, lecture seule.
+- Donnees locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
+- Auth simple: login/register, cookie HTTP-only, reset via recovery code.
 
-## Démarrer
+## Demarrer
 
-1. Installer les dépendances
-   - `npm install`
-2. Lancer en dev
-   - `npm run dev`
-3. Build / preview
-   - `npm run build`
-   - `npm run preview`
+1) Installer
+- `npm install`
 
-## Installation (optionnel)
+2) Dev
+- `npm run dev`
 
-- Sur mobile/desktop, utiliser “Installer” (PWA) dans le navigateur si disponible.
+3) Build / preview
+- `npm run build`
+- `npm run preview`
 
-## Backup (recommandé)
+## Installation PWA
 
-- Menu `⋯` en haut à droite → `Exporter (JSON)` pour sauvegarder.
-- `Importer (JSON)` pour restaurer sur un autre navigateur / machine.
+Ouvrir l'app dans le navigateur puis utiliser "Installer" si propose.
 
-## Comptes utilisateurs + cloud (Redis)
+## Backup
 
-Les données sont stockées **sur l’appareil** (IndexedDB) et synchronisées (best-effort) dans Redis via Vercel Serverless (`/api/state`). Chaque utilisateur a son propre dataset.
+- Menu `...` en haut a droite -> `Exporter (JSON)` pour sauvegarder.
+- `Importer (JSON)` pour restaurer.
 
-### Pré-requis Vercel
+<details>
+<summary>Cloud: configuration Redis (Vercel / Upstash)</summary>
 
-1. Option 1: Vercel → `Storage` → créer un `KV` store (Upstash Redis), puis l’attacher au projet.
-2. Option 2: Upstash Redis (Marketplace) ou compte Upstash externe, en configurant les env vars dans Vercel.
-3. L’API accepte (par ordre de priorité):
-   - `SYNC_REDIS_REST_URL` + `SYNC_REDIS_REST_TOKEN` (recommandé)
-   - `KV_REST_API_URL` + `KV_REST_API_TOKEN` (Vercel KV)
-   - `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (Upstash)
+Les donnees sont stockees localement et synchronisees dans Redis via `/api/state`.
 
-### Auth / sécurité
+L'API accepte (ordre de priorite):
+- `SYNC_REDIS_REST_URL` + `SYNC_REDIS_REST_TOKEN` (recommande)
+- `KV_REST_API_URL` + `KV_REST_API_TOKEN` (Vercel KV)
+- `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (Upstash)
 
-- Écran login/register au démarrage (session cookie HTTP-only).
-- Mot de passe hashé côté serveur (PBKDF2-SHA256).
-- “Mot de passe oublié”: reset via **recovery code** (affiché à la création et à chaque reset). Pas d’envoi email dans cette version.
+</details>
 
-## Dev local et routes `/api`
+<details>
+<summary>Auth / securite</summary>
 
-En prod, les routes sont servies par Vercel (Serverless Functions dans `api/`). En local, `vite` ne les sert pas par défaut.
+- Cookie de session HTTP-only.
+- Hash PBKDF2-SHA256 cote serveur.
+- Reset via recovery code (affiche a la creation ou reset).
+- Pas d'envoi email dans cette version.
 
-- `npm run dev` sert aussi `/api/*` via un middleware Vite (chargement des handlers `api/**/*.ts`).
-- Si tu vois `KV_NOT_CONFIGURED`, crée un `.env.local` (non commité) avec tes creds Redis REST:
-  - `SYNC_REDIS_REST_URL=...`
-  - `SYNC_REDIS_REST_TOKEN=...`
+</details>
+
+<details>
+<summary>Dev local et routes /api</summary>
+
+En prod, les routes vivent dans `api/` (Vercel Serverless). En local, Vite les sert via un middleware.
+
+Si vous voyez `KV_NOT_CONFIGURED`, creez un `.env.local` non commite:
+- `SYNC_REDIS_REST_URL=...`
+- `SYNC_REDIS_REST_TOKEN=...`
+
+</details>
+
+<details>
+<summary>Modele de donnees (resume)</summary>
+
+- Charges globales (mensuelles) + charges ponctuelles par mois.
+- Budgets par enveloppe + depenses par mois.
+- Totaux: commun, ma part, perso, reste a vivre, reste apres enveloppes.
+
+</details>
