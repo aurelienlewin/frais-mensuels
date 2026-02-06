@@ -1,16 +1,16 @@
 # Frais mensuels
 
-Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), avec enveloppes et reste a vivre.
+Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), avec enveloppes et reste à vivre.
 
-## Resume rapide
+## Résumé rapide
 
 - Charges mensuelles avec part %, comptes, auto/manuel, et statut OK.
-- Enveloppes (budgets) + depenses + reste / depassement.
+- Enveloppes (budgets) + dépenses + reste / dépassement.
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
-- Donnees locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
+- Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
 - Auth simple: login/register, cookie HTTP-only, reset via recovery code.
 
-## Demarrer
+## Démarrer
 
 1) Installer
 - `npm install`
@@ -24,31 +24,31 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 
 ## Installation PWA
 
-Ouvrir l'app dans le navigateur puis utiliser "Installer" si propose.
+Ouvrir l'app dans le navigateur puis utiliser "Installer" si proposé.
 
 ## Backup
 
-- Menu `...` en haut a droite -> `Exporter (JSON)` pour sauvegarder.
+- Menu `...` en haut à droite -> `Exporter (JSON)` pour sauvegarder.
 - `Importer (JSON)` pour restaurer.
 
 <details>
 <summary>Cloud: configuration Redis (Vercel / Upstash)</summary>
 
-Les donnees sont stockees localement et synchronisees dans Redis via `/api/state`.
+Les données sont stockées localement et synchronisées dans Redis via `/api/state`.
 
 L'API accepte (ordre de priorite):
-- `SYNC_REDIS_REST_URL` + `SYNC_REDIS_REST_TOKEN` (recommande)
+- `SYNC_REDIS_REST_URL` + `SYNC_REDIS_REST_TOKEN` (recommandé)
 - `KV_REST_API_URL` + `KV_REST_API_TOKEN` (Vercel KV)
 - `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (Upstash)
 
 </details>
 
 <details>
-<summary>Auth / securite</summary>
+<summary>Auth / sécurité</summary>
 
 - Cookie de session HTTP-only.
-- Hash PBKDF2-SHA256 cote serveur.
-- Reset via recovery code (affiche a la creation ou reset).
+- Hash PBKDF2-SHA256 côté serveur.
+- Reset via recovery code (affiché à la création ou reset).
 - Pas d'envoi email dans cette version.
 
 </details>
@@ -58,17 +58,17 @@ L'API accepte (ordre de priorite):
 
 En prod, les routes vivent dans `api/` (Vercel Serverless). En local, Vite les sert via un middleware.
 
-Si vous voyez `KV_NOT_CONFIGURED`, creez un `.env.local` non commite:
+Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - `SYNC_REDIS_REST_URL=...`
 - `SYNC_REDIS_REST_TOKEN=...`
 
 </details>
 
 <details>
-<summary>Modele de donnees (resume)</summary>
+<summary>Modèle de données (résumé)</summary>
 
 - Charges globales (mensuelles) + charges ponctuelles par mois.
-- Budgets par enveloppe + depenses par mois.
-- Totaux: commun, ma part, perso, reste a vivre, reste apres enveloppes.
+- Budgets par enveloppe + dépenses par mois.
+- Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
 
 </details>
