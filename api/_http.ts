@@ -65,7 +65,12 @@ export function parseCookies(req: any): Record<string, string> {
     const [k, ...rest] = part.split('=');
     const key = (k ?? '').trim();
     if (!key) continue;
-    out[key] = decodeURIComponent(rest.join('=').trim() || '');
+    const raw = rest.join('=').trim() || '';
+    try {
+      out[key] = decodeURIComponent(raw);
+    } catch {
+      out[key] = raw;
+    }
   }
   return out;
 }
