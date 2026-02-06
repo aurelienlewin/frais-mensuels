@@ -1,4 +1,5 @@
 type KvEnv = { url: string; token: string };
+const KV_TIMEOUT_MS = 8_000;
 
 function kvEnv(): KvEnv | null {
   const env = ((globalThis as any)?.process?.env ?? {}) as Record<string, string | undefined>;
@@ -30,10 +31,23 @@ async function kvFetch(path: string, method: 'GET' | 'POST'): Promise<unknown> {
   const env = kvEnv();
   if (!env) throw new Error('KV_NOT_CONFIGURED');
 
-  const res = await fetch(`${env.url}${path}`, { method, headers: { Authorization: `Bearer ${env.token}` } });
-  const body = await parseJson(res);
-  if (!res.ok) throw new Error('KV_ERROR');
-  return body;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), KV_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${env.url}${path}`, {
+      method,
+      headers: { Authorization: `Bearer ${env.token}` },
+      signal: controller.signal,
+    });
+    const body = await parseJson(res);
+    if (!res.ok) throw new Error('KV_ERROR');
+    return body;
+  } catch (e) {
+    if (controller.signal.aborted) throw new Error('KV_TIMEOUT');
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function toScalarResult(body: unknown): unknown {
