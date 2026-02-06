@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 import { deflateSync, inflateSync } from 'node:zlib';
 import { getSession, getUserById, SESSION_COOKIE, touchSession } from './_auth.js';
 import { kvConfigured, kvDel, kvGet, kvSet } from './_kv.js';
-import { badRequest, json, methodNotAllowed, parseCookies, readJsonBody, setCookie, unauthorized } from './_http.js';
+import { PayloadTooLargeError, badRequest, json, methodNotAllowed, parseCookies, readJsonBody, setCookie, unauthorized } from './_http.js';
 
 const PREFIX = 'fm:state:';
 const CHUNK_SIZE = 900;
@@ -215,8 +215,11 @@ export default async function handler(req: any, res: any) {
 
   let body: any = null;
   try {
-    body = await readJsonBody(req);
-  } catch {
+    body = await readJsonBody(req, { maxBytes: 5_000_000 });
+  } catch (e) {
+    if (e instanceof PayloadTooLargeError) {
+      return json(res, 413, { ok: false, error: 'PAYLOAD_TOO_LARGE', message: e.message });
+    }
     return badRequest(res, 'Invalid JSON');
   }
 

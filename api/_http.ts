@@ -28,15 +28,32 @@ export function serverError(res: any, message = 'Server error') {
   return json(res, 500, { ok: false, error: 'SERVER_ERROR', message });
 }
 
-export async function readJsonBody(req: any): Promise<any | null> {
+const DEFAULT_MAX_JSON_BYTES = 1_000_000; // ~1MB
+
+export class PayloadTooLargeError extends Error {
+  code = 'PAYLOAD_TOO_LARGE' as const;
+  status = 413 as const;
+  constructor(maxBytes: number) {
+    super(`Payload too large (max ${maxBytes} bytes)`);
+    this.name = 'PayloadTooLargeError';
+  }
+}
+
+export async function readJsonBody(req: any, opts?: { maxBytes?: number }): Promise<any | null> {
   if (req.body && typeof req.body === 'object') return req.body;
+  const maxBytes = Math.max(1, Math.floor(opts?.maxBytes ?? DEFAULT_MAX_JSON_BYTES));
   const chunks: Uint8Array[] = [];
+  let total = 0;
   for await (const chunk of req) {
     const bytes = typeof chunk === 'string' ? new TextEncoder().encode(chunk) : chunk;
+    total += bytes.length;
+    if (total > maxBytes) {
+      if (typeof req?.destroy === 'function') req.destroy();
+      throw new PayloadTooLargeError(maxBytes);
+    }
     chunks.push(bytes);
   }
   if (chunks.length === 0) return null;
-  const total = chunks.reduce((acc, c) => acc + c.length, 0);
   const merged = new Uint8Array(total);
   let off = 0;
   for (const c of chunks) {
