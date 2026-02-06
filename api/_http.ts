@@ -48,11 +48,19 @@ export async function readJsonBody(req: any): Promise<any | null> {
   return JSON.parse(raw);
 }
 
-export function getClientIp(req: any): string {
-  const xf = req?.headers?.['x-forwarded-for'];
-  if (typeof xf === 'string' && xf.trim()) return xf.split(',')[0]!.trim();
-  const xr = req?.headers?.['x-real-ip'];
-  if (typeof xr === 'string' && xr.trim()) return xr.trim();
+function trustProxy(env: Record<string, string | undefined>): boolean {
+  return String(env.TRUST_PROXY || '').toLowerCase() === 'true' || Boolean(env.VERCEL) || Boolean(env.VERCEL_ENV);
+}
+
+export function getClientIp(req: any, opts?: { trustProxy?: boolean }): string {
+  const env = ((globalThis as any)?.process?.env ?? {}) as Record<string, string | undefined>;
+  const shouldTrustProxy = typeof opts?.trustProxy === 'boolean' ? opts.trustProxy : trustProxy(env);
+  if (shouldTrustProxy) {
+    const xf = req?.headers?.['x-forwarded-for'];
+    if (typeof xf === 'string' && xf.trim()) return xf.split(',')[0]!.trim();
+    const xr = req?.headers?.['x-real-ip'];
+    if (typeof xr === 'string' && xr.trim()) return xr.trim();
+  }
   const ra = req?.socket?.remoteAddress;
   return typeof ra === 'string' && ra.trim() ? ra.trim() : '0.0.0.0';
 }
