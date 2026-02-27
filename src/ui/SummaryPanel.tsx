@@ -202,16 +202,16 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               <Row
                 label="Dette entrante ajoutée (enveloppes)"
                 value={formatEUR(reliquatDebtImpactCents)}
-                valueClassName="text-rose-200"
                 rowClassName="fm-reliquat-negative"
+                tone="negative"
               />
             ) : null}
             {reliquatCreditImpactCents > 0 ? (
               <Row
                 label="Reliquat positif à déduire (enveloppes)"
                 value={formatEUR(reliquatCreditImpactCents)}
-                valueClassName="text-emerald-200"
                 rowClassName="fm-reliquat-positive"
+                tone="positive"
               />
             ) : null}
             <Row label="Enveloppes à virer (ma part)" value={formatEUR(totals.totalBudgetsCents)} strong />
@@ -233,11 +233,11 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                 <span>Enveloppes cibles</span>
                 <span className="tabular-nums text-slate-100">{formatEUR(totals.totalBudgetsBaseCents)}</span>
               </div>
-              <div className="flex items-center justify-between gap-2">
+              <div className="fm-reliquat-negative flex items-center justify-between gap-2 rounded-lg border px-2 py-1">
                 <span>+ Dette entrante</span>
                 <span className="tabular-nums text-rose-200">{formatEUR(reliquatDebtImpactCents)}</span>
               </div>
-              <div className="flex items-center justify-between gap-2">
+              <div className="fm-reliquat-positive flex items-center justify-between gap-2 rounded-lg border px-2 py-1">
                 <span>- Reliquat positif</span>
                 <span className="tabular-nums text-emerald-200">{formatEUR(reliquatCreditImpactCents)}</span>
               </div>
@@ -691,22 +691,27 @@ function Row({
   strong,
   valueClassName,
   rowClassName,
+  tone,
 }: {
   label: string;
   value: string;
   strong?: boolean;
   valueClassName?: string;
   rowClassName?: string;
+  tone?: 'neutral' | 'positive' | 'negative';
 }) {
+  const labelToneClass = tone === 'negative' ? 'text-rose-100' : tone === 'positive' ? 'text-emerald-100' : undefined;
+  const valueToneClass = tone === 'negative' ? 'text-rose-200' : tone === 'positive' ? 'text-emerald-200' : undefined;
   return (
     <div className={cx('fm-stat-row', rowClassName)}>
-      <div className={cx('fm-stat-label', strong ? 'text-slate-200' : 'text-slate-400')}>
+      <div className={cx('fm-stat-label', strong ? 'text-slate-200' : 'text-slate-400', labelToneClass)}>
         {label}
       </div>
       <div
         className={cx(
           'fm-stat-value',
           strong ? 'font-semibold text-slate-100' : 'text-slate-200',
+          valueToneClass,
           valueClassName,
         )}
       >
