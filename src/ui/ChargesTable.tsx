@@ -203,12 +203,12 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 			  return (
 			    <section
 			      data-tour="charges"
-			      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
+			      className="fm-panel motion-hover motion-pop overflow-hidden"
 			    >
           <div className="relative border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
             <button
               type="button"
-              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/7 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:right-3 max-[360px]:top-3 max-[360px]:h-9 max-[360px]:w-9 sm:hidden"
+              className="fm-btn-ghost absolute right-4 top-4 flex h-10 w-10 items-center justify-center text-sm max-[360px]:right-3 max-[360px]:top-3 max-[360px]:h-9 max-[360px]:w-9 sm:hidden"
               onClick={() => setChargesOpen((v) => !v)}
               aria-expanded={chargesOpen}
               aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
@@ -231,7 +231,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
               <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 pr-12 max-[360px]:w-full max-[360px]:gap-1.5 max-[360px]:pr-11 sm:pr-0">
                 <button
                   type="button"
-                  className="hidden h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/7 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:h-9 max-[360px]:w-9 sm:flex"
+                  className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm max-[360px]:h-9 max-[360px]:w-9 sm:flex"
                   onClick={() => setChargesOpen((v) => !v)}
                   aria-expanded={chargesOpen}
                   aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
@@ -244,7 +244,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 <button
                   data-tour="add-charge"
                   className={cx(
-                    'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
+                    'fm-btn-ghost rounded-2xl px-4 py-2 text-sm max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
                     !canEdit && 'opacity-50',
                   )}
                   disabled={!canEdit}
@@ -270,7 +270,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 </button>
                 <button
                   className={cx(
-                    'rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm transition-colors duration-150 hover:bg-white/10 max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
+                    'fm-btn-ghost rounded-2xl px-4 py-2 text-sm max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
                     !canEdit && 'opacity-50',
                   )}
                   disabled={!canEdit}
@@ -303,7 +303,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 <div className="mt-3 flex items-center gap-2">
                   <div className="relative min-w-0 flex-1">
                     <input
-                      className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
+                      className="fm-input h-10 rounded-2xl px-4 pr-10 text-sm"
                       placeholder="Filtrer… (libellé, compte, destination)"
                       value={filter}
                       onChange={(e) => setFilter(e.target.value)}
@@ -313,7 +313,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                     {filter ? (
                       <button
                         type="button"
-                        className="absolute inset-y-0 right-2 my-auto h-8 w-8 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-200 transition-colors hover:bg-white/10"
+                        className="fm-btn-ghost absolute inset-y-0 right-2 my-auto h-8 w-8 text-sm text-slate-200"
                         onClick={() => setFilter('')}
                         aria-label="Effacer le filtre"
                       >
@@ -372,9 +372,9 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                  ? 'border-violet-200/30 bg-violet-400/15 text-violet-50'
 	                  : 'border-amber-200/30 bg-amber-400/15 text-amber-50';
 	              const metaSelect =
-	                'h-6 rounded-lg border border-white/15 bg-ink-950/35 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
+	                'fm-input-select h-6 rounded-lg px-2 text-[10px] font-semibold uppercase tracking-wide shadow-inner shadow-black/20';
 	              const ioSelectBase =
-	                'min-w-0 max-w-full h-7 rounded-lg border border-white/15 px-2 text-[11px] font-medium text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
+	                'fm-input-select min-w-0 max-w-full h-7 rounded-lg px-2 text-[11px] font-medium shadow-inner shadow-black/20';
 	              const hasAccountId = typeof r.accountId === 'string' && r.accountId.length > 0;
 	              const account = hasAccountId ? accountsById.get(r.accountId) ?? null : null;
 	              const accountInActiveList = hasAccountId ? activeAccountIds.has(r.accountId) : false;
@@ -439,7 +439,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                        draggable={canReorder}
 	                        disabled={!canReorder}
 	                        className={cx(
-	                          'rounded-md border border-white/10 bg-white/5 px-1.5 py-1 text-[10px] leading-none text-slate-200 transition-colors hover:bg-white/10',
+	                          'fm-btn-ghost rounded-md px-1.5 py-1 text-[10px] leading-none text-slate-200',
 	                          !canReorder && 'opacity-40',
 	                        )}
 	                        aria-label={`Réordonner: ${r.name}`}
@@ -493,12 +493,12 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                   </Td>
                   <Td>
                     <div className="min-w-0 sm:min-w-[240px]">
-	                      <InlineTextInput
-	                        ariaLabel="Libellé"
-	                        value={r.name}
-	                        disabled={!editable}
+		                      <InlineTextInput
+		                        ariaLabel="Libellé"
+		                        value={r.name}
+		                        disabled={!editable}
 		                        className={cx(
-		                          'h-8 w-full rounded-lg border border-white/10 bg-ink-950/35 px-2 text-[13px] font-medium text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-ink-950/45',
+		                          'fm-input h-8 rounded-lg px-2 text-[13px] font-medium ring-0',
 		                          r.paid && 'line-through decoration-white/25',
 		                        )}
 		                        onCommit={(name) => updateCharge(r.id, { name })}
@@ -507,7 +507,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                      <div className="mt-2 grid gap-2 text-[11px] text-slate-200/90">
 		                        <div
 		                          className={cx(
-		                            'flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1',
+		                            'fm-inline-panel flex flex-wrap items-center gap-2 px-2 py-1',
 		                            !editable && 'opacity-70',
 		                          )}
 		                        >
@@ -520,7 +520,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                                ariaLabel="Jour du prélèvement (1 à 31)"
 		                                value={pad2(r.dayOfMonth)}
 		                                disabled={!editable}
-		                                className="h-5 w-[34px] rounded-lg border border-white/15 bg-ink-950/35 pl-3 pr-0.5 text-[8px] font-semibold tabular-nums text-slate-100 outline-none ring-0 focus:border-white/25 focus:bg-ink-950/45"
+		                                className="fm-input h-5 w-[34px] rounded-lg pl-3 pr-0.5 text-[8px] font-semibold tabular-nums ring-0"
 		                                onCommit={(raw) => {
 		                                  const digits = raw.replace(/[^\d]/g, '');
 		                                  if (!digits) return;
@@ -544,7 +544,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                          ) : (
 		                            <span
 		                              title={r.dueDate}
-		                              className="inline-flex h-5 items-center rounded-lg border border-white/15 bg-ink-950/35 px-1 text-[8px] font-semibold tabular-nums text-slate-100"
+		                              className="fm-chip-field inline-flex h-5 items-center px-1 text-[8px] font-semibold tabular-nums"
 		                            >
 		                              J{pad2(r.dayOfMonth)}
 		                            </span>
@@ -613,13 +613,13 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 
 		                        <div
 		                          className={cx(
-		                            'grid w-full max-w-[360px] min-w-0 justify-self-start grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 overflow-hidden rounded-xl border border-white/10 bg-white/5 px-2 py-1',
+		                            'fm-inline-panel grid w-full max-w-[360px] min-w-0 justify-self-start grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 overflow-hidden px-2 py-1',
 		                            !editable && 'opacity-70',
 		                          )}
 		                        >
 	                          {editable ? (
 	                            <select
-	                              className={cx(ioSelectBase, 'w-full truncate bg-ink-950/35')}
+	                              className={cx(ioSelectBase, 'w-full truncate')}
 	                              value={accountValue}
 	                              title={r.accountName}
 		                              onChange={(e) => {
@@ -648,7 +648,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                            </select>
 		                          ) : (
 		                            <span
-		                              className="min-w-0 truncate rounded-lg border border-white/15 bg-ink-950/35 px-2 py-1 text-[11px] font-medium text-slate-100"
+		                              className="fm-chip-field min-w-0 truncate px-2 py-1 text-[11px] font-medium"
 		                              title={r.accountName}
 		                            >
 		                              {r.accountName}
@@ -667,7 +667,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                                  value={r.destination.text}
 		                                  placeholder="Destination…"
 		                                  disabled={!editable}
-		                                  className="h-7 w-full min-w-0 rounded-lg border border-white/15 bg-ink-950/35 px-2 text-[11px] font-medium text-slate-100 outline-none ring-0 placeholder:text-slate-400 focus:border-white/25 focus:bg-ink-950/45"
+		                                  className="fm-input h-7 w-full min-w-0 rounded-lg px-2 text-[11px] font-medium ring-0"
 		                                  onCommit={(text) => {
 		                                    const next = text.trim();
 		                                    updateCharge(r.id, { destination: next ? { kind: 'text', text: next } : null });
@@ -675,7 +675,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                                  inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '6' }}
 		                                />
 		                                <button
-		                                  className="h-7 flex-none rounded-lg border border-white/10 bg-white/5 px-2 text-[11px] text-slate-200 transition-colors hover:bg-white/10"
+		                                  className="fm-btn-ghost h-7 flex-none rounded-lg px-2 text-[11px] text-slate-200"
 		                                  onClick={() => updateCharge(r.id, { destination: null })}
 		                                  aria-label="Supprimer la destination"
 		                                  type="button"
@@ -729,7 +729,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                            )
 	                          ) : r.destinationLabel ? (
 	                            <span
-	                              className="min-w-0 truncate rounded-lg border border-white/15 bg-ink-950/35 px-2 py-1 text-[11px] font-medium text-slate-100"
+	                              className="fm-chip-field min-w-0 truncate px-2 py-1 text-[11px] font-medium"
 	                              title={r.destinationLabel}
 	                            >
 	                              {r.destinationLabel}
@@ -742,7 +742,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                        <div className="sm:hidden">
 	                          <div
 	                            className={cx(
-	                              'grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1',
+	                              'fm-inline-panel grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-2 py-1',
 	                              !editable && 'opacity-70',
 	                            )}
 	                          >
@@ -787,7 +787,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                   <Td className="text-right">
                     <button
                       className={cx(
-                        'rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs transition-colors duration-150 hover:bg-white/10',
+                        'fm-btn-ghost px-3 py-2 text-xs',
                         !editable && 'opacity-40',
 	                      )}
 	                      disabled={!editable}
@@ -970,12 +970,12 @@ function MobileCard({
   const monthOnlyChip = 'border-slate-200/25 bg-slate-400/12 text-slate-100';
 
   const chipBase =
-    'inline-flex h-6 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 text-[10px] font-semibold text-slate-200';
+    'fm-chip-pill h-6 px-2 text-[10px] font-semibold';
 
   const metaSelect =
-    'h-9 rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[12px] font-semibold text-slate-100 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
+    'fm-input-select h-9 rounded-xl px-3 text-[12px] font-semibold';
   const ioSelect =
-    'h-10 w-full rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[13px] font-medium text-slate-100 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
+    'fm-input-select h-10 w-full rounded-xl px-3 text-[13px] font-medium';
 
   const hasAccountId = typeof r.accountId === 'string' && r.accountId.length > 0;
   const accountInActiveList = hasAccountId ? activeAccounts.some((a) => a.id === r.accountId) : false;
@@ -1018,7 +1018,7 @@ function MobileCard({
               value={r.name}
               disabled={!canEdit}
               className={cx(
-                'h-9 min-w-0 flex-1 rounded-xl border border-white/10 bg-ink-950/35 px-3 text-[14px] font-semibold text-slate-100 outline-none ring-0 focus:border-white/15 focus:bg-ink-950/45',
+                'fm-input h-9 min-w-0 flex-1 rounded-xl px-3 text-[14px] font-semibold ring-0',
                 r.paid && 'line-through decoration-white/25',
               )}
               onCommit={(name) => onUpdate({ name })}
@@ -1028,7 +1028,7 @@ function MobileCard({
             <button
               type="button"
               className={cx(
-                'flex-none rounded-xl border border-white/10 bg-white/5 px-2.5 py-1 text-right transition-colors hover:bg-white/10',
+                'fm-btn-ghost flex-none px-2.5 py-1 text-right',
                 !canEdit && 'opacity-50 hover:bg-white/5',
               )}
               disabled={!canEdit}
@@ -1066,7 +1066,7 @@ function MobileCard({
             <button
               type="button"
               className={cx(
-                'ml-auto inline-flex h-6 items-center rounded-full border border-white/10 bg-white/5 px-2.5 text-[10px] font-semibold text-slate-200 transition-colors hover:bg-white/10',
+                'fm-btn-ghost ml-auto inline-flex h-6 items-center rounded-full px-2.5 text-[10px] font-semibold text-slate-200',
                 expanded && 'bg-white/8',
                 !canEdit && 'opacity-50 hover:bg-white/5',
               )}
@@ -1080,7 +1080,7 @@ function MobileCard({
           </div>
 
           {expanded ? (
-            <div className="mt-3 grid gap-2 rounded-2xl border border-white/10 bg-ink-950/35 p-3">
+            <div className="fm-card-soft mt-3 grid gap-2 p-3">
               <div className="grid grid-cols-2 gap-2">
                 <label className="grid gap-1">
                   <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Jour</div>
@@ -1092,7 +1092,7 @@ function MobileCard({
                       ariaLabel="Jour du prélèvement (1 à 31)"
                       value={pad2(r.dayOfMonth)}
                       disabled={!canEdit}
-                      className="h-9 w-full rounded-xl border border-white/12 bg-ink-950/35 pl-7 pr-3 text-[13px] font-semibold tabular-nums text-slate-100 outline-none ring-0 focus:border-white/25 focus:bg-ink-950/45"
+                      className="fm-input h-9 w-full rounded-xl pl-7 pr-3 text-[13px] font-semibold tabular-nums ring-0"
                       onCommit={(raw) => {
                         const digits = raw.replace(/[^\d]/g, '');
                         if (!digits) return;
@@ -1209,7 +1209,7 @@ function MobileCard({
                       value={r.destination.text}
                       placeholder="Destination…"
                       disabled={!canEdit}
-                      className="h-10 min-w-0 flex-1 rounded-xl border border-white/12 bg-ink-950/35 px-3 text-[13px] font-medium text-slate-100 outline-none ring-0 placeholder:text-slate-400 focus:border-white/25 focus:bg-ink-950/45"
+                      className="fm-input h-10 min-w-0 flex-1 rounded-xl px-3 text-[13px] font-medium ring-0"
                       onCommit={(text) => {
                         const next = text.trim();
                         onUpdate({ destination: next ? { kind: 'text', text: next } : null });
@@ -1217,7 +1217,7 @@ function MobileCard({
                       inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '6' }}
                     />
                     <button
-                      className="h-10 flex-none rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-slate-200 transition-colors hover:bg-white/10 disabled:opacity-40"
+                      className="fm-btn-ghost h-10 flex-none rounded-xl px-3 text-sm text-slate-200 disabled:opacity-40"
                       onClick={() => onUpdate({ destination: null })}
                       aria-label="Supprimer la destination"
                       type="button"
@@ -1289,7 +1289,7 @@ function MobileCard({
         </div>
 
         <div className="flex flex-col items-end gap-2">
-          <div className="flex overflow-hidden rounded-full border border-white/10 bg-white/5">
+          <div className="fm-inline-panel flex overflow-hidden rounded-full">
             <button
               type="button"
               className="h-8 w-8 text-slate-200 transition-colors hover:bg-white/10 disabled:opacity-40"
