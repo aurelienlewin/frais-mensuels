@@ -71,6 +71,56 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   );
   const recomputedBudgetsToWireCents = totals.totalBudgetsBaseCents + reliquatDebtImpactCents - reliquatCreditImpactCents;
   const recomputedProvisionCents = totals.totalPourMoiCents + recomputedBudgetsToWireCents;
+  const autoSavingsSurplus = useMemo(() => {
+    const globalsById = new Map(state.charges.map((c) => [c.id, c]));
+    const normalizeName = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const isSavingsName = (name: string) => {
+      const normalized = normalizeName(name);
+      return (
+        normalized === 'epargne' ||
+        normalized === 'virement epargne' ||
+        normalized.includes('epargne') ||
+        normalized.includes('eparne')
+      );
+    };
+
+    const candidates = charges
+      .map((r) => {
+        const global = globalsById.get(r.id);
+        if (!global || !global.active) return null;
+        if (r.scope !== 'perso') return null;
+        if (!isSavingsName(r.name)) return null;
+
+        const normalized = normalizeName(r.name);
+        const exact =
+          normalized === 'epargne' || normalized === 'virement epargne' || normalized === 'eparne' || normalized === 'virement eparne';
+        const preferred = normalized.startsWith('virement epargne') || normalized.startsWith('virement eparne');
+        const autoPayment = global.payment === 'auto';
+        const rank = (exact ? 100 : 0) + (preferred ? 10 : 0) + (autoPayment ? 5 : 0);
+        return { row: r, global, rank };
+      })
+      .filter((x): x is { row: (typeof charges)[number]; global: (typeof state.charges)[number]; rank: number } => x !== null)
+      .sort((a, b) => {
+        if (a.rank !== b.rank) return b.rank - a.rank;
+        if (a.row.sortOrder !== b.row.sortOrder) return a.row.sortOrder - b.row.sortOrder;
+        return a.row.id.localeCompare(b.row.id);
+      });
+
+    if (candidates.length === 0) return null;
+    const selected = candidates[0]!;
+    const floorCents = Math.max(0, selected.global.amountCents);
+    const currentCents = Math.max(0, selected.row.amountCents);
+    const surplusCents = Math.max(0, currentCents - floorCents);
+    if (surplusCents <= 0) return null;
+    const locked = state.months[ym]?.charges[selected.row.id]?.paid === true;
+    return { floorCents, currentCents, surplusCents, locked };
+  }, [charges, state.charges, state.months, ym]);
 
   const repartition = (() => {
     const perso = totals.totalPersoCents;
@@ -207,6 +257,19 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               {formatEUR(totals.totalPourMoiCents)} charges + {formatEUR(totals.totalBudgetsCents)} enveloppes à virer
             </div>
           </div>
+          {autoSavingsSurplus ? (
+            <div className="rounded-2xl border border-emerald-300/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.22),rgba(6,78,59,0.2))] px-4 py-3 shadow-[0_20px_48px_-28px_rgba(16,185,129,0.95)]">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-100/90">Surplus épargne</div>
+              <div className="mt-1 flex items-end justify-between gap-3">
+                <div className="text-sm font-medium leading-tight text-emerald-100">Ajout automatique ce mois</div>
+                <div className="text-2xl font-semibold tabular-nums text-emerald-50">+{formatEUR(autoSavingsSurplus.surplusCents)}</div>
+              </div>
+              <div className="mt-1 text-[11px] text-emerald-100/90">
+                Épargne: {formatEUR(autoSavingsSurplus.floorCents)} → {formatEUR(autoSavingsSurplus.currentCents)}
+                {autoSavingsSurplus.locked ? ' (figée: charge cochée)' : ''}
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid gap-2">
             <Row label="Charges à provisionner (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
