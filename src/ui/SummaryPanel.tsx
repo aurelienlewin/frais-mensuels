@@ -26,6 +26,19 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     () => totalsByAccount(state, ym, { charges, budgets }),
     [budgets, charges, state.accounts, ym],
   );
+  const budgetsCardsComputedCents = useMemo(
+    () =>
+      budgets.reduce((acc, b) => {
+        const fundingCents = Math.max(0, b.amountCents + b.carryOverDebtCents - b.carryOverCreditCents);
+        const myShareCents =
+          b.scope === 'commun'
+            ? Math.round((fundingCents * (typeof b.splitPercent === 'number' && Number.isFinite(b.splitPercent) ? b.splitPercent : 50)) / 100)
+            : fundingCents;
+        return acc + myShareCents;
+      }, 0),
+    [budgets],
+  );
+  const budgetsInvariantDeltaCents = totals.totalBudgetsCents - budgetsCardsComputedCents;
   const totalByAccountCents = useMemo(() => byAccount.reduce((acc, a) => acc + a.totalCents, 0), [byAccount]);
   const accountSummaryDeltaCents = totals.totalProvisionCents - totalByAccountCents;
   const hasUnknownAccountSummaryRow = useMemo(() => byAccount.some((a) => !a.isKnownAccount), [byAccount]);
@@ -215,6 +228,12 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               />
             ) : null}
             <Row label="Enveloppes à virer (ma part)" value={formatEUR(totals.totalBudgetsCents)} strong />
+            {budgetsInvariantDeltaCents !== 0 ? (
+              <div className="fm-reliquat-negative rounded-xl border px-3 py-2 text-xs">
+                Incohérence enveloppes: somme cartes ({formatEUR(budgetsCardsComputedCents)}) vs total enveloppes à virer (
+                {formatEUR(totals.totalBudgetsCents)}).
+              </div>
+            ) : null}
             <Row label="Total à provisionner ce mois" value={formatEUR(totals.totalProvisionCents)} strong />
             <Row
               label="Reste à vivre (après enveloppes)"
