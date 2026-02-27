@@ -40,6 +40,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
   const [open, setOpen] = useState<Mode | null>(null);
   const [chooserOpen, setChooserOpen] = useState(false);
   const [showTop, setShowTop] = useState(false);
+  const [keyboardInset, setKeyboardInset] = useState(0);
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
   const [budgetId, setBudgetId] = useState<string>('');
@@ -120,6 +121,33 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
     };
   }, []);
 
+  useEffect(() => {
+    if (!open) {
+      setKeyboardInset(0);
+      return;
+    }
+    if (typeof window === 'undefined' || typeof window.visualViewport === 'undefined') return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const updateInset = () => {
+      const viewportBottom = vv.offsetTop + vv.height;
+      const overlap = Math.max(0, window.innerHeight - viewportBottom);
+      // Ignore tiny viewport shifts caused by browser chrome.
+      setKeyboardInset(overlap > 80 ? Math.round(overlap) : 0);
+    };
+
+    updateInset();
+    vv.addEventListener('resize', updateInset);
+    vv.addEventListener('scroll', updateInset);
+    window.addEventListener('orientationchange', updateInset);
+    return () => {
+      vv.removeEventListener('resize', updateInset);
+      vv.removeEventListener('scroll', updateInset);
+      window.removeEventListener('orientationchange', updateInset);
+    };
+  }, [open]);
+
   const submit = () => {
     if (!canEdit) return;
     const id = budgetId || inferred[open ?? 'perso'] || '';
@@ -145,7 +173,11 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
     'fixed z-50 left-0 right-0 bottom-[calc(1rem_+_env(safe-area-inset-bottom))] pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:bottom-[calc(0.75rem_+_env(safe-area-inset-bottom))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:left-auto sm:right-6 sm:bottom-6 sm:pl-0 sm:pr-0';
 
   return (
-    <div data-tour="quick-add" className={cx(position, 'flex flex-col items-end gap-2')}>
+    <div
+      data-tour="quick-add"
+      className={cx(position, 'flex flex-col items-end gap-2 transition-transform duration-200 ease-out')}
+      style={open && keyboardInset > 0 ? { transform: `translateY(-${keyboardInset}px)` } : undefined}
+    >
       {chooserOpen && !open ? (
         <div
           className="fixed inset-0"
