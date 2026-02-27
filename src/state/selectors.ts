@@ -1,4 +1,4 @@
-import { dueDateIso, pad2, type YM } from '../lib/date';
+import { dueDateIso, pad2, ymAdd, type YM } from '../lib/date';
 import type {
   Account,
   AccountId,
@@ -35,6 +35,9 @@ export type BudgetResolved = {
   id: string;
   name: string;
   amountCents: number;
+  adjustedAmountCents: number;
+  fundingCents: number;
+  carryOverDebtCents: number;
   accountId: AccountId;
   accountName: string;
   scope: ChargeScope;
@@ -188,6 +191,7 @@ function resolveBudgetSnapshot(
 export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
   const month = state.months[ym];
   const accounts = accountById(state.accounts);
+  const rowCache = new Map<string, BudgetResolved | null>();
 
   const ids: string[] = [];
   if (month?.archived) {
@@ -215,12 +219,28 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     }
   }
 
-  const rows: BudgetResolved[] = [];
-  for (const id of ids) {
-    const { expenses, snap } = resolveBudgetSnapshot(state, ym, id);
-    if (!snap) continue;
+  const resolveBudgetRow = (targetYm: YM, budgetId: string): BudgetResolved | null => {
+    const key = `${targetYm}:${budgetId}`;
+    const cached = rowCache.get(key);
+    if (cached !== undefined) return cached;
+
+    const { expenses, snap } = resolveBudgetSnapshot(state, targetYm, budgetId);
+    if (!snap) {
+      rowCache.set(key, null);
+      return null;
+    }
+
+    let carryOverDebtCents = 0;
+    const prevYm = ymAdd(targetYm, -1);
+    if (state.months[prevYm]) {
+      const prev = resolveBudgetRow(prevYm, budgetId);
+      carryOverDebtCents = prev && prev.remainingCents < 0 ? -prev.remainingCents : 0;
+    }
+
     const spentCents = expenses.reduce((acc, e) => acc + e.amountCents, 0);
-    const remainingCents = snap.amountCents - spentCents;
+    const adjustedAmountCents = snap.amountCents - carryOverDebtCents;
+    const fundingCents = Math.max(0, adjustedAmountCents);
+    const remainingCents = adjustedAmountCents - spentCents;
     const accName = accounts.get(snap.accountId)?.name ?? snap.accountId;
     const scope: ChargeScope = snap.scope === 'commun' ? 'commun' : 'perso';
     const splitPercent =
@@ -229,11 +249,14 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
           ? Math.max(0, Math.min(100, Math.round(snap.splitPercent)))
           : 50
         : 100;
-    const myShareCents = scope === 'commun' ? Math.round((snap.amountCents * splitPercent) / 100) : snap.amountCents;
-    rows.push({
-      id,
+    const myShareCents = scope === 'commun' ? Math.round((fundingCents * splitPercent) / 100) : fundingCents;
+    const row = {
+      id: budgetId,
       name: snap.name,
       amountCents: snap.amountCents,
+      adjustedAmountCents,
+      fundingCents,
+      carryOverDebtCents,
       accountId: snap.accountId,
       accountName: accName,
       scope,
@@ -242,7 +265,15 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       expenses,
       spentCents,
       remainingCents,
-    });
+    } satisfies BudgetResolved;
+    rowCache.set(key, row);
+    return row;
+  };
+
+  const rows: BudgetResolved[] = [];
+  for (const id of ids) {
+    const row = resolveBudgetRow(ym, id);
+    if (row) rows.push(row);
   }
 
   rows.sort((a, b) => a.name.localeCompare(b.name));

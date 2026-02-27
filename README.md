@@ -6,6 +6,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 
 - Charges mensuelles avec part %, comptes, auto/manuel, et statut OK.
 - Enveloppes (budgets) + dépenses + reste / dépassement.
+- Reliquat d’enveloppe: un dépassement d’un mois est reporté sur le mois suivant pour la même enveloppe et réduit le montant à virer.
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
 - Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
 - Auth simple: login/register, cookie HTTP-only, reset via recovery code.
@@ -69,6 +70,8 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 
 - Charges globales (mensuelles) + charges ponctuelles par mois.
 - Budgets par enveloppe + dépenses par mois.
+- Reliquat d’enveloppe: si le reste d’un mois est négatif, la dette est reportée sur le mois suivant de la même enveloppe.
+- Montant d’enveloppe à virer: `max(0, montant enveloppe - reliquat du mois précédent)`.
 - Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
 
 </details>

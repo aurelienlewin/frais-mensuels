@@ -166,7 +166,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             <Row label="Charges perso" value={formatEUR(totals.totalPersoCents)} />
             <div className="my-2 h-px bg-white/10" />
             <Row label="Total charges (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
-            <Row label="Enveloppes (ma part)" value={formatEUR(totals.totalBudgetsCents)} />
+            <Row label="Enveloppes à virer (ma part)" value={formatEUR(totals.totalBudgetsCents)} />
             <Row label="Total (charges + enveloppes)" value={formatEUR(totals.totalPourMoiAvecEnveloppesCents)} strong />
             <Row
               label="Reste à vivre (après enveloppes)"
@@ -239,7 +239,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         </div>
 
         <div className="mt-8 max-[360px]:mt-6">
-          <div className="text-sm font-medium text-slate-200">Par compte (charges + enveloppes)</div>
+          <div className="text-sm font-medium text-slate-200">Par compte (charges + enveloppes à virer)</div>
           <div className="mt-3 space-y-2">
             {byAccount.map((a) => {
               const meta = chargesByAccount.get(a.accountId) ?? null;
@@ -281,7 +281,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                     </div>
                     <div className="mt-0.5 truncate text-xs text-slate-400">
                       {formatEUR(a.chargesPaidCents)} / {formatEUR(a.chargesTotalCents)} charges cochées
-                      {a.budgetsCents ? ` · enveloppes ${formatEUR(a.budgetsCents)}` : ''}
+                      {a.budgetsCents ? ` · enveloppes à virer ${formatEUR(a.budgetsCents)}` : ''}
                     </div>
                   </div>
                   <div

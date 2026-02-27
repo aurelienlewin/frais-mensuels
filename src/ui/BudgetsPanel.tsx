@@ -188,7 +188,12 @@ function BudgetCard({
     'h-9 rounded-xl border border-white/12 bg-ink-950/35 px-2.5 text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45 sm:h-8 sm:px-3';
   const footerSelectAccount = `${footerSelectBase} text-[12px] font-medium`;
   const footerSelectType = `${footerSelectBase} text-[11px] font-semibold uppercase tracking-wide`;
-  const ratio = budget.amountCents > 0 ? Math.min(1, Math.max(0, budget.spentCents / budget.amountCents)) : 0;
+  const ratio =
+    budget.fundingCents > 0
+      ? Math.min(1, Math.max(0, budget.spentCents / budget.fundingCents))
+      : budget.spentCents > 0 || budget.carryOverDebtCents > 0
+        ? 1
+        : 0;
   const over = budget.remainingCents < 0;
 
   const hasAccountId = typeof budget.accountId === 'string' && budget.accountId.length > 0;
@@ -216,7 +221,7 @@ function BudgetCard({
           />
           <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-400">
             <div className={cx('tabular-nums whitespace-nowrap', over ? 'text-rose-200' : 'text-slate-300')}>
-              {formatEUR(budget.spentCents)} / {formatEUR(budget.amountCents)}
+              {formatEUR(budget.spentCents)} / {formatEUR(budget.fundingCents)}
             </div>
           </div>
           <div
@@ -245,6 +250,16 @@ function BudgetCard({
             disabled={!canEdit}
             onCommit={(euros) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { amountCents: eurosToCents(euros) } })}
           />
+          <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+            <div>À virer ce mois</div>
+            <div className="tabular-nums text-slate-200">{formatEUR(budget.fundingCents)}</div>
+          </div>
+          {budget.carryOverDebtCents > 0 ? (
+            <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+              <div>Reliquat (mois précédent)</div>
+              <div className="tabular-nums text-rose-200">-{formatEUR(budget.carryOverDebtCents)}</div>
+            </div>
+          ) : null}
           <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
             <div>Reste</div>
             <div className={cx('tabular-nums', over ? 'text-rose-200' : 'text-emerald-200')}>{formatEUR(budget.remainingCents)}</div>
