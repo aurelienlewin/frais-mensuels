@@ -111,7 +111,7 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Dette reportée fin de mois: `max(0, -reste)` (reportée uniquement si non traitée).
 - Exemple enveloppe récurrente: cible `100`, dépensé `80` sur le mois N -> reliquat positif `20` reporté -> mois N+1: `à virer = 80`.
 - Total à provisionner du mois: `charges (pour moi) + enveloppes à virer`.
-- Dans le panneau Totaux, l'impact reliquat est détaillé en deux lignes: dette entrante (`+`, rouge) et reliquat positif (`-`, vert).
+- Dans le panneau Totaux, l'impact reliquat est détaillé en deux lignes affichées en montant absolu: `dette entrante à ajouter` (rouge) et `reliquat positif à déduire` (vert). En interne, le calcul reste signé: `+dette` et `-reliquat positif`.
 - Par compte: `charges à provisionner + enveloppes à virer` (impact reliquat déjà intégré dans "enveloppes à virer", qu'il s'agisse d'une dette ou d'un reliquat positif). Si des lignes référencent un compte non configuré, elles restent visibles et incluses dans les totaux.
 - Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
 

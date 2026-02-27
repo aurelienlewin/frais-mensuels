@@ -203,16 +203,16 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             <Row label="Enveloppes cibles (ma part)" value={formatEUR(totals.totalBudgetsBaseCents)} />
             {reliquatDebtImpactCents > 0 ? (
               <Row
-                label="Impact dette entrante (enveloppes)"
-                value={formatSignedCents(reliquatDebtImpactCents)}
+                label="Dette entrante à ajouter (enveloppes)"
+                value={formatEUR(reliquatDebtImpactCents)}
                 valueClassName="text-rose-200"
                 rowClassName="fm-reliquat-negative"
               />
             ) : null}
             {reliquatCreditImpactCents > 0 ? (
               <Row
-                label="Impact reliquat positif (enveloppes)"
-                value={formatSignedCents(-reliquatCreditImpactCents)}
+                label="Reliquat positif à déduire (enveloppes)"
+                value={formatEUR(reliquatCreditImpactCents)}
                 valueClassName="text-emerald-200"
                 rowClassName="fm-reliquat-positive"
               />
