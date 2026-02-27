@@ -43,7 +43,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const [dragging, setDragging] = useState<{ id: string; scope: ChargeScope } | null>(null);
   const [dragOver, setDragOver] = useState<{ id: string; pos: 'before' | 'after' } | null>(null);
   const [filter, setFilter] = useState('');
-  const [chargesOpen, setChargesOpen] = useState(true);
+  const [chargesOpen, setChargesOpen] = useState(false);
   const filterNorm = useMemo(() => normalizeSearch(filter.trim()), [filter]);
   const isFiltering = filterNorm.length > 0;
   const [flashRowId, setFlashRowId] = useState<string | null>(null);

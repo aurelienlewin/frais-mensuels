@@ -36,7 +36,7 @@ function FormulaHint({ label, text }: { label: string; text: string }) {
 
 export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state } = useStoreState();
-  const [budgetsOpen, setBudgetsOpen] = useState(true);
+  const [budgetsOpen, setBudgetsOpen] = useState(false);
   const budgets = useMemo(
     () => budgetsForMonth(state, ym),
     [state.accounts, state.budgets, state.months, ym],
@@ -234,7 +234,7 @@ function BudgetCard({
 
   const canEdit = !archived && Boolean(model);
   const canDelete = !archived && Boolean(model?.active);
-  const [expensesOpen, setExpensesOpen] = useState(true);
+  const [expensesOpen, setExpensesOpen] = useState(false);
   const footerSelectBase = 'fm-input-select h-9 px-2.5 text-slate-100 shadow-inner shadow-black/20 sm:h-8 sm:px-3';
   const footerSelectAccount = `${footerSelectBase} text-[12px] font-medium`;
   const footerSelectType = `${footerSelectBase} text-[11px] font-semibold uppercase tracking-wide`;

@@ -55,7 +55,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   }, [charges]);
   const [salaryDraft, setSalaryDraft] = useState(() => String(centsToEuros(totals.salaryCents)));
   const [salaryEditing, setSalaryEditing] = useState(false);
-  const [summaryOpen, setSummaryOpen] = useState(true);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const archived = state.months[ym]?.archived ?? false;
 
   useEffect(() => {
