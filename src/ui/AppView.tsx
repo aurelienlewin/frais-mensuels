@@ -359,7 +359,7 @@ export function AppView({
           <div className="sr-only" aria-live="polite">
             {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-4">
+          <div className="grid items-start gap-2.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-4">
             <div className="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3">
               <div className="group relative flex min-w-0 items-center gap-2 overflow-hidden rounded-2xl border border-white/12 bg-[radial-gradient(120%_130%_at_0%_0%,rgba(56,189,248,0.24),rgba(15,23,42,0.02)_48%),linear-gradient(135deg,rgba(255,255,255,0.11),rgba(255,255,255,0.03))] px-2 py-1.5 shadow-[0_18px_58px_-30px_rgba(0,0,0,0.9)] max-[520px]:shrink sm:gap-3 sm:px-3 sm:py-2">
                 <div
@@ -456,12 +456,12 @@ export function AppView({
               </div>
             </div>
 
-            <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 max-[360px]:w-full sm:gap-2">
+            <div className="flex min-w-0 flex-wrap items-center justify-end-safe gap-2 max-[360px]:w-full sm:justify-end">
               <div className="flex min-w-0 items-center gap-1.5 truncate sm:hidden">
-                <div className="min-w-0 truncate text-xs font-semibold text-slate-200">{monthLabelFr(ym)}</div>
+                <div className="min-w-0 truncate text-xs font-semibold text-slate-200 wrap-anywhere">{monthLabelFr(ym)}</div>
                 <button
                   type="button"
-                  className="flex flex-none items-center gap-1.5 rounded-full border border-white/15 bg-white/7 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10"
+                  className="flex flex-none items-center gap-1.5 rounded-full border border-white/15 bg-white/7 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10 pointer-coarse:px-3.5 pointer-coarse:py-2"
                   onClick={() => setMonthsNavOpen((v) => !v)}
                   aria-expanded={monthsNavOpen}
                   aria-controls="month-nav"
@@ -472,101 +472,104 @@ export function AppView({
                   </span>
                 </button>
               </div>
-              <button
-                className="rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs"
-                onClick={() => setYm(todayYm)}
-                type="button"
-              >
-                <span className="max-[360px]:hidden">Aujourd’hui</span>
-                <span className="hidden max-[360px]:inline">Ajd</span>
-              </button>
 
-              {(() => {
-                const prevYm = ymAdd(ym, -1);
-                const disabled = isMonthDisabled(prevYm);
-                return (
-              <button
-                className={cx(
-                  'rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs',
-                  disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-white/10',
-                )}
-                onClick={() => setYm(prevYm)}
-                aria-label="Mois précédent"
-                type="button"
-                disabled={disabled}
-                title={disabled ? 'Aucune donnée pour ce mois.' : undefined}
-              >
-                ←
-              </button>
-                );
-              })()}
-              <button
-                className="rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs"
-                onClick={() => setYm((v) => ymAdd(v, 1))}
-                aria-label="Mois suivant"
-                type="button"
-              >
-                →
-              </button>
+              <div className="flex items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(15,23,42,0.88),rgba(30,41,59,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.95)]">
+                <button
+                  className="rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/12 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5"
+                  onClick={() => setYm(todayYm)}
+                  type="button"
+                >
+                  <span className="max-[360px]:hidden">Aujourd’hui</span>
+                  <span className="hidden max-[360px]:inline">Ajd</span>
+                </button>
+                <span className="h-6 w-px bg-white/12" aria-hidden="true" />
+                {(() => {
+                  const prevYm = ymAdd(ym, -1);
+                  const disabled = isMonthDisabled(prevYm);
+                  return (
+                    <button
+                      className={cx(
+                        'rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5',
+                        disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-white/12',
+                      )}
+                      onClick={() => setYm(prevYm)}
+                      aria-label="Mois précédent"
+                      type="button"
+                      disabled={disabled}
+                      title={disabled ? 'Aucune donnée pour ce mois.' : undefined}
+                    >
+                      ←
+                    </button>
+                  );
+                })()}
+                <button
+                  className="rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/12 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5"
+                  onClick={() => setYm((v) => ymAdd(v, 1))}
+                  aria-label="Mois suivant"
+                  type="button"
+                >
+                  →
+                </button>
+              </div>
 
-              <select
-                className={cx(
-                  'h-10 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10 max-[360px]:h-9 max-[360px]:px-2 max-[360px]:text-xs',
-                  archivedMonths.length === 0 && 'opacity-50',
-                  'hidden sm:block',
-                )}
-                defaultValue=""
-                disabled={archivedMonths.length === 0}
-                onChange={(e) => {
-                  const next = e.target.value as YM;
-                  if (next) setYm(next);
-                  e.target.value = '';
-                }}
-                aria-label="Historique (mois archivés)"
-              >
-                <option value="" disabled>
-                  Historique…
-                </option>
-                {archivedMonths.map((m) => (
-                  <option key={m} value={m}>
-                    {monthLabelFr(m)}
+              <div className="flex items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(15,23,42,0.88),rgba(30,41,59,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.95)]">
+                <select
+                  className={cx(
+                    'hidden h-10 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10 sm:block',
+                    archivedMonths.length === 0 && 'opacity-50',
+                  )}
+                  defaultValue=""
+                  disabled={archivedMonths.length === 0}
+                  onChange={(e) => {
+                    const next = e.target.value as YM;
+                    if (next) setYm(next);
+                    e.target.value = '';
+                  }}
+                  aria-label="Historique (mois archivés)"
+                >
+                  <option value="" disabled>
+                    Historique…
                   </option>
-                ))}
-                  </select>
-  
-              <details
-                ref={menuRef}
-                className="absolute right-[calc(0.75rem_+_env(safe-area-inset-right))] top-2 flex-shrink-0 sm:relative sm:right-auto sm:top-auto"
-                onKeyDown={(e) => {
-                  if (e.key !== 'Escape') return;
-                  menuRef.current?.removeAttribute('open');
-                  (menuRef.current?.querySelector('summary') as HTMLElement | null)?.focus();
-                }}
-              >
-                <summary
-                  aria-label="Menu"
-                  className="list-none rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs inline-flex items-center justify-center"
-                  data-tour="menu"
+                  {archivedMonths.map((m) => (
+                    <option key={m} value={m}>
+                      {monthLabelFr(m)}
+                    </option>
+                  ))}
+                </select>
+
+                <details
+                  ref={menuRef}
+                  className="relative flex-shrink-0"
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Escape') return;
+                    menuRef.current?.removeAttribute('open');
+                    (menuRef.current?.querySelector('summary') as HTMLElement | null)?.focus();
+                  }}
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    role="img"
-                    aria-hidden="true"
-                    className="h-5 w-5 text-slate-100"
+                  <summary
+                    aria-label="Menu"
+                    className="list-none inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5"
+                    data-tour="menu"
                   >
-                    <path
-                      d="M4 7.5h16M4 12h16M4 16.5h16"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                    <svg
+                      viewBox="0 0 24 24"
+                      role="img"
+                      aria-hidden="true"
+                      className="h-5 w-5 text-slate-100"
+                    >
+                      <path
+                        d="M4 7.5h16M4 12h16M4 16.5h16"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </summary>
-                <div
-                  className="absolute right-0 z-20 mt-2 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)] sm:left-auto sm:right-0 sm:translate-x-0 sm:w-[280px]"
-                  style={{ maxWidth: 'calc(100vw - 1.5rem - env(safe-area-inset-right))' }}
-                >
+                  <div
+                    className="absolute right-0 z-20 mt-2 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)] sm:left-auto sm:right-0 sm:translate-x-0 sm:w-[280px]"
+                    style={{ maxWidth: 'calc(100vw - 1.5rem - env(safe-area-inset-right))' }}
+                  >
                       <div className="px-3 py-2 text-xs text-slate-400">
                         Connecté: <span className="font-mono text-slate-200">{user.email}</span>
                       </div>
@@ -823,26 +826,27 @@ export function AppView({
                   >
                     Réinitialiser (exemple)
                   </button>
-                </div>
-              </details>
+                  </div>
+                </details>
 
-              <button
-                className="ml-2 hidden rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs sm:inline-flex"
-                onClick={() => {
-                  if (!archived) {
-                    const ok = window.confirm('Archiver ce mois ? Les montants seront figés (modifiable en réouvrant).');
+                <button
+                  className="hidden rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/10 pointer-coarse:px-3.5 pointer-coarse:py-2.5 sm:inline-flex"
+                  onClick={() => {
+                    if (!archived) {
+                      const ok = window.confirm('Archiver ce mois ? Les montants seront figés (modifiable en réouvrant).');
+                      if (!ok) return;
+                      dispatch({ type: 'ARCHIVE_MONTH', ym });
+                      return;
+                    }
+                    const ok = window.confirm('Réouvrir ce mois (désarchiver) ?');
                     if (!ok) return;
-                    dispatch({ type: 'ARCHIVE_MONTH', ym });
-                    return;
-                  }
-                  const ok = window.confirm('Réouvrir ce mois (désarchiver) ?');
-                  if (!ok) return;
-                  dispatch({ type: 'UNARCHIVE_MONTH', ym });
-                }}
-                type="button"
-              >
-                {archived ? 'Réouvrir' : 'Archiver'}
-              </button>
+                    dispatch({ type: 'UNARCHIVE_MONTH', ym });
+                  }}
+                  type="button"
+                >
+                  {archived ? 'Réouvrir' : 'Archiver'}
+                </button>
+              </div>
             </div>
           </div>
 
