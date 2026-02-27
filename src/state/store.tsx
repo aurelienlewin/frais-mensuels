@@ -71,6 +71,8 @@ function actionSummary(action: Action): string | null {
       return 'Enveloppe mise à jour';
     case 'REMOVE_BUDGET':
       return 'Enveloppe supprimée';
+    case 'SET_BUDGET_CARRY_HANDLED':
+      return action.handled ? 'Reliquat traité' : 'Reliquat réactivé';
     case 'ADD_BUDGET_EXPENSE':
       return 'Dépense ajoutée';
     case 'UPDATE_BUDGET_EXPENSE': {

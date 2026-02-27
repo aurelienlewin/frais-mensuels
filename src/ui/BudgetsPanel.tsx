@@ -194,6 +194,7 @@ function BudgetCard({
         ? 1
         : 0;
   const over = budget.remainingToFundCents < 0;
+  const canToggleCarryHandling = budget.carryOverSourceDebtCents > 0 || budget.carryOverHandled;
 
   const hasAccountId = typeof budget.accountId === 'string' && budget.accountId.length > 0;
   const accountInActiveList = hasAccountId ? activeAccounts.some((a) => a.id === budget.accountId) : false;
@@ -257,12 +258,38 @@ function BudgetCard({
 	            <div className="fm-stat-label text-xs">À virer ce mois</div>
 	            <div className="fm-stat-value font-semibold text-sky-200">{formatEUR(budget.fundingCents)}</div>
 	          </div>
-	          {budget.carryOverDebtCents > 0 ? (
+	          {budget.carryOverHandled && budget.carryOverSourceDebtCents > 0 ? (
+              <div className="flex items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-100">
+                <div>Reliquat traité</div>
+                <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverSourceDebtCents)}</div>
+              </div>
+            ) : null}
+	          {!budget.carryOverHandled && budget.carryOverDebtCents > 0 ? (
 	            <div className="flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
 	              <div>Reliquat (mois précédent)</div>
 	              <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverDebtCents)}</div>
 	            </div>
 	          ) : null}
+            {canToggleCarryHandling ? (
+              <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-200">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-emerald-400"
+                  checked={budget.carryOverHandled}
+                  disabled={!canEdit}
+                  onChange={(e) =>
+                    dispatch({
+                      type: 'SET_BUDGET_CARRY_HANDLED',
+                      ym,
+                      budgetId: budget.id,
+                      handled: e.currentTarget.checked,
+                    })
+                  }
+                  aria-label={`Marquer le reliquat comme traité pour ${budget.name}`}
+                />
+                <span>Reliquat traité manuellement</span>
+              </label>
+            ) : null}
 	          <div className="fm-stat-row">
 	            <div className="fm-stat-label text-xs">Reste du mois</div>
 	            <div className={cx('fm-stat-value', over ? 'text-rose-200' : 'text-emerald-200')}>

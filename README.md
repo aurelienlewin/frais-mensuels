@@ -7,6 +7,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Charges mensuelles avec part %, comptes, auto/manuel, et statut OK.
 - Enveloppes (budgets) + dépenses + reste du mois + dette reportée.
 - Reliquat d’enveloppe: un dépassement d’un mois est reporté sur le mois suivant pour la même enveloppe et réduit le montant à virer.
+- Reliquat traité: une case à cocher par enveloppe permet de marquer le reliquat entrant comme géré manuellement (il n'est alors plus déduit du mois).
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat inclus), total à provisionner, reste à vivre.
 - Vue par compte orientée action: montant à approvisionner en début de mois.
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
@@ -96,6 +97,7 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Charges globales (mensuelles) + charges ponctuelles par mois.
 - Budgets par enveloppe + dépenses par mois.
 - Reliquat d’enveloppe: si le reste d’un mois est négatif, la dette est reportée sur le mois suivant de la même enveloppe.
+- Reliquat traité (optionnel): si activé sur un mois/enveloppe, le reliquat entrant est conservé comme information mais n’est plus appliqué dans le calcul du montant à virer pour ce mois.
 - Montant d’enveloppe à virer: `max(0, montant enveloppe - reliquat du mois précédent)`.
 - Reste du mois (enveloppe): `à virer ce mois - dépensé`.
 - Dette reportée fin de mois: `max(0, dépensé - (montant enveloppe - reliquat précédent))`.

@@ -37,6 +37,8 @@ export type BudgetResolved = {
   amountCents: number;
   adjustedAmountCents: number;
   fundingCents: number;
+  carryOverSourceDebtCents: number;
+  carryOverHandled: boolean;
   carryOverDebtCents: number;
   carryForwardDebtCents: number;
   remainingToFundCents: number;
@@ -209,14 +211,19 @@ function resolveBudgetSnapshot(
   month: MonthData | undefined,
   budgets: Map<string, AppState['budgets'][number]>,
   budgetId: string,
-): { expenses: BudgetExpense[]; snap: MonthBudgetSnapshot | null } {
+): { expenses: BudgetExpense[]; carryOverHandled: boolean; snap: MonthBudgetSnapshot | null } {
   const monthState = month?.budgets[budgetId];
   const expenses = monthState?.expenses ?? [];
-  if (month?.archived && monthState?.snapshot) return { expenses, snap: monthState.snapshot };
+  const carryOverHandled = monthState?.carryOverHandled === true;
+  if (month?.archived && monthState?.snapshot) return { expenses, carryOverHandled, snap: monthState.snapshot };
 
   const b = budgets.get(budgetId);
-  if (!b) return { expenses, snap: null };
-  return { expenses, snap: { name: b.name, amountCents: b.amountCents, accountId: b.accountId, scope: b.scope, splitPercent: b.splitPercent } };
+  if (!b) return { expenses, carryOverHandled, snap: null };
+  return {
+    expenses,
+    carryOverHandled,
+    snap: { name: b.name, amountCents: b.amountCents, accountId: b.accountId, scope: b.scope, splitPercent: b.splitPercent },
+  };
 }
 
 export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
@@ -264,18 +271,19 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     if (cached !== undefined) return cached;
 
     const targetMonth = state.months[targetYm];
-    const { expenses, snap } = resolveBudgetSnapshot(targetMonth, budgets, budgetId);
+    const { expenses, carryOverHandled, snap } = resolveBudgetSnapshot(targetMonth, budgets, budgetId);
     if (!snap) {
       rowCache.set(key, null);
       return null;
     }
 
-    let carryOverDebtCents = 0;
+    let carryOverSourceDebtCents = 0;
     const prevYm = ymAdd(targetYm, -1);
     if (state.months[prevYm]) {
       const prev = resolveBudgetRow(prevYm, budgetId);
-      carryOverDebtCents = prev?.carryForwardDebtCents ?? 0;
+      carryOverSourceDebtCents = prev?.carryForwardDebtCents ?? 0;
     }
+    const carryOverDebtCents = carryOverHandled ? 0 : carryOverSourceDebtCents;
 
     const spentCents = expenses.reduce((acc, e) => acc + e.amountCents, 0);
     const adjustedAmountCents = snap.amountCents - carryOverDebtCents;
@@ -302,6 +310,8 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       amountCents: snap.amountCents,
       adjustedAmountCents,
       fundingCents,
+      carryOverSourceDebtCents,
+      carryOverHandled,
       carryOverDebtCents,
       carryForwardDebtCents,
       remainingToFundCents,

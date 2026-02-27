@@ -18,6 +18,7 @@ export type Action =
   | { type: 'REMOVE_MONTH_CHARGE'; ym: MonthData['ym']; chargeId: string }
   | { type: 'ARCHIVE_MONTH'; ym: MonthData['ym'] }
   | { type: 'UNARCHIVE_MONTH'; ym: MonthData['ym'] }
+  | { type: 'SET_BUDGET_CARRY_HANDLED'; ym: MonthData['ym']; budgetId: string; handled: boolean }
   | { type: 'ADD_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expense: Omit<BudgetExpense, 'id'> }
   | { type: 'UPDATE_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expenseId: string; patch: Partial<Omit<BudgetExpense, 'id'>> }
   | { type: 'REMOVE_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expenseId: string }
@@ -310,6 +311,7 @@ export function reducer(state: AppState, action: Action): AppState {
 	            if (current?.snapshot) continue;
 	            budgetsWithSnapshots[b.id] = {
 	              expenses: current?.expenses ?? [],
+                carryOverHandled: current?.carryOverHandled,
 	              snapshot: {
 	                name: b.name,
 	                amountCents: b.amountCents,
@@ -323,6 +325,31 @@ export function reducer(state: AppState, action: Action): AppState {
 	        });
       case 'UNARCHIVE_MONTH':
         return withMonth(state, action.ym, (m) => ({ ...m, archived: false }));
+      case 'SET_BUDGET_CARRY_HANDLED':
+        return withMonth(state, action.ym, (m) => {
+          if (m.archived) return m;
+          const existing = m.budgets[action.budgetId];
+          if (existing?.carryOverHandled === action.handled) return m;
+
+          // Keep the month budget state if it contains data (expenses/snapshot), otherwise clean it up.
+          if (!action.handled && existing && (existing.expenses?.length ?? 0) === 0 && !existing.snapshot) {
+            const nextBudgets = { ...m.budgets };
+            delete nextBudgets[action.budgetId];
+            return { ...m, budgets: nextBudgets };
+          }
+
+          return {
+            ...m,
+            budgets: {
+              ...m.budgets,
+              [action.budgetId]: {
+                expenses: existing?.expenses ?? [],
+                snapshot: existing?.snapshot,
+                carryOverHandled: action.handled,
+              },
+            },
+          };
+        });
       case 'ADD_BUDGET_EXPENSE':
         return withMonth(state, action.ym, (m) => {
           const existing = m.budgets[action.budgetId];
@@ -332,7 +359,11 @@ export function reducer(state: AppState, action: Action): AppState {
             ...m,
             budgets: {
               ...m.budgets,
-              [action.budgetId]: { expenses: [next, ...prev], snapshot: existing?.snapshot },
+              [action.budgetId]: {
+                expenses: [next, ...prev],
+                snapshot: existing?.snapshot,
+                carryOverHandled: existing?.carryOverHandled,
+              },
             },
           };
         });
@@ -360,7 +391,11 @@ export function reducer(state: AppState, action: Action): AppState {
             ...m,
             budgets: {
               ...m.budgets,
-              [action.budgetId]: { expenses: nextExpenses, snapshot: existing.snapshot },
+              [action.budgetId]: {
+                expenses: nextExpenses,
+                snapshot: existing.snapshot,
+                carryOverHandled: existing.carryOverHandled,
+              },
             },
           };
         });
@@ -372,7 +407,11 @@ export function reducer(state: AppState, action: Action): AppState {
             ...m,
             budgets: {
               ...m.budgets,
-              [action.budgetId]: { expenses: prev.filter((e) => e.id !== action.expenseId), snapshot: existing?.snapshot },
+              [action.budgetId]: {
+                expenses: prev.filter((e) => e.id !== action.expenseId),
+                snapshot: existing?.snapshot,
+                carryOverHandled: existing?.carryOverHandled,
+              },
             },
           };
         });
