@@ -337,8 +337,8 @@ function BudgetCard({
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Entrant (mois précédent)</div>
                 {budget.carryOverHandled && budget.carryOverSourceDebtCents > 0 ? (
                   <div className="mt-1 flex items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-100">
-                    <div>Reliquat entrant traité</div>
-                    <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverSourceDebtCents)}</div>
+                    <div>Reliquat dette traité</div>
+                    <div className="tabular-nums font-semibold">+{formatEUR(budget.carryOverSourceDebtCents)}</div>
                   </div>
                 ) : null}
                 {budget.carryOverHandled && budget.carryOverSourceCreditCents > 0 ? (
@@ -350,7 +350,7 @@ function BudgetCard({
                 {!budget.carryOverHandled && budget.carryOverDebtCents > 0 ? (
                   <div className="mt-1 flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
                     <div>Reliquat dette appliqué</div>
-                    <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverDebtCents)}</div>
+                    <div className="tabular-nums font-semibold">+{formatEUR(budget.carryOverDebtCents)}</div>
                   </div>
                 ) : null}
                 {!budget.carryOverHandled && budget.carryOverCreditCents > 0 ? (

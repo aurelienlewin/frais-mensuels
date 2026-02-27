@@ -40,10 +40,12 @@ export type BudgetResolved = {
   carryOverSourceDebtCents: number;
   carryOverSourceCreditCents: number;
   carryOverSourceTotalCents: number;
+  carryOverSourceNetCents: number;
   carryOverHandled: boolean;
   carryOverDebtCents: number;
   carryOverCreditCents: number;
   carryOverTotalCents: number;
+  carryOverNetCents: number;
   carryForwardSourceDebtCents: number;
   carryForwardSourceCreditCents: number;
   carryForwardHandled: boolean;
@@ -314,18 +316,20 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       carryOverSourceCreditCents = prev?.carryForwardCreditCents ?? 0;
     }
     const carryOverSourceTotalCents = carryOverSourceDebtCents + carryOverSourceCreditCents;
+    const carryOverSourceNetCents = carryOverSourceCreditCents - carryOverSourceDebtCents;
     const carryOverDebtCents = carryOverHandled ? 0 : carryOverSourceDebtCents;
     const carryOverCreditCents = carryOverHandled ? 0 : carryOverSourceCreditCents;
     const carryOverTotalCents = carryOverDebtCents + carryOverCreditCents;
+    const carryOverNetCents = carryOverCreditCents - carryOverDebtCents;
 
     const spentCents = expenses.reduce((acc, e) => acc + e.amountCents, 0);
-    const adjustedAmountCents = snap.amountCents - carryOverTotalCents;
+    const adjustedAmountCents = snap.amountCents - carryOverNetCents;
     const fundingCents = Math.max(0, adjustedAmountCents);
     // UX-facing monthly remainder on the amount actually funded this month.
     const remainingToFundCents = fundingCents - spentCents;
     // Consolidation basis: what was effectively available this month in the envelope.
     // If incoming reliquat exceeds the target, available starts from that higher amount.
-    const availableCents = Math.max(carryOverTotalCents, snap.amountCents);
+    const availableCents = Math.max(carryOverNetCents, snap.amountCents);
     const remainingCents = availableCents - spentCents;
     const carryForwardSourceDebtCents = Math.max(0, -remainingCents);
     const carryForwardSourceCreditCents = Math.max(0, remainingCents);
@@ -351,10 +355,12 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       carryOverSourceDebtCents,
       carryOverSourceCreditCents,
       carryOverSourceTotalCents,
+      carryOverSourceNetCents,
       carryOverHandled,
       carryOverDebtCents,
       carryOverCreditCents,
       carryOverTotalCents,
+      carryOverNetCents,
       carryForwardSourceDebtCents,
       carryForwardSourceCreditCents,
       carryForwardHandled,

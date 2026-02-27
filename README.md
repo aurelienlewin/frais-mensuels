@@ -102,9 +102,10 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Reliquat d’enveloppe: le reste d’un mois (positif ou négatif) est reporté sur le mois suivant de la même enveloppe. Un reliquat positif réduit le virement du mois suivant; un reliquat négatif alimente la dette reportée.
 - Reliquat traité (optionnel): si activé sur un mois/enveloppe, le reliquat entrant est conservé comme information mais n’est plus appliqué dans le calcul du montant à virer pour ce mois.
 - Dette du mois traitée (optionnel): si activé sur un mois/enveloppe, la dette générée ce mois est conservée comme information mais n’est plus reportée au mois suivant.
-- Montant d’enveloppe à virer: `max(0, montant enveloppe - reliquat entrant appliqué du mois précédent)`.
+- Reliquat entrant net (mois précédent): `reliquat positif - dette`.
+- Montant d’enveloppe à virer: `max(0, montant enveloppe - reliquat entrant net)`.
 - Reste du mois (enveloppe): `à virer ce mois - dépensé`.
-- Consolidation mensuelle du reliquat (entrant vers mois suivant): base disponible `max(montant cible, reliquat entrant appliqué)` puis `reste = base disponible - dépensé`.
+- Consolidation mensuelle du reliquat (entrant vers mois suivant): base disponible `max(montant cible, reliquat entrant net)` puis `reste = base disponible - dépensé`.
 - Reliquat positif sortant: `max(0, reste)` (reporté comme reliquat entrant).
 - Dette reportée fin de mois: `max(0, -reste)` (reportée uniquement si non traitée).
 - Exemple enveloppe récurrente: cible `100`, dépensé `80` sur le mois N -> reliquat positif `20` reporté -> mois N+1: `à virer = 80`.
