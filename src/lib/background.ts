@@ -14,9 +14,6 @@ const AUTO_ROTATE_MS = 1000 * 60 * 3;
 const AUTO_ROTATE_JITTER_MS = 1000 * 45;
 const CROSSFADE_MS = 520;
 const CROSSFADE_SETTLE_MS = 70;
-const BLACKOUT_FADE_TO_MS = 230;
-const BLACKOUT_FADE_FROM_MS = 280;
-const BLACKOUT_SETTLE_MS = 40;
 const PRELOAD_TIMEOUT_MS = 1000 * 12;
 const RETRY_BASE_MS = 1000 * 8;
 const RETRY_MAX_MS = 1000 * 75;
@@ -208,7 +205,6 @@ function setBaseBackground(css: string) {
   root.style.setProperty('--bg-image-current', next);
   root.style.setProperty('--bg-image-next', next);
   root.style.setProperty('--bg-crossfade-opacity', '0');
-  root.style.setProperty('--bg-blackout-opacity', '0');
 }
 
 async function preloadImage(url: string, signal: AbortSignal) {
@@ -390,7 +386,6 @@ async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: b
     scheduleRetry();
     if (!currentCss) setBaseBackground(FALLBACK_CSS);
     root.style.setProperty('--bg-crossfade-opacity', '0');
-    root.style.setProperty('--bg-blackout-opacity', '0');
     finishLoad(loadId, controller);
     return;
   }
@@ -411,17 +406,6 @@ async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: b
     return;
   }
 
-  const shouldBlackoutTransition = Boolean(currentCss);
-  if (shouldBlackoutTransition) {
-    root.style.setProperty('--bg-blackout-opacity', '1');
-    await waitMs(BLACKOUT_FADE_TO_MS + BLACKOUT_SETTLE_MS);
-    if (loadId !== activeLoadId) {
-      if (chosenObjectUrl) URL.revokeObjectURL(chosenObjectUrl);
-      finishLoad(loadId, controller);
-      return;
-    }
-  }
-
   root.style.setProperty('--bg-image-next', chosenDisplayCss);
   window.requestAnimationFrame(() => {
     if (loadId !== activeLoadId) return;
@@ -438,13 +422,6 @@ async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: b
   root.style.setProperty('--bg-image-current', chosenDisplayCss);
   root.style.setProperty('--bg-image-next', chosenDisplayCss);
   root.style.setProperty('--bg-crossfade-opacity', '0');
-  root.style.setProperty('--bg-blackout-opacity', '0');
-  await waitMs(BLACKOUT_FADE_FROM_MS + BLACKOUT_SETTLE_MS);
-  if (loadId !== activeLoadId) {
-    if (chosenObjectUrl) URL.revokeObjectURL(chosenObjectUrl);
-    finishLoad(loadId, controller);
-    return;
-  }
 
   const prevObjectUrl = currentObjectUrl;
   currentObjectUrl = chosenObjectUrl;
