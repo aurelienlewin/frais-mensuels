@@ -345,7 +345,9 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
         : 100;
     const baseMyShareCents = scope === 'commun' ? Math.round((snap.amountCents * splitPercent) / 100) : snap.amountCents;
     const myShareCents = scope === 'commun' ? Math.round((fundingCents * splitPercent) / 100) : fundingCents;
-    const carryOverMyShareCents = Math.max(0, baseMyShareCents - myShareCents);
+    // Signed reliquat impact on my transfer share:
+    // positive => increases transfer (incoming debt), negative => reduces transfer (incoming credit).
+    const carryOverMyShareCents = myShareCents - baseMyShareCents;
     const row = {
       id: budgetId,
       name: snap.name,

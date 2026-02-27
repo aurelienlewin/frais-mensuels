@@ -191,11 +191,11 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           <div className="grid gap-2">
             <Row label="Charges à provisionner (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
             <Row label="Enveloppes cibles (ma part)" value={formatEUR(totals.totalBudgetsBaseCents)} />
-            {totals.totalBudgetsCarryOverCents > 0 ? (
+            {totals.totalBudgetsCarryOverCents !== 0 ? (
               <Row
-                label="Reliquat reporté (déjà déduit)"
-                value={`-${formatEUR(totals.totalBudgetsCarryOverCents)}`}
-                valueClassName="text-rose-200"
+                label="Impact reliquat entrant (enveloppes)"
+                value={formatSignedCents(totals.totalBudgetsCarryOverCents)}
+                valueClassName={totals.totalBudgetsCarryOverCents > 0 ? 'text-rose-200' : 'text-emerald-200'}
               />
             ) : null}
             <Row label="Enveloppes à virer (ma part)" value={formatEUR(totals.totalBudgetsCents)} strong />
@@ -365,10 +365,15 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                             <span className="tabular-nums text-slate-100">{formatEUR(a.budgetsBaseCents)}</span>
                           </span>
                         ) : null}
-                        {a.budgetsCarryOverCents > 0 ? (
-                          <span className="fm-chip-pill-readable gap-1.5 border-rose-200/25 bg-rose-500/12 px-2 py-0.5 text-[11px] text-rose-100">
-                            <span>Reliquat:</span>
-                            <span className="tabular-nums">-{formatEUR(a.budgetsCarryOverCents)}</span>
+                        {a.budgetsCarryOverCents !== 0 ? (
+                          <span
+                            className={cx(
+                              'fm-chip-pill-readable gap-1.5 px-2 py-0.5 text-[11px]',
+                              a.budgetsCarryOverCents > 0 ? 'fm-reliquat-negative' : 'fm-reliquat-positive',
+                            )}
+                          >
+                            <span>Impact reliquat:</span>
+                            <span className="tabular-nums">{formatSignedCents(a.budgetsCarryOverCents)}</span>
                           </span>
                         ) : null}
                       </div>
@@ -671,4 +676,10 @@ function Row({
       </div>
     </div>
   );
+}
+
+function formatSignedCents(cents: number) {
+  if (cents === 0) return formatEUR(0);
+  const sign = cents > 0 ? '+' : '-';
+  return `${sign}${formatEUR(Math.abs(cents))}`;
 }

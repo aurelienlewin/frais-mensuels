@@ -682,7 +682,7 @@ export function AppView({
                       lines.push(csvLine(['Champ', 'Montant (€)']));
                       lines.push(csvLine(['Charges à provisionner (pour moi)', toEuroCsv(reportTotals.totalPourMoiCents)]));
                       lines.push(csvLine(['Enveloppes cibles (ma part)', toEuroCsv(reportTotals.totalBudgetsBaseCents)]));
-                      lines.push(csvLine(['Reliquat reporté (déjà déduit)', `-${toEuroCsv(reportTotals.totalBudgetsCarryOverCents)}`]));
+                      lines.push(csvLine(['Impact reliquat entrant (enveloppes)', toEuroCsv(reportTotals.totalBudgetsCarryOverCents)]));
                       lines.push(csvLine(['Enveloppes à virer (ma part)', toEuroCsv(reportTotals.totalBudgetsCents)]));
                       lines.push(csvLine(['Total à provisionner ce mois', toEuroCsv(reportTotals.totalProvisionCents)]));
                       lines.push(csvLine(['Reste à vivre (après enveloppes)', toEuroCsv(reportTotals.resteAVivreApresEnveloppesCents)]));
@@ -721,7 +721,7 @@ export function AppView({
                           'Compte',
                           'Charges à provisionner (€)',
                           'Enveloppes cibles (€)',
-                          'Reliquat déduit (€)',
+                          'Impact reliquat (€)',
                           'Enveloppes à virer (€)',
                           'Total à approvisionner (€)',
                         ]),
@@ -732,7 +732,7 @@ export function AppView({
                             a.accountName,
                             toEuroCsv(a.chargesTotalCents),
                             toEuroCsv(a.budgetsBaseCents),
-                            toEuroCsv(-a.budgetsCarryOverCents),
+                            toEuroCsv(a.budgetsCarryOverCents),
                             toEuroCsv(a.budgetsCents),
                             toEuroCsv(a.totalCents),
                           ]),

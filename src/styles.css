@@ -63,6 +63,14 @@
     @apply inline-flex h-auto max-w-full items-center gap-1 rounded-full border border-white/10 bg-white/5 whitespace-normal text-left leading-[1.35] text-slate-200 wrap-break-word;
   }
 
+  .fm-reliquat-positive {
+    @apply border-emerald-300/25 bg-emerald-500/12 text-emerald-100;
+  }
+
+  .fm-reliquat-negative {
+    @apply border-rose-300/25 bg-rose-500/12 text-rose-100;
+  }
+
   .fm-mobile-section-toggle {
     @apply inline-flex min-h-10 items-center gap-2 rounded-2xl border border-sky-200/30 bg-sky-400/15 px-3 py-2 text-xs font-semibold text-sky-50 text-shadow-2xs shadow-[0_14px_30px_-20px_rgba(56,189,248,0.9)] transition-colors hover:bg-sky-400/22 active:bg-sky-400/28 pointer-coarse:min-h-11 pointer-coarse:px-4 pointer-coarse:py-2.5;
   }
