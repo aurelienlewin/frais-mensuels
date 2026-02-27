@@ -284,22 +284,16 @@ function parseApiParams(url: string) {
   }
 }
 
-function buildCandidateUrls(primaryUrl: string) {
+function buildCandidateUrls(primaryUrl: string, maxCount = 2) {
   const out = new Set<string>();
   if (primaryUrl) out.add(primaryUrl);
+  if (maxCount <= 1) return Array.from(out);
 
   const api = parseApiParams(primaryUrl);
   if (!api) return Array.from(out);
 
   out.add(buildApiUrl(api.w, api.h, `${api.seed}-r1`));
-  out.add(buildApiUrl(api.w, api.h, `${api.seed}-r2`));
-
-  const compactW = clamp(Math.round(api.w * 0.82), 640, 1600);
-  const compactH = clamp(Math.round(api.h * 0.82), 640, 1600);
-  out.add(buildApiUrl(compactW, compactH, `${api.seed}-compact`));
-  out.add(buildApiUrl(compactW, compactH, `${api.seed}-compact-r1`));
-
-  return Array.from(out);
+  return Array.from(out).slice(0, Math.max(1, maxCount));
 }
 
 function finishLoad(loadId: number, controller: AbortController) {
@@ -307,7 +301,7 @@ function finishLoad(loadId: number, controller: AbortController) {
   if (activeAbort === controller) activeAbort = null;
 }
 
-async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: boolean }) {
+async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: boolean; maxCandidates?: number }) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
   if (!root) return;
@@ -321,7 +315,7 @@ async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: b
   activeAbort = controller;
   root.style.setProperty('--bg-crossfade-opacity', '0');
 
-  const candidates = buildCandidateUrls(sourceUrl);
+  const candidates = buildCandidateUrls(sourceUrl, options?.maxCandidates ?? 2);
 
   let chosenDisplayCss: string | null = null;
   let chosenObjectUrl: string | null = null;
@@ -439,7 +433,7 @@ async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: b
 
 export function initDynamicBackground(options?: { force?: boolean }) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
-  if (pendingLoadId) return;
+  if (pendingLoadId && !options?.force) return;
 
   if (shouldSkipDynamicBackground() && !options?.force) {
     if (!currentCss) setBaseBackground(FALLBACK_CSS);
@@ -449,7 +443,7 @@ export function initDynamicBackground(options?: { force?: boolean }) {
   const allowLocalFallback = !currentCss || isLocalCss(currentCss);
   const session = readSessionSaved();
   if (!options?.force && session?.url) {
-    loadAndSwap(session.url, { allowLocalFallback }).catch(() => {
+    loadAndSwap(session.url, { allowLocalFallback, maxCandidates: 2 }).catch(() => {
       consecutiveFailures += 1;
       scheduleRetry();
       if (!currentCss) setBaseBackground(FALLBACK_CSS);
@@ -457,9 +451,15 @@ export function initDynamicBackground(options?: { force?: boolean }) {
     return;
   }
 
+  if (options?.force && activeAbort) {
+    activeAbort.abort();
+    activeAbort = null;
+    pendingLoadId = null;
+  }
+
   const { w, h } = computeSize();
   const sourceUrl = buildApiUrl(w, h, newSeed());
-  loadAndSwap(sourceUrl, { allowLocalFallback }).catch(() => {
+  loadAndSwap(sourceUrl, { allowLocalFallback, maxCandidates: options?.force ? 1 : 2 }).catch(() => {
     consecutiveFailures += 1;
     scheduleRetry();
     if (!currentCss) setBaseBackground(FALLBACK_CSS);

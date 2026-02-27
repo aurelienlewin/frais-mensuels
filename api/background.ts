@@ -14,7 +14,7 @@ const THEMES: BgTheme[] = [
 ];
 
 const LOCAL_FALLBACK = '/bg-snowy.jpg';
-const UPSTREAM_TIMEOUT_MS = 9000;
+const UPSTREAM_TIMEOUT_MS = 3500;
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -50,25 +50,24 @@ function buildCandidates(w: number, h: number, seed: string, theme: BgTheme) {
     out.push({ provider, url });
   };
 
-  const unsplashUrl = new URL(`https://source.unsplash.com/random/${w}x${h}/`);
-  unsplashUrl.search = `${theme.keywords}&sig=${encodeURIComponent(seed)}`;
-  add('unsplash', unsplashUrl.toString());
-
-  const unsplashRetryUrl = new URL(`https://source.unsplash.com/random/${w}x${h}/`);
-  unsplashRetryUrl.search = `${theme.keywords}&sig=${encodeURIComponent(`${seed}-r1`)}`;
-  add('unsplash', unsplashRetryUrl.toString());
-
   const picsumSeedA = hash32(`${seed}:${theme.id}:a`).toString(16);
   const picsumSeedB = hash32(`${seed}:${theme.id}:b`).toString(16);
   const picsumSeedC = hash32(`${seed}:${theme.id}:c`).toString(16);
+  const picsumSeedD = hash32(`${seed}:${theme.id}:d`).toString(16);
   add('picsum', `https://picsum.photos/seed/${picsumSeedA}/${w}/${h}`);
   add('picsum', `https://picsum.photos/seed/${picsumSeedB}/${w}/${h}`);
   add('picsum', `https://picsum.photos/seed/${picsumSeedC}/${w}/${h}`);
+  add('picsum', `https://picsum.photos/seed/${picsumSeedD}/${w}/${h}`);
 
   const compactW = clamp(Math.round(w * 0.82), 480, 2200);
   const compactH = clamp(Math.round(h * 0.82), 480, 2200);
-  add('picsum', `https://picsum.photos/seed/${picsumSeedB}/${compactW}/${compactH}`);
-  add('picsum', `https://picsum.photos/seed/${picsumSeedC}/${compactW}/${compactH}`);
+  add('picsum', `https://picsum.photos/seed/${picsumSeedA}/${compactW}/${compactH}`);
+  add('picsum', `https://picsum.photos/seed/${picsumSeedD}/${compactW}/${compactH}`);
+
+  // Keep Unsplash as late fallback only; Picsum is usually faster and more reliable.
+  const unsplashUrl = new URL(`https://source.unsplash.com/random/${w}x${h}/`);
+  unsplashUrl.search = `${theme.keywords}&sig=${encodeURIComponent(seed)}`;
+  add('unsplash', unsplashUrl.toString());
 
   return out;
 }
