@@ -108,7 +108,13 @@ function normalizeNameForMatch(s: string) {
 
 function isAutoSavingsChargeName(name: string) {
   const normalized = normalizeNameForMatch(name);
-  return normalized === 'epargne' || normalized === 'virement epargne' || normalized.includes('epargne');
+  return (
+    normalized === 'epargne' ||
+    normalized === 'virement epargne' ||
+    normalized.includes('epargne') ||
+    // Tolerate common typo: "eparne".
+    normalized.includes('eparne')
+  );
 }
 
 function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[]) {

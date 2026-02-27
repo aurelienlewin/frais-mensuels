@@ -11,7 +11,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
 - Dépenses d’enveloppe Essence: le libellé est forcé à `Essence` (saisie enveloppe + ajout rapide), sans saisie manuelle requise.
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat positif inclus), total à provisionner, reste à vivre.
-- Épargne auto (option par convention): s'il existe une unique charge récurrente perso nommée comme `Epargne` / `Virement épargne`, son montant du mois garde d'abord le montant configuré (plancher), puis ajoute l'excédent de reste. Les dettes entrantes d'enveloppe sont d'abord prélevées sur le reste; le reliquat positif continue de réduire l'enveloppe à virer.
+- Épargne auto (option par convention): s'il existe une unique charge récurrente perso nommée comme `Epargne` / `Virement épargne` (tolère aussi `Eparne`), son montant du mois garde d'abord le montant configuré (plancher), puis ajoute l'excédent de reste. Les dettes entrantes d'enveloppe sont d'abord prélevées sur le reste; le reliquat positif continue de réduire l'enveloppe à virer.
 - Vue par compte orientée action: montant à approvisionner en début de mois, avec contrôle d’intégrité (somme des comptes = total à provisionner).
 - Cartes "Par compte" optimisées lecture rapide: total mis en avant + lignes métriques alignées (charges, cochées, enveloppes, impact reliquat).
 - Transparence calculs: bloc repliable "Détails du calcul" dans Totaux et info-bulle sur "Reste du mois" des enveloppes.
