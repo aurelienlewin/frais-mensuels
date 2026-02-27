@@ -361,7 +361,11 @@ export function AppView({
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-4">
             <div className="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3">
-              <div className="group relative flex min-w-0 items-center gap-2 overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-2 py-1.5 shadow-[0_12px_55px_-28px_rgba(0,0,0,0.85)] max-[520px]:shrink sm:gap-3 sm:px-3 sm:py-2">
+              <div className="group relative flex min-w-0 items-center gap-2 overflow-hidden rounded-2xl border border-white/12 bg-[radial-gradient(120%_130%_at_0%_0%,rgba(56,189,248,0.24),rgba(15,23,42,0.02)_48%),linear-gradient(135deg,rgba(255,255,255,0.11),rgba(255,255,255,0.03))] px-2 py-1.5 shadow-[0_18px_58px_-30px_rgba(0,0,0,0.9)] max-[520px]:shrink sm:gap-3 sm:px-3 sm:py-2">
+                <div
+                  className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_100%_0%,rgba(148,163,184,0.26),rgba(15,23,42,0)_62%)] opacity-70 transition duration-700 group-hover:opacity-95"
+                  aria-hidden="true"
+                />
                 <div className="relative">
                   <div
                     className="pointer-events-none absolute -inset-4 -z-10 bg-[conic-gradient(at_30%_30%,rgba(16,185,129,0.35),rgba(56,189,248,0.4),rgba(236,72,153,0.4),rgba(16,185,129,0.35))] opacity-60 blur-[14px] transition duration-700 group-hover:scale-110 group-hover:opacity-90 sm:opacity-80 sm:blur-2xl"
@@ -409,9 +413,15 @@ export function AppView({
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-[11px] sm:tracking-[0.32em]">Tableau privé</div>
-                  <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
-                    <h1 className="text-[15px] font-semibold leading-tight tracking-tight text-slate-50 sm:text-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="text-[10px] uppercase tracking-[0.3em] text-slate-300/90 text-shadow-2xs sm:text-[11px] sm:tracking-[0.32em]">Tableau privé</div>
+                    <span className="hidden h-4 w-px bg-white/12 sm:block" aria-hidden="true" />
+                    <span className="hidden rounded-full border border-cyan-200/25 bg-cyan-400/12 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-cyan-100/90 sm:inline-flex">
+                      Live
+                    </span>
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <h1 className="text-[15px] font-semibold leading-tight tracking-tight text-slate-50 text-shadow-2xs sm:text-lg">
                       <span className="bg-gradient-to-r from-cyan-200 via-slate-200 to-amber-200 bg-clip-text text-transparent">Frais</span>{' '}
                       mensuels
                     </h1>
@@ -419,14 +429,31 @@ export function AppView({
                       Actif
                     </span>
                   </div>
-                  <p className="hidden text-[11px] text-slate-400 max-[520px]:hidden sm:block sm:text-xs">Synthèse perso + coloc · Cloud + hors ligne</p>
                 </div>
               </div>
               <div className="h-4 min-w-[120px] text-xs text-slate-400 max-[360px]:hidden" aria-hidden="true">
                 {saving.status === 'saving' ? 'Sauvegarde…' : saving.status === 'error' ? 'Sauvegarde en erreur' : ''}
               </div>
-              {!online ? <div className="rounded-full bg-rose-400/10 px-3 py-1 text-xs text-rose-200">Offline</div> : null}
-              {archived ? <div className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-200">Archivé</div> : null}
+              <div className="flex flex-none items-center gap-2">
+                <div
+                  className={cx(
+                    'rounded-full px-3 py-1 text-xs',
+                    online ? 'invisible bg-rose-400/10 text-rose-200' : 'bg-rose-400/10 text-rose-200',
+                  )}
+                  aria-hidden={online}
+                >
+                  Offline
+                </div>
+                <div
+                  className={cx(
+                    'rounded-full px-3 py-1 text-xs',
+                    archived ? 'bg-white/10 text-slate-200' : 'invisible bg-white/10 text-slate-200',
+                  )}
+                  aria-hidden={!archived}
+                >
+                  Archivé
+                </div>
+              </div>
             </div>
 
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 max-[360px]:w-full sm:gap-2">
