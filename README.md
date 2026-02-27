@@ -11,7 +11,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
 - Dépenses d’enveloppe Essence: le libellé est forcé à `Essence` (saisie enveloppe + ajout rapide), sans saisie manuelle requise.
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat positif inclus), total à provisionner, reste à vivre.
-- Épargne auto (option par convention): s'il existe une unique charge récurrente perso nommée comme `Epargne` / `Virement épargne` (tolère aussi `Eparne`), son montant du mois garde d'abord le montant configuré (plancher), puis ajoute l'excédent de reste. Les dettes entrantes d'enveloppe sont d'abord prélevées sur le reste; le reliquat positif continue de réduire l'enveloppe à virer.
+- Épargne auto (option par convention): s'il existe une unique charge récurrente perso nommée comme `Epargne` / `Virement épargne` (tolère aussi `Eparne`), son montant du mois garde d'abord le montant configuré (plancher), puis ajoute l'excédent de reste. Les dettes entrantes d'enveloppe augmentent d'abord le montant à virer de l'enveloppe; le reliquat positif continue de le réduire.
 - Vue par compte orientée action: montant à approvisionner en début de mois, avec contrôle d’intégrité (somme des comptes = total à provisionner).
 - Cartes "Par compte" optimisées lecture rapide: total mis en avant + lignes métriques alignées (charges, cochées, enveloppes, impact reliquat).
 - Transparence calculs: bloc repliable "Détails du calcul" dans Totaux et info-bulle sur "Reste du mois" des enveloppes.
@@ -107,8 +107,8 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Reliquat d’enveloppe: le reste d’un mois (positif ou négatif) est reporté sur le mois suivant de la même enveloppe. Un reliquat positif réduit le virement du mois suivant; un reliquat négatif alimente la dette reportée.
 - Reliquat traité (optionnel): si activé sur un mois/enveloppe, le reliquat entrant est conservé comme information mais n’est plus appliqué dans le calcul du montant à virer pour ce mois.
 - Dette du mois traitée (optionnel): si activé sur un mois/enveloppe, la dette générée ce mois est conservée comme information mais n’est plus reportée au mois suivant.
-- Montant d’enveloppe à virer: `max(0, montant enveloppe - reliquat positif entrant)`.
-- Dette entrante: n’augmente pas le virement d’enveloppe; elle est prélevée sur le reste du mois.
+- Montant d’enveloppe à virer: `max(0, montant enveloppe + dette entrante - reliquat positif entrant)`.
+- Dette entrante: augmente le virement d’enveloppe du mois courant (si non traitée).
 - Reste du mois (enveloppe): `montant cible - dépensé` (la dette reportée n’augmente pas ce reste affiché).
 - Enveloppe Essence: chaque dépense est stockée avec le libellé `Essence` (le libellé utilisateur est ignoré pour cette enveloppe).
 - Consolidation mensuelle du reliquat (entrant vers mois suivant): base de reste `max(montant cible, reliquat positif entrant - dette entrante)` puis `reste = base de reste - dépensé`.
@@ -116,8 +116,8 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Dette reportée fin de mois: `max(0, -reste)` (reportée uniquement si non traitée).
 - Exemple enveloppe récurrente: cible `100`, dépensé `80` sur le mois N -> reliquat positif `20` reporté -> mois N+1: `à virer = 80`.
 - Total à provisionner du mois: `charges (pour moi) + enveloppes à virer`.
-- Dans le panneau Totaux, l’impact reliquat distingue: dette entrante prélevée sur reste (rouge) et reliquat positif à déduire sur l’enveloppe à virer (vert).
-- Par compte: `charges à provisionner + enveloppes à virer` (le reliquat positif est intégré à "enveloppes à virer"; la dette entrante est affichée séparément comme prélèvement sur reste). Si des lignes référencent un compte non configuré, elles restent visibles et incluses dans les totaux.
+- Dans le panneau Totaux, l’impact reliquat distingue: dette entrante ajoutée au virement d’enveloppe (rouge) et reliquat positif à déduire sur l’enveloppe à virer (vert).
+- Par compte: `charges à provisionner + enveloppes à virer` (la dette entrante et le reliquat positif sont intégrés au montant d’enveloppes à virer). Si des lignes référencent un compte non configuré, elles restent visibles et incluses dans les totaux.
 - Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
 
 </details>

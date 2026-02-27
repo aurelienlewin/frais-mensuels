@@ -136,15 +136,14 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
   const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
   const budgets = budgetsForMonth(state, ym);
   const budgetsToWireCents = budgets.reduce((acc, b) => acc + b.myShareCents, 0);
-  const budgetsDebtFromResteCents = budgets.reduce((acc, b) => acc + b.carryOverDebtMyShareCents, 0);
   const otherChargesTotalCents = rows.reduce((acc, r) => {
     if (r.id === savings.id) return acc;
     return acc + (r.scope === 'commun' ? r.myShareCents : r.amountCents);
   }, 0);
   const savingsFloorCents = Math.max(0, savings.amountCents);
-  // Rule: wire envelopes with positive reliquat applied; incoming debt is paid from monthly "reste"
+  // Rule: wire envelopes with incoming debt catch-up and positive reliquat applied
   // before allocating extra to Epargne (floor kept).
-  const remainingAboveFloorCents = salaryCents - otherChargesTotalCents - budgetsToWireCents - budgetsDebtFromResteCents - savingsFloorCents;
+  const remainingAboveFloorCents = salaryCents - otherChargesTotalCents - budgetsToWireCents - savingsFloorCents;
   const extraSavingsCents = Math.max(0, remainingAboveFloorCents);
   const nextSavingsAmountCents = savingsFloorCents + extraSavingsCents;
 
@@ -386,8 +385,8 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     const carryOverNetCents = carryOverCreditCents - carryOverDebtCents;
 
     const spentCents = expenses.reduce((acc, e) => acc + e.amountCents, 0);
-    // Incoming debt is not added to the envelope transfer; only positive reliquat can reduce it.
-    const adjustedAmountCents = snap.amountCents - carryOverCreditCents;
+    // Incoming debt increases the transfer; incoming positive reliquat reduces it.
+    const adjustedAmountCents = snap.amountCents + carryOverDebtCents - carryOverCreditCents;
     const fundingCents = Math.max(0, adjustedAmountCents);
     // UX-facing monthly remainder on the monthly target itself (excluding debt catch-up transfer).
     const remainingToFundCents = snap.amountCents - spentCents;

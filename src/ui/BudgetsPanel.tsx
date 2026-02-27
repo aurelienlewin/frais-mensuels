@@ -377,7 +377,7 @@ function BudgetCard({
                 ) : null}
                 {!budget.carryOverHandled && budget.carryOverDebtCents > 0 ? (
                   <div className="fm-reliquat-negative mt-1 flex items-center justify-between rounded-lg border px-2 py-1 text-xs">
-                    <div>Dette entrante (sur reste)</div>
+                    <div>Dette entrante (ajoutée au virement)</div>
                     <div className="tabular-nums font-semibold">+{formatEUR(budget.carryOverDebtCents)}</div>
                   </div>
                 ) : null}

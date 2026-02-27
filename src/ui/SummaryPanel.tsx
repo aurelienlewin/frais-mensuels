@@ -51,12 +51,12 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 
   const ratio =
     totals.salaryCents > 0 ? Math.min(1, Math.max(0, totals.totalPourMoiAvecEnveloppesCents / totals.salaryCents)) : 0;
-  const reliquatDebtFromResteCents = useMemo(() => budgets.reduce((acc, b) => acc + b.carryOverDebtMyShareCents, 0), [budgets]);
+  const reliquatDebtImpactCents = useMemo(() => budgets.reduce((acc, b) => acc + b.carryOverDebtMyShareCents, 0), [budgets]);
   const reliquatCreditImpactCents = useMemo(
     () => budgets.reduce((acc, b) => acc + Math.max(0, -b.carryOverMyShareCents), 0),
     [budgets],
   );
-  const recomputedBudgetsToWireCents = totals.totalBudgetsBaseCents - reliquatCreditImpactCents;
+  const recomputedBudgetsToWireCents = totals.totalBudgetsBaseCents + reliquatDebtImpactCents - reliquatCreditImpactCents;
   const recomputedProvisionCents = totals.totalPourMoiCents + recomputedBudgetsToWireCents;
 
   const repartition = (() => {
@@ -198,10 +198,10 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           <div className="grid gap-2">
             <Row label="Charges à provisionner (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
             <Row label="Enveloppes cibles (ma part)" value={formatEUR(totals.totalBudgetsBaseCents)} />
-            {reliquatDebtFromResteCents > 0 ? (
+            {reliquatDebtImpactCents > 0 ? (
               <Row
-                label="Dette entrante prélevée sur reste"
-                value={formatEUR(reliquatDebtFromResteCents)}
+                label="Dette entrante ajoutée (enveloppes)"
+                value={formatEUR(reliquatDebtImpactCents)}
                 valueClassName="text-rose-200"
                 rowClassName="fm-reliquat-negative"
               />
@@ -232,6 +232,10 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               <div className="flex items-center justify-between gap-2">
                 <span>Enveloppes cibles</span>
                 <span className="tabular-nums text-slate-100">{formatEUR(totals.totalBudgetsBaseCents)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>+ Dette entrante</span>
+                <span className="tabular-nums text-rose-200">{formatEUR(reliquatDebtImpactCents)}</span>
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span>- Reliquat positif</span>
