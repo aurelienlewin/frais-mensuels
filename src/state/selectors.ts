@@ -65,6 +65,11 @@ export type BudgetResolved = {
   remainingCents: number;
 };
 
+export type AutoSavingsMatch = {
+  row: ChargeResolved;
+  global: AppState['charges'][number];
+};
+
 type MonthComputedInputs = {
   charges?: ChargeResolved[];
   budgets?: BudgetResolved[];
@@ -117,10 +122,17 @@ function isAutoSavingsChargeName(name: string) {
   );
 }
 
-function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[]) {
-  if (rows.length === 0) return rows;
-  if (state.months[ym]?.archived) return rows;
+function rankAutoSavingsCandidate(row: ChargeResolved, global: AppState['charges'][number]) {
+  const normalized = normalizeNameForMatch(row.name);
+  const exact =
+    normalized === 'epargne' || normalized === 'virement epargne' || normalized === 'eparne' || normalized === 'virement eparne';
+  const preferred = normalized.startsWith('virement epargne') || normalized.startsWith('virement eparne');
+  const autoPayment = global.payment === 'auto';
+  return (exact ? 100 : 0) + (preferred ? 10 : 0) + (autoPayment ? 5 : 0);
+}
 
+export function pickAutoSavingsChargeForMonth(state: AppState, rows: ChargeResolved[]): AutoSavingsMatch | null {
+  if (rows.length === 0) return null;
   const globalById = chargeById(state.charges);
   const candidates = rows
     .map((r) => {
@@ -128,24 +140,27 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
       if (!global || !global.active) return null; // recurring charge only
       if (r.scope !== 'perso') return null;
       if (!isAutoSavingsChargeName(r.name)) return null;
-
-      const normalized = normalizeNameForMatch(r.name);
-      const exact =
-        normalized === 'epargne' || normalized === 'virement epargne' || normalized === 'eparne' || normalized === 'virement eparne';
-      const preferred = normalized.startsWith('virement epargne') || normalized.startsWith('virement eparne');
-      const autoPayment = global.payment === 'auto';
-      const rank = (exact ? 100 : 0) + (preferred ? 10 : 0) + (autoPayment ? 5 : 0);
-      return { row: r, rank };
+      return { row: r, global, rank: rankAutoSavingsCandidate(r, global) };
     })
-    .filter((x): x is { row: ChargeResolved; rank: number } => x !== null)
+    .filter((x): x is { row: ChargeResolved; global: AppState['charges'][number]; rank: number } => x !== null)
     .sort((a, b) => {
       if (a.rank !== b.rank) return b.rank - a.rank;
       if (a.row.sortOrder !== b.row.sortOrder) return a.row.sortOrder - b.row.sortOrder;
       return a.row.id.localeCompare(b.row.id);
     });
 
-  if (candidates.length === 0) return rows;
-  const savings = candidates[0]!.row;
+  if (candidates.length === 0) return null;
+  const selected = candidates[0]!;
+  return { row: selected.row, global: selected.global };
+}
+
+function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[]) {
+  if (rows.length === 0) return rows;
+  if (state.months[ym]?.archived) return rows;
+
+  const selected = pickAutoSavingsChargeForMonth(state, rows);
+  if (!selected) return rows;
+  const savings = selected.row;
   const savingsMonthState = state.months[ym]?.charges[savings.id];
   const savingsLockedForMonth = savingsMonthState?.paid === true;
   if (savingsLockedForMonth) return rows;

@@ -5,6 +5,7 @@ import { useStore } from '../state/store';
 import { budgetsForMonth, chargesForMonth, totalsByAccount, totalsForMonth } from '../state/selectors';
 import { ChargesTable } from './ChargesTable';
 import { BudgetsPanel } from './BudgetsPanel';
+import { SavingsPanel } from './SavingsPanel';
 import { SummaryPanel } from './SummaryPanel';
 import { QuickAddWidget } from './QuickAddWidget';
 import { Tour, type TourStep } from './Tour';
@@ -906,10 +907,11 @@ export function AppView({
           <div className="grid gap-4 max-[360px]:gap-3 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
             <SummaryPanel ym={ym} />
             <div className="space-y-6 max-[360px]:space-y-4">
-            <ChargesTable ym={ym} archived={archived} />
-            <BudgetsPanel ym={ym} archived={archived} />
+              <ChargesTable ym={ym} archived={archived} />
+              <SavingsPanel ym={ym} archived={archived} />
+              <BudgetsPanel ym={ym} archived={archived} />
+            </div>
           </div>
-        </div>
 
         <footer className="mt-10 text-center text-[11px] text-slate-400">
           Données synchronisées via{' '}
