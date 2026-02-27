@@ -121,17 +121,30 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
   if (rows.length === 0) return rows;
 
   const globalById = chargeById(state.charges);
-  const candidates = rows.filter((r) => {
-    const global = globalById.get(r.id);
-    if (!global || !global.active) return false; // recurring charge only
-    if (global.payment !== 'auto') return false;
-    if (r.scope !== 'perso') return false;
-    return isAutoSavingsChargeName(r.name);
-  });
+  const candidates = rows
+    .map((r) => {
+      const global = globalById.get(r.id);
+      if (!global || !global.active) return null; // recurring charge only
+      if (global.payment !== 'auto') return null;
+      if (r.scope !== 'perso') return null;
+      if (!isAutoSavingsChargeName(r.name)) return null;
 
-  // Avoid auto-fill ambiguity if user has several "épargne" recurring charges.
-  if (candidates.length !== 1) return rows;
-  const savings = candidates[0]!;
+      const normalized = normalizeNameForMatch(r.name);
+      const exact =
+        normalized === 'epargne' || normalized === 'virement epargne' || normalized === 'eparne' || normalized === 'virement eparne';
+      const preferred = normalized.startsWith('virement epargne') || normalized.startsWith('virement eparne');
+      const rank = (exact ? 100 : 0) + (preferred ? 10 : 0);
+      return { row: r, rank };
+    })
+    .filter((x): x is { row: ChargeResolved; rank: number } => x !== null)
+    .sort((a, b) => {
+      if (a.rank !== b.rank) return b.rank - a.rank;
+      if (a.row.sortOrder !== b.row.sortOrder) return a.row.sortOrder - b.row.sortOrder;
+      return a.row.id.localeCompare(b.row.id);
+    });
+
+  if (candidates.length === 0) return rows;
+  const savings = candidates[0]!.row;
 
   const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
   const budgets = budgetsForMonth(state, ym);
