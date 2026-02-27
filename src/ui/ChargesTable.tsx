@@ -16,7 +16,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state, dispatch } = useStoreState();
   const rows = useMemo(
     () => chargesForMonth(state, ym),
-    [state.accounts, state.charges, state.months, ym],
+    [state.accounts, state.budgets, state.charges, state.months, ym],
   );
   const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
   const activeAccountIds = useMemo(() => new Set(activeAccounts.map((a) => a.id)), [activeAccounts]);

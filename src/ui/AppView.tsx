@@ -196,7 +196,7 @@ export function AppView({
   const archived = state.months[ym]?.archived ?? false;
   const reportCharges = useMemo(
     () => chargesForMonth(state, ym),
-    [state.accounts, state.charges, state.months, ym],
+    [state.accounts, state.budgets, state.charges, state.months, ym],
   );
   const reportBudgets = useMemo(
     () => budgetsForMonth(state, ym),

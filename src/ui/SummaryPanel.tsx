@@ -12,7 +12,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   const { state, dispatch } = useStoreState();
   const charges = useMemo(
     () => chargesForMonth(state, ym),
-    [state.accounts, state.charges, state.months, ym],
+    [state.accounts, state.budgets, state.charges, state.months, ym],
   );
   const budgets = useMemo(
     () => budgetsForMonth(state, ym),
