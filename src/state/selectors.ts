@@ -325,8 +325,8 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     const spentCents = expenses.reduce((acc, e) => acc + e.amountCents, 0);
     const adjustedAmountCents = snap.amountCents - carryOverNetCents;
     const fundingCents = Math.max(0, adjustedAmountCents);
-    // UX-facing monthly remainder on the amount actually funded this month.
-    const remainingToFundCents = fundingCents - spentCents;
+    // UX-facing monthly remainder on the monthly target itself (excluding debt catch-up transfer).
+    const remainingToFundCents = snap.amountCents - spentCents;
     // Consolidation basis: what was effectively available this month in the envelope.
     // If incoming reliquat exceeds the target, available starts from that higher amount.
     const availableCents = Math.max(carryOverNetCents, snap.amountCents);
