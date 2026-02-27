@@ -321,15 +321,14 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     const spentCents = expenses.reduce((acc, e) => acc + e.amountCents, 0);
     const adjustedAmountCents = snap.amountCents - carryOverTotalCents;
     const fundingCents = Math.max(0, adjustedAmountCents);
-    // Keep this as the canonical carry-over basis (includes past debt impact).
-    const remainingCents = adjustedAmountCents - spentCents;
     // UX-facing monthly remainder on the amount actually funded this month.
     const remainingToFundCents = fundingCents - spentCents;
-    // If incoming reliquat is larger than the monthly target, keep the excess as incoming reliquat
-    // for next month instead of creating artificial "current month debt" when nothing was spent.
-    const unconsumedCarryOverCents = Math.max(0, carryOverTotalCents - snap.amountCents);
-    const carryForwardSourceDebtCents = Math.max(0, -remainingToFundCents);
-    const carryForwardSourceCreditCents = unconsumedCarryOverCents + Math.max(0, remainingToFundCents);
+    // Consolidation basis: what was effectively available this month in the envelope.
+    // If incoming reliquat exceeds the target, available starts from that higher amount.
+    const availableCents = Math.max(carryOverTotalCents, snap.amountCents);
+    const remainingCents = availableCents - spentCents;
+    const carryForwardSourceDebtCents = Math.max(0, -remainingCents);
+    const carryForwardSourceCreditCents = Math.max(0, remainingCents);
     const carryForwardDebtCents = carryForwardHandled ? 0 : carryForwardSourceDebtCents;
     const carryForwardCreditCents = carryForwardSourceCreditCents;
     const accName = accounts.get(snap.accountId)?.name ?? snap.accountId;

@@ -104,8 +104,9 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Dette du mois traitée (optionnel): si activé sur un mois/enveloppe, la dette générée ce mois est conservée comme information mais n’est plus reportée au mois suivant.
 - Montant d’enveloppe à virer: `max(0, montant enveloppe - reliquat entrant appliqué du mois précédent)`.
 - Reste du mois (enveloppe): `à virer ce mois - dépensé`.
-- Excédent de reliquat entrant: si le reliquat entrant dépasse la cible du mois et qu’il n’est pas consommé, l’excédent reste un reliquat entrant pour le mois suivant (sans créer de "dette du mois" tant qu’il n’y a pas de dépense au-delà du "à virer").
-- Dette reportée fin de mois: `max(0, dépensé - max(0, montant enveloppe - reliquat entrant appliqué précédent))`.
+- Consolidation mensuelle du reliquat (entrant vers mois suivant): base disponible `max(montant cible, reliquat entrant appliqué)` puis `reste = base disponible - dépensé`.
+- Reliquat positif sortant: `max(0, reste)` (reporté comme reliquat entrant).
+- Dette reportée fin de mois: `max(0, -reste)` (reportée uniquement si non traitée).
 - Exemple enveloppe récurrente: cible `100`, dépensé `80` sur le mois N -> reliquat positif `20` reporté -> mois N+1: `à virer = 80`.
 - Total à provisionner du mois: `charges (pour moi) + enveloppes à virer`.
 - Par compte: `charges à provisionner + enveloppes à virer` (reliquat déjà déduit dans "enveloppes à virer", qu'il s'agisse d'une dette ou d'un reliquat positif). Si des lignes référencent un compte non configuré, elles restent visibles et incluses dans les totaux.
