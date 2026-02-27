@@ -126,7 +126,6 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
     .map((r) => {
       const global = globalById.get(r.id);
       if (!global || !global.active) return null; // recurring charge only
-      if (global.payment !== 'auto') return null;
       if (r.scope !== 'perso') return null;
       if (!isAutoSavingsChargeName(r.name)) return null;
 
@@ -134,7 +133,8 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
       const exact =
         normalized === 'epargne' || normalized === 'virement epargne' || normalized === 'eparne' || normalized === 'virement eparne';
       const preferred = normalized.startsWith('virement epargne') || normalized.startsWith('virement eparne');
-      const rank = (exact ? 100 : 0) + (preferred ? 10 : 0);
+      const autoPayment = global.payment === 'auto';
+      const rank = (exact ? 100 : 0) + (preferred ? 10 : 0) + (autoPayment ? 5 : 0);
       return { row: r, rank };
     })
     .filter((x): x is { row: ChargeResolved; rank: number } => x !== null)
