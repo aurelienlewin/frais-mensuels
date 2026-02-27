@@ -79,6 +79,10 @@ document.addEventListener('visibilitychange', () => {
   kickBackground();
   swRegistration?.update().catch(() => undefined);
 });
+window.addEventListener('online', () => {
+  kickBackground({ force: true });
+  swRegistration?.update().catch(() => undefined);
+});
 window.addEventListener('pageshow', () => {
   kickBackground();
   swRegistration?.update().catch(() => undefined);

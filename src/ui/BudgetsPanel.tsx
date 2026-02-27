@@ -65,18 +65,18 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
             >
               <span>{budgetsOpen ? 'Replier' : 'Voir'} enveloppes</span>
               <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-                {budgetsOpen ? '−' : '+'}
+                {budgetsOpen ? '▴' : '▾'}
               </span>
             </button>
             <button
               type="button"
-              className="fm-btn-ghost hidden h-8 w-10 items-center justify-center text-xs font-medium text-slate-200 sm:flex"
+              className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
               onClick={() => setBudgetsOpen((v) => !v)}
               aria-expanded={budgetsOpen}
               aria-label={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
               title={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
             >
-              <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
+              <span aria-hidden="true" className="text-[22px] font-semibold leading-none">
                 {budgetsOpen ? '▴' : '▾'}
               </span>
             </button>
@@ -463,18 +463,18 @@ function BudgetCard({
           >
             <span>{expensesOpen ? 'Masquer' : 'Voir'} détail</span>
             <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-              {expensesOpen ? '−' : '+'}
+              {expensesOpen ? '▴' : '▾'}
             </span>
           </button>
           <button
             type="button"
-            className="fm-btn-ghost hidden h-8 w-10 items-center justify-center text-xs font-medium text-slate-200 sm:flex"
+            className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
             onClick={() => setExpensesOpen((v) => !v)}
             aria-expanded={expensesOpen}
             aria-label={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
             title={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
           >
-            <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
+            <span aria-hidden="true" className="text-[22px] font-semibold leading-none">
               {expensesOpen ? '▴' : '▾'}
             </span>
           </button>

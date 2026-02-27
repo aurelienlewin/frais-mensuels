@@ -1,7 +1,13 @@
 const SESSION_KEY = 'fm:bg:session:v2';
 
 const LOCAL_FALLBACK_URL = '/bg-snowy.jpg';
-const FALLBACK_CSS = `url("${LOCAL_FALLBACK_URL}")`;
+const LOCAL_FALLBACK_CSS_VARIANTS = [
+  `linear-gradient(140deg, rgba(15,23,42,0.42), rgba(2,6,23,0.55)), url("${LOCAL_FALLBACK_URL}")`,
+  `linear-gradient(160deg, rgba(22,78,99,0.36), rgba(15,23,42,0.54)), url("${LOCAL_FALLBACK_URL}")`,
+  `linear-gradient(125deg, rgba(67,56,202,0.24), rgba(12,74,110,0.44)), url("${LOCAL_FALLBACK_URL}")`,
+  `linear-gradient(150deg, rgba(6,95,70,0.28), rgba(15,23,42,0.5)), url("${LOCAL_FALLBACK_URL}")`,
+] as const;
+const FALLBACK_CSS = LOCAL_FALLBACK_CSS_VARIANTS[0];
 
 const SAVED_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 3; // keep last good remote for 3 days
 const AUTO_ROTATE_MS = 1000 * 60 * 3;
@@ -14,6 +20,15 @@ const RETRY_MAX_MS = 1000 * 75;
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
+}
+
+function hash32(input: string) {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
 }
 
 function prefersReducedMotion() {
@@ -81,6 +96,13 @@ function isLocalFallbackUrl(url: string) {
 function isLocalCss(css: string) {
   const url = extractUrlFromCss(css);
   return url ? isLocalFallbackUrl(url) : false;
+}
+
+function fallbackCssForKey(key: string) {
+  const idx = LOCAL_FALLBACK_CSS_VARIANTS.length
+    ? hash32(key || String(Date.now())) % LOCAL_FALLBACK_CSS_VARIANTS.length
+    : 0;
+  return LOCAL_FALLBACK_CSS_VARIANTS[idx] ?? FALLBACK_CSS;
 }
 
 type SessionBgV1 = { v: 1; css: string; savedAt: number };
@@ -321,6 +343,14 @@ async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: b
       if (fetched.isLocal && !canUseLocal) {
         URL.revokeObjectURL(fetched.objectUrl);
       } else {
+        if (fetched.isLocal) {
+          URL.revokeObjectURL(fetched.objectUrl);
+          chosenDisplayCss = fallbackCssForKey(candidate);
+          chosenObjectUrl = null;
+          chosenSaveUrl = null;
+          chosenIsLocal = true;
+          break;
+        }
         const ok = await preloadImage(fetched.objectUrl, controller.signal);
         if (loadId !== activeLoadId) {
           URL.revokeObjectURL(fetched.objectUrl);
@@ -349,7 +379,7 @@ async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: b
       const canUseLocal = options?.allowLocalFallback || !currentCss || isLocalCss(currentCss);
       if (isLocal && !canUseLocal) continue;
 
-      chosenDisplayCss = `url("${candidate}")`;
+      chosenDisplayCss = isLocal ? fallbackCssForKey(candidate) : `url("${candidate}")`;
       chosenObjectUrl = null;
       chosenSaveUrl = isLocal ? null : candidate;
       chosenIsLocal = isLocal;

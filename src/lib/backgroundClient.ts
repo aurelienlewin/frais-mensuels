@@ -1,7 +1,6 @@
 type BackgroundModule = typeof import('./background');
 
 let backgroundModulePromise: Promise<BackgroundModule> | null = null;
-let backgroundRotationStarted = false;
 
 function loadBackgroundModule() {
   if (!backgroundModulePromise) backgroundModulePromise = import('./background');
@@ -10,10 +9,7 @@ function loadBackgroundModule() {
 
 export async function kickDynamicBackground(options?: { force?: boolean }) {
   const mod = await loadBackgroundModule();
-  if (!backgroundRotationStarted) {
-    backgroundRotationStarted = true;
-    mod.startBackgroundRotation();
-  }
+  // Always (re)start rotation scheduling: this recovers when startup happened offline/save-data.
+  mod.startBackgroundRotation();
   mod.initDynamicBackground(options);
 }
-

@@ -218,31 +218,6 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 
               <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
                 <button
-                  type="button"
-                  className="fm-mobile-section-toggle sm:hidden"
-                  onClick={() => setChargesOpen((v) => !v)}
-                  aria-expanded={chargesOpen}
-                  aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
-                  title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
-                >
-                  <span>{chargesOpen ? 'Replier' : 'Voir'} charges</span>
-                  <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-                    {chargesOpen ? '−' : '+'}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm max-[360px]:h-9 max-[360px]:w-9 sm:flex"
-                  onClick={() => setChargesOpen((v) => !v)}
-                  aria-expanded={chargesOpen}
-                  aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
-                  title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
-                >
-                  <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
-                    {chargesOpen ? '▴' : '▾'}
-                  </span>
-                </button>
-                <button
                   data-tour="add-charge"
                   className={cx(
                     'fm-btn-ghost rounded-2xl px-4 py-2 text-sm max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
@@ -295,6 +270,31 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                   }}
                 >
                   + Ponctuelle
+                </button>
+                <button
+                  type="button"
+                  className="fm-mobile-section-toggle order-last sm:hidden"
+                  onClick={() => setChargesOpen((v) => !v)}
+                  aria-expanded={chargesOpen}
+                  aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+                  title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+                >
+                  <span>{chargesOpen ? 'Replier' : 'Voir'} charges</span>
+                  <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
+                    {chargesOpen ? '▴' : '▾'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="fm-btn-ghost order-last hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
+                  onClick={() => setChargesOpen((v) => !v)}
+                  aria-expanded={chargesOpen}
+                  aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+                  title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+                >
+                  <span aria-hidden="true" className="text-[22px] font-semibold leading-none">
+                    {chargesOpen ? '▴' : '▾'}
+                  </span>
                 </button>
               </div>
             </div>

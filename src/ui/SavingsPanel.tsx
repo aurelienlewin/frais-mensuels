@@ -116,19 +116,19 @@ export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
             ) : null}
             <button
               type="button"
-              className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm sm:flex"
+              className="fm-btn-ghost order-last hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
               aria-label={open ? "Masquer le panneau Épargne" : "Afficher le panneau Épargne"}
               title={open ? "Masquer le panneau Épargne" : "Afficher le panneau Épargne"}
             >
-              <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
+              <span aria-hidden="true" className="text-[22px] font-semibold leading-none">
                 {open ? '▴' : '▾'}
               </span>
             </button>
             <button
               type="button"
-              className="fm-mobile-section-toggle sm:hidden"
+              className="fm-mobile-section-toggle order-last sm:hidden"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
               aria-label={open ? "Masquer le panneau Épargne" : "Afficher le panneau Épargne"}
@@ -136,7 +136,7 @@ export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
             >
               <span>{open ? 'Replier' : 'Voir'} épargne</span>
               <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-                {open ? '−' : '+'}
+                {open ? '▴' : '▾'}
               </span>
             </button>
           </div>
