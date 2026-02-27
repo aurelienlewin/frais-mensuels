@@ -62,15 +62,11 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     if (!salaryEditing) setSalaryDraft(String(centsToEuros(totals.salaryCents)));
   }, [salaryEditing, totals.salaryCents]);
 
-  const ratio =
-    totals.salaryCents > 0 ? Math.min(1, Math.max(0, totals.totalPourMoiAvecEnveloppesCents / totals.salaryCents)) : 0;
   const reliquatDebtImpactCents = useMemo(() => budgets.reduce((acc, b) => acc + b.carryOverDebtMyShareCents, 0), [budgets]);
   const reliquatCreditImpactCents = useMemo(
     () => budgets.reduce((acc, b) => acc + Math.max(0, -b.carryOverMyShareCents), 0),
     [budgets],
   );
-  const recomputedBudgetsToWireCents = totals.totalBudgetsBaseCents + reliquatDebtImpactCents - reliquatCreditImpactCents;
-  const recomputedProvisionCents = totals.totalPourMoiCents + recomputedBudgetsToWireCents;
   const autoSavingsBreakdown = useMemo(() => {
     const globalsById = new Map(state.charges.map((c) => [c.id, c]));
     const normalizeName = (s: string) =>
@@ -224,6 +220,8 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   const savingsCenterBottom = activeSavingsSeg ? formatEUR(activeSavingsSeg.value) : formatEUR(savingsRepartition?.totalCents ?? 0);
   const savingsCenterTone =
     activeSavingsSeg?.id === 'savings-surplus-core' || activeSavingsSeg?.id === 'savings-surplus-credit' ? 'text-emerald-200' : 'text-slate-200';
+  const savingsCurrentCents = autoSavingsBreakdown?.currentCents ?? 0;
+  const chargesWithoutSavingsCents = Math.max(0, totals.totalPourMoiCents - savingsCurrentCents);
   const chartSlides = useMemo<Array<'savings' | 'global'>>(
     () => (savingsRepartition ? ['savings', 'global'] : ['global']),
     [savingsRepartition],
@@ -321,13 +319,6 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             </div>
           </label>
 
-          <div className="fm-card-soft px-4 py-3">
-            <div className="text-xs uppercase tracking-wide text-slate-400">Total à provisionner ce mois</div>
-            <div className="mt-1 text-2xl font-semibold tabular-nums text-slate-50">{formatEUR(totals.totalProvisionCents)}</div>
-            <div className="mt-1 text-xs text-slate-400">
-              {formatEUR(totals.totalPourMoiCents)} charges + {formatEUR(totals.totalBudgetsCents)} enveloppes à virer
-            </div>
-          </div>
           {autoSavingsBreakdown && autoSavingsBreakdown.surplusCents > 0 ? (
             <div className="rounded-2xl border border-emerald-300/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.22),rgba(6,78,59,0.2))] px-4 py-3 shadow-[0_20px_48px_-28px_rgba(16,185,129,0.95)]">
               <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-100/90">Surplus épargne</div>
@@ -343,8 +334,8 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           ) : null}
 
           <div className="grid gap-2">
-            <Row label="Charges à provisionner (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
-            <Row label="Enveloppes cibles (ma part)" value={formatEUR(totals.totalBudgetsBaseCents)} />
+            <Row label="Charges hors épargne" value={formatEUR(chargesWithoutSavingsCents)} strong />
+            <Row label="Enveloppes cibles" value={formatEUR(totals.totalBudgetsBaseCents)} />
             {reliquatDebtImpactCents > 0 ? (
               <Row
                 label="Dette entrante ajoutée (enveloppes)"
@@ -368,67 +359,14 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                 {formatEUR(totals.totalBudgetsCents)}).
               </div>
             ) : null}
-            <Row label="Total à provisionner ce mois" value={formatEUR(totals.totalProvisionCents)} strong />
-            <Row
-              label="Reste à vivre (après enveloppes)"
-              value={formatEUR(totals.resteAVivreApresEnveloppesCents)}
-              strong
-              valueClassName={totals.resteAVivreApresEnveloppesCents < 0 ? 'text-rose-200' : 'text-emerald-200'}
-            />
-          </div>
-          <details className="group mt-2 rounded-xl border border-white/10 bg-ink-950/25 px-3 py-2 open:bg-ink-950/45">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs font-medium text-slate-200">
-              <span>Détails du calcul</span>
-              <span className="text-[11px] text-slate-400 transition-transform group-open:rotate-180">▾</span>
-            </summary>
-            <div className="mt-2 space-y-1.5 text-[11px] leading-relaxed text-slate-300">
-              <div className="flex items-center justify-between gap-2">
-                <span>Enveloppes cibles</span>
-                <span className="tabular-nums text-slate-100">{formatEUR(totals.totalBudgetsBaseCents)}</span>
-              </div>
-              <div className="fm-reliquat-negative flex items-center justify-between gap-2 rounded-lg border px-2 py-1">
-                <span>+ Dette entrante</span>
-                <span className="tabular-nums text-rose-200">{formatEUR(reliquatDebtImpactCents)}</span>
-              </div>
-              <div className="fm-reliquat-positive flex items-center justify-between gap-2 rounded-lg border px-2 py-1">
-                <span>- Reliquat positif</span>
-                <span className="tabular-nums text-emerald-200">{formatEUR(reliquatCreditImpactCents)}</span>
-              </div>
-              <div className="h-px bg-white/10" />
-              <div className="flex items-center justify-between gap-2">
-                <span>Enveloppes à virer</span>
-                <span className="tabular-nums font-semibold text-sky-200">{formatEUR(recomputedBudgetsToWireCents)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span>Charges à provisionner</span>
-                <span className="tabular-nums text-slate-100">{formatEUR(totals.totalPourMoiCents)}</span>
-              </div>
-              <div className="h-px bg-white/10" />
-              <div className="flex items-center justify-between gap-2">
-                <span>Total à provisionner</span>
-                <span className="tabular-nums font-semibold text-slate-50">{formatEUR(recomputedProvisionCents)}</span>
-              </div>
-            </div>
-          </details>
-
-          <div className="fm-card-soft px-4 py-3">
-            <div className="flex items-center justify-between text-xs text-slate-400">
-              <div>Charges + enveloppes / salaire</div>
-              <div>{Math.round(ratio * 100)}%</div>
-            </div>
-            <div
-              className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
-              role="progressbar"
-              aria-label="Charges + enveloppes / salaire"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(ratio * 100)}
-            >
-              <div
-                className="h-full rounded-full bg-emerald-400/70 transition-[width] duration-300"
-                style={{ width: `${Math.round(ratio * 100)}%` }}
+            {autoSavingsBreakdown ? (
+              <Row
+                label="Épargne du mois"
+                value={formatEUR(autoSavingsBreakdown.currentCents)}
+                strong
+                valueClassName="text-emerald-200"
               />
-            </div>
+            ) : null}
           </div>
         </div>
 
