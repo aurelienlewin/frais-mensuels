@@ -243,20 +243,51 @@ function BudgetCard({
 
   return (
       <div className="fm-card motion-hover p-5 max-[360px]:p-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-[220px] flex-1">
-          <div className="truncate text-xs text-slate-400">Enveloppe</div>
+      <div className="grid gap-4">
+        <div className="min-w-0">
+          <div className="text-xs text-slate-400">Enveloppe</div>
           <InlineTextInput
             ariaLabel="Nom du budget"
             value={budget.name}
             disabled={!canEdit}
             onCommit={(name) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { name } })}
           />
-	          <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-400">
-	            <div className={cx('tabular-nums whitespace-nowrap', over ? 'text-rose-200' : 'text-slate-300')}>
-	              {formatEUR(budget.spentCents)} / {formatEUR(budget.fundingCents)}
+        </div>
+
+        <div className="fm-card-soft p-3">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
+            <div className="min-w-0">
+              <div className="text-xs text-slate-400">Montant réservé</div>
+	            <div className="mt-1">
+                <InlineNumberInput
+	              ariaLabel="Montant du budget (euros)"
+	              value={centsToEuros(budget.amountCents)}
+                  step={0.01}
+                  min={0}
+                  suffix="€"
+	              disabled={!canEdit}
+	              onCommit={(euros) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { amountCents: eurosToCents(euros) } })}
+	            />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <div className="fm-stat-row">
+                <div className="fm-stat-label text-xs">Montant cible</div>
+                <div className="fm-stat-value text-slate-200">{formatEUR(budget.amountCents)}</div>
+              </div>
+	            <div className="fm-stat-row">
+	              <div className="fm-stat-label text-xs">À virer ce mois</div>
+	              <div className="fm-stat-value font-semibold text-sky-200">{formatEUR(budget.fundingCents)}</div>
 	            </div>
+            </div>
+          </div>
+
+	        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
+	          <div>Dépensé / à virer</div>
+	          <div className={cx('tabular-nums whitespace-nowrap', over ? 'text-rose-200' : 'text-slate-300')}>
+	            {formatEUR(budget.spentCents)} / {formatEUR(budget.fundingCents)}
 	          </div>
+	        </div>
           <div
             className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
             role="progressbar"
@@ -270,27 +301,23 @@ function BudgetCard({
               style={{ width: `${Math.round(ratio * 100)}%` }}
             />
           </div>
+
+	        <div className="mt-3 fm-stat-row">
+	          <div className="fm-stat-label text-xs">Reste du mois</div>
+	          <div className={cx('fm-stat-value', over ? 'text-rose-200' : 'text-emerald-200')}>
+              {formatEUR(budget.remainingToFundCents)}
+            </div>
+          </div>
+          {!canToggleCurrentDebtHandling && budget.carryForwardDebtCents > 0 ? (
+            <div className="mt-2 flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
+              <div>Dette à reporter</div>
+              <div className="tabular-nums font-semibold">{formatEUR(budget.carryForwardDebtCents)}</div>
+            </div>
+          ) : null}
         </div>
 
-        <div className="w-full max-w-[280px] space-y-2">
-          <div className="text-xs text-slate-400">Montant réservé</div>
-	          <InlineNumberInput
-	            ariaLabel="Montant du budget (euros)"
-	            value={centsToEuros(budget.amountCents)}
-            step={0.01}
-            min={0}
-            suffix="€"
-	            disabled={!canEdit}
-	            onCommit={(euros) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { amountCents: eurosToCents(euros) } })}
-	          />
-          <div className="fm-stat-row">
-            <div className="fm-stat-label text-xs">Montant cible</div>
-            <div className="fm-stat-value text-slate-200">{formatEUR(budget.amountCents)}</div>
-          </div>
-	          <div className="fm-stat-row">
-	            <div className="fm-stat-label text-xs">À virer ce mois</div>
-	            <div className="fm-stat-value font-semibold text-sky-200">{formatEUR(budget.fundingCents)}</div>
-	          </div>
+        {canToggleCarryHandling || canToggleCurrentDebtHandling ? (
+          <div className={cx('grid gap-2', canToggleCarryHandling && canToggleCurrentDebtHandling && 'sm:grid-cols-2')}>
             {canToggleCarryHandling ? (
               <div className="rounded-lg border border-white/10 bg-white/5 p-2">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Entrant (mois précédent)</div>
@@ -362,19 +389,8 @@ function BudgetCard({
                 </label>
               </div>
             ) : null}
-	          <div className="fm-stat-row">
-	            <div className="fm-stat-label text-xs">Reste du mois</div>
-	            <div className={cx('fm-stat-value', over ? 'text-rose-200' : 'text-emerald-200')}>
-                {formatEUR(budget.remainingToFundCents)}
-              </div>
           </div>
-          {!canToggleCurrentDebtHandling && budget.carryForwardDebtCents > 0 ? (
-            <div className="flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
-              <div>Dette à reporter</div>
-              <div className="tabular-nums font-semibold">{formatEUR(budget.carryForwardDebtCents)}</div>
-            </div>
-          ) : null}
-        </div>
+        ) : null}
       </div>
 
       <div className="mt-5">
