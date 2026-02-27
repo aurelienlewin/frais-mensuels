@@ -114,12 +114,40 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 
     if (candidates.length === 0) return null;
     const selected = candidates[0]!;
+    const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
+    const otherChargesTotalCents = charges.reduce((acc, r) => {
+      if (r.id === selected.row.id) return acc;
+      return acc + (r.scope === 'commun' ? r.myShareCents : r.amountCents);
+    }, 0);
     const floorCents = Math.max(0, selected.global.amountCents);
     const currentCents = Math.max(0, selected.row.amountCents);
     const surplusCents = Math.max(0, currentCents - floorCents);
+    const baseBeforeCarryCents = salaryCents - otherChargesTotalCents - totals.totalBudgetsBaseCents - floorCents;
+    const afterDebtCents = baseBeforeCarryCents - reliquatDebtImpactCents;
+    const withCreditCents = afterDebtCents + reliquatCreditImpactCents;
+    let structuralSurplusCents = Math.max(0, afterDebtCents);
+    let bonusCreditSurplusCents = Math.max(0, withCreditCents) - structuralSurplusCents;
+    if (bonusCreditSurplusCents < 0) bonusCreditSurplusCents = 0;
+    if (state.months[ym]?.charges[selected.row.id]?.paid === true) {
+      structuralSurplusCents = surplusCents;
+      bonusCreditSurplusCents = 0;
+    } else {
+      const modeled = structuralSurplusCents + bonusCreditSurplusCents;
+      if (modeled !== surplusCents) {
+        structuralSurplusCents = Math.max(0, structuralSurplusCents + (surplusCents - modeled));
+      }
+    }
     const locked = state.months[ym]?.charges[selected.row.id]?.paid === true;
-    return { floorCents, currentCents, surplusCents, locked };
-  }, [charges, state.charges, state.months, ym]);
+    return {
+      floorCents,
+      currentCents,
+      surplusCents,
+      structuralSurplusCents,
+      bonusCreditSurplusCents,
+      debtImpactCents: reliquatDebtImpactCents,
+      locked,
+    };
+  }, [charges, reliquatCreditImpactCents, reliquatDebtImpactCents, state.charges, state.months, state.salaryCents, totals.totalBudgetsBaseCents, ym]);
 
   const repartition = (() => {
     const perso = totals.totalPersoCents;
@@ -168,20 +196,34 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     const baseCents = Math.min(autoSavingsBreakdown.floorCents, autoSavingsBreakdown.currentCents);
     const segments: DonutSegment[] = [
       { id: 'savings-base', label: 'Base configurée', value: baseCents, color: 'rgb(148 163 184)' },
-      { id: 'savings-surplus', label: 'Surplus auto', value: autoSavingsBreakdown.surplusCents, color: 'rgb(16 185 129)' },
+      {
+        id: 'savings-surplus-core',
+        label: 'Surplus structurel',
+        value: autoSavingsBreakdown.structuralSurplusCents,
+        color: 'rgb(34 197 94)',
+      },
+      {
+        id: 'savings-surplus-credit',
+        label: 'Bonus reliquat +',
+        value: autoSavingsBreakdown.bonusCreditSurplusCents,
+        color: 'rgb(16 185 129)',
+      },
     ].filter((s) => s.value > 0);
     return {
       segments,
       totalCents: autoSavingsBreakdown.currentCents,
       locked: autoSavingsBreakdown.locked,
       hasSurplus: autoSavingsBreakdown.surplusCents > 0,
+      debtImpactCents: autoSavingsBreakdown.debtImpactCents,
+      bonusCreditSurplusCents: autoSavingsBreakdown.bonusCreditSurplusCents,
     };
   }, [autoSavingsBreakdown]);
   const [activeSavingsSegId, setActiveSavingsSegId] = useState<string | null>(null);
   const activeSavingsSeg = savingsRepartition?.segments.find((s) => s.id === activeSavingsSegId) ?? null;
   const savingsCenterTop = activeSavingsSeg?.label ?? 'Épargne';
   const savingsCenterBottom = activeSavingsSeg ? formatEUR(activeSavingsSeg.value) : formatEUR(savingsRepartition?.totalCents ?? 0);
-  const savingsCenterTone = activeSavingsSeg?.id === 'savings-surplus' ? 'text-emerald-200' : 'text-slate-200';
+  const savingsCenterTone =
+    activeSavingsSeg?.id === 'savings-surplus-core' || activeSavingsSeg?.id === 'savings-surplus-credit' ? 'text-emerald-200' : 'text-slate-200';
   const chartSlides = useMemo<Array<'savings' | 'global'>>(
     () => (savingsRepartition ? ['savings', 'global'] : ['global']),
     [savingsRepartition],
@@ -400,7 +442,9 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                 {activeChartId === 'savings'
                   ? savingsRepartition?.locked
                     ? 'Montant figé (charge cochée)'
-                    : 'Base + surplus automatique'
+                    : savingsRepartition?.bonusCreditSurplusCents
+                      ? 'Base + surplus structurel + bonus reliquat'
+                      : 'Base + surplus automatique'
                   : repartition.label}
               </div>
             </div>
@@ -470,6 +514,11 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   ))}
                   {!savingsRepartition.hasSurplus ? (
                     <div className="text-xs text-slate-400">Pas de surplus ce mois (épargne au montant de base).</div>
+                  ) : null}
+                  {savingsRepartition.debtImpactCents > 0 ? (
+                    <div className="fm-reliquat-negative rounded-lg border px-2 py-1 text-[11px]">
+                      Dette entrante absorbée avant surplus: {formatEUR(savingsRepartition.debtImpactCents)}
+                    </div>
                   ) : null}
                 </div>
               </>
