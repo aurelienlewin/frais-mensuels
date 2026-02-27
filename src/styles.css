@@ -1,4 +1,10 @@
 @import "tailwindcss";
+@source "../index.html";
+@source "./**/*.{ts,tsx}";
+
+@theme {
+  --color-ink-950: #101113;
+}
 
 :root {
   color-scheme: dark;

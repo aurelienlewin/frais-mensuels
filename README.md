@@ -18,7 +18,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Tailwind CSS 4 (PostCSS via `@tailwindcss/postcss`)
 - TypeScript 5.9
 
-Migration notable appliquée: passage Tailwind v4 (`@import "tailwindcss"` dans `src/styles.css` et plugin PostCSS dédié).
+Migration notable appliquée: passage Tailwind v4 CSS-first (`@import "tailwindcss"`, `@source`, `@theme` dans `src/styles.css`, sans `tailwind.config` JS).
 
 ## Démarrer
 
