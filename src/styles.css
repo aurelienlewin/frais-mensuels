@@ -4,6 +4,8 @@
 
 @theme {
   --color-ink-950: #101113;
+  --ease-bg-crossfade: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-bg-crossfade: 520ms;
 }
 
 @layer components {
@@ -86,7 +88,9 @@
   --safe-area-right: env(safe-area-inset-right, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-left: env(safe-area-inset-left, 0px);
-  --bg-overlay-opacity: 0;
+  --bg-image-current: url('/bg-snowy.jpg');
+  --bg-image-next: var(--bg-image-current);
+  --bg-crossfade-opacity: 0;
 }
 
 html,
@@ -109,7 +113,7 @@ body {
   background-color: rgb(16 17 19);
 }
 
-/* Single background layer + overlay (overlay fades hide progressive loads). */
+/* Two background layers (decoded-image crossfade, no progressive interlacing). */
 body::before,
 body::after {
   content: '';
@@ -123,12 +127,17 @@ body::before {
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.72), rgba(10, 11, 12, 0.94)), var(--bg-image, url('/bg-snowy.jpg'));
+  background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.72), rgba(10, 11, 12, 0.94)), var(--bg-image-current, url('/bg-snowy.jpg'));
 }
 
 body::after {
-  background: rgb(10 11 12);
-  opacity: var(--bg-overlay-opacity, 0);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.72), rgba(10, 11, 12, 0.94)),
+    var(--bg-image-next, var(--bg-image-current, url('/bg-snowy.jpg')));
+  opacity: var(--bg-crossfade-opacity, 0);
+  will-change: opacity;
 }
 
 #root {
@@ -165,7 +174,7 @@ body::after {
   }
 
   body::after {
-    transition: opacity 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: opacity var(--duration-bg-crossfade) var(--ease-bg-crossfade);
   }
 
   .motion-dash {

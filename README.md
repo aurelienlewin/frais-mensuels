@@ -28,6 +28,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 Migration notable appliquée: passage Tailwind v4 CSS-first (`@import "tailwindcss"`, `@source`, `@theme` dans `src/styles.css`, sans `tailwind.config` JS).
 Conventions UI: composants utilitaires Tailwind v4 dans `@layer components` (`fm-panel`, `fm-card`, `fm-input`, `fm-btn-*`, `fm-stat-*`) pour harmoniser Résumé, Enveloppes et formulaires.
 Pass Tailwind v4 récent: adoption d'utilitaires/variants `pointer-coarse:*`, `text-shadow-*`, `wrap-break-word` et `wrap-anywhere` pour améliorer l'ergonomie tactile et la lisibilité des contenus longs.
+Fond dynamique: crossfade en 2 couches piloté par tokens Tailwind v4 CSS-first (`@theme` avec `--duration-bg-crossfade` et `--ease-bg-crossfade`) pour n'afficher l'image suivante qu'après chargement/décodage.
 
 ## Démarrer
 

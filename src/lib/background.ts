@@ -6,8 +6,8 @@ const FALLBACK_CSS = `url("${LOCAL_FALLBACK_URL}")`;
 const SAVED_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 3; // keep last good remote for 3 days
 const AUTO_ROTATE_MS = 1000 * 60 * 12;
 const AUTO_ROTATE_JITTER_MS = 1000 * 60 * 3;
-const OVERLAY_FADE_MS = 420;
-const OVERLAY_SETTLE_MS = 60;
+const CROSSFADE_MS = 520;
+const CROSSFADE_SETTLE_MS = 70;
 const PRELOAD_TIMEOUT_MS = 1000 * 12;
 const RETRY_BASE_MS = 1000 * 8;
 const RETRY_MAX_MS = 1000 * 75;
@@ -180,8 +180,9 @@ function setBaseBackground(css: string) {
     currentObjectUrl = null;
   }
   currentCss = next;
-  root.style.setProperty('--bg-image', next);
-  root.style.setProperty('--bg-overlay-opacity', '0');
+  root.style.setProperty('--bg-image-current', next);
+  root.style.setProperty('--bg-image-next', next);
+  root.style.setProperty('--bg-crossfade-opacity', '0');
 }
 
 async function preloadImage(url: string, signal: AbortSignal) {
@@ -296,15 +297,7 @@ async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: b
   if (activeAbort) activeAbort.abort();
   const controller = new AbortController();
   activeAbort = controller;
-
-  if (!reduced) {
-    root.style.setProperty('--bg-overlay-opacity', '1');
-    await waitMs(OVERLAY_FADE_MS + OVERLAY_SETTLE_MS);
-    if (loadId !== activeLoadId) {
-      finishLoad(loadId, controller);
-      return;
-    }
-  }
+  root.style.setProperty('--bg-crossfade-opacity', '0');
 
   const candidates = buildCandidateUrls(sourceUrl);
 
@@ -368,7 +361,7 @@ async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: b
     consecutiveFailures += 1;
     scheduleRetry();
     if (!currentCss) setBaseBackground(FALLBACK_CSS);
-    if (!reduced) root.style.setProperty('--bg-overlay-opacity', '0');
+    root.style.setProperty('--bg-crossfade-opacity', '0');
     finishLoad(loadId, controller);
     return;
   }
@@ -389,18 +382,22 @@ async function loadAndSwap(sourceUrl: string, options?: { allowLocalFallback?: b
     return;
   }
 
-  root.style.setProperty('--bg-image', chosenDisplayCss);
+  root.style.setProperty('--bg-image-next', chosenDisplayCss);
   window.requestAnimationFrame(() => {
     if (loadId !== activeLoadId) return;
-    root.style.setProperty('--bg-overlay-opacity', '0');
+    root.style.setProperty('--bg-crossfade-opacity', '1');
   });
 
-  await waitMs(OVERLAY_FADE_MS + OVERLAY_SETTLE_MS);
+  await waitMs(CROSSFADE_MS + CROSSFADE_SETTLE_MS);
   if (loadId !== activeLoadId) {
     if (chosenObjectUrl) URL.revokeObjectURL(chosenObjectUrl);
     finishLoad(loadId, controller);
     return;
   }
+
+  root.style.setProperty('--bg-image-current', chosenDisplayCss);
+  root.style.setProperty('--bg-image-next', chosenDisplayCss);
+  root.style.setProperty('--bg-crossfade-opacity', '0');
 
   const prevObjectUrl = currentObjectUrl;
   currentObjectUrl = chosenObjectUrl;
