@@ -310,7 +310,20 @@ function BudgetCard({
           <div className="text-sm font-medium text-slate-200">Dépenses</div>
           <button
             type="button"
-            className="fm-btn-ghost flex h-8 w-10 items-center justify-center text-xs font-medium text-slate-200"
+            className="fm-mobile-section-toggle sm:hidden"
+            onClick={() => setExpensesOpen((v) => !v)}
+            aria-expanded={expensesOpen}
+            aria-label={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
+            title={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
+          >
+            <span>{expensesOpen ? 'Masquer' : 'Voir'} détail</span>
+            <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
+              {expensesOpen ? '−' : '+'}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="fm-btn-ghost hidden h-8 w-10 items-center justify-center text-xs font-medium text-slate-200 sm:flex"
             onClick={() => setExpensesOpen((v) => !v)}
             aria-expanded={expensesOpen}
             aria-label={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}

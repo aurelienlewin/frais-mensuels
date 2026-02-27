@@ -113,14 +113,15 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           </div>
           <button
             type="button"
-            className="fm-btn-ghost flex h-8 w-10 items-center justify-center text-xs font-medium text-slate-200 sm:hidden"
+            className="fm-mobile-section-toggle sm:hidden"
             onClick={() => setSummaryOpen((v) => !v)}
             aria-expanded={summaryOpen}
             aria-label={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
             title={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
           >
-            <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
-              {summaryOpen ? '▴' : '▾'}
+            <span>{summaryOpen ? 'Replier' : 'Voir'} résumé</span>
+            <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
+              {summaryOpen ? '−' : '+'}
             </span>
           </button>
         </div>

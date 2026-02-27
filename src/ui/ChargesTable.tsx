@@ -206,19 +206,6 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 			      className="fm-panel motion-hover motion-pop overflow-hidden"
 			    >
           <div className="relative border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
-            <button
-              type="button"
-              className="fm-btn-ghost absolute right-4 top-4 flex h-10 w-10 items-center justify-center text-sm max-[360px]:right-3 max-[360px]:top-3 max-[360px]:h-9 max-[360px]:w-9 sm:hidden"
-              onClick={() => setChargesOpen((v) => !v)}
-              aria-expanded={chargesOpen}
-              aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
-              title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
-            >
-              <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
-                {chargesOpen ? '▴' : '▾'}
-              </span>
-            </button>
-
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm text-slate-300">Charges</h2>
@@ -228,7 +215,20 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                 </div>
               </div>
 
-              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 pr-12 max-[360px]:w-full max-[360px]:gap-1.5 max-[360px]:pr-11 sm:pr-0">
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
+                <button
+                  type="button"
+                  className="fm-mobile-section-toggle sm:hidden"
+                  onClick={() => setChargesOpen((v) => !v)}
+                  aria-expanded={chargesOpen}
+                  aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+                  title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+                >
+                  <span>{chargesOpen ? 'Replier' : 'Voir'} charges</span>
+                  <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
+                    {chargesOpen ? '−' : '+'}
+                  </span>
+                </button>
                 <button
                   type="button"
                   className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm max-[360px]:h-9 max-[360px]:w-9 sm:flex"
