@@ -387,6 +387,9 @@ function BudgetCard({
                   />
                   <span>Traiter la dette du mois (ne pas reporter)</span>
                 </label>
+                <div className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                  La dette à reporter est le total restant après application éventuelle du reliquat entrant.
+                </div>
               </div>
             ) : null}
           </div>
