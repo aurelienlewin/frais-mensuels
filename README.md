@@ -11,7 +11,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
 - Dépenses d’enveloppe Essence: le libellé est forcé à `Essence` (saisie enveloppe + ajout rapide), sans saisie manuelle requise.
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat positif inclus), total à provisionner, reste à vivre.
-- Épargne auto (option par convention): s'il existe au moins une charge récurrente perso nommée comme `Epargne` / `Virement épargne` (tolère aussi `Eparne`), le meilleur candidat est sélectionné automatiquement (une charge en mode `auto` est prioritaire si plusieurs existent). Son montant du mois garde d'abord le montant configuré (plancher), puis ajoute l'excédent de reste. Les dettes entrantes d'enveloppe augmentent d'abord le montant à virer de l'enveloppe; le reliquat positif continue de le réduire. Cet ajustement s'applique tant que la charge Épargne du mois n'est pas cochée. Toute modification de montant d'enveloppe recalcule immédiatement cette épargne (avant cochage).
+- Épargne auto (option par convention): s'il existe au moins une charge récurrente perso nommée comme `Epargne` / `Virement épargne` (tolère aussi `Eparne`), le meilleur candidat est sélectionné automatiquement (une charge en mode `auto` est prioritaire si plusieurs existent). Son montant du mois correspond au reste après charges + enveloppes: il peut donc monter au-dessus du montant configuré, ou descendre en dessous (jusqu'à `0`) si les enveloppes augmentent. Dans ce second cas, une modale d'alerte explique l'ajustement. Cet ajustement s'applique tant que la charge Épargne du mois n'est pas cochée. Toute modification de montant d'enveloppe recalcule immédiatement cette épargne (avant cochage).
 - Vue par compte orientée action: montant à approvisionner en début de mois, avec contrôle d’intégrité (somme des comptes = total à provisionner).
 - Cartes "Par compte" optimisées lecture rapide: total mis en avant + lignes métriques alignées (charges, cochées, enveloppes, impact reliquat).
 - Transparence calculs: bloc repliable "Détails du calcul" dans Totaux et info-bulle sur "Reste du mois" des enveloppes.
@@ -120,6 +120,6 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Dans le panneau Totaux, l’impact reliquat distingue: dette entrante ajoutée au virement d’enveloppe (rouge) et reliquat positif à déduire sur l’enveloppe à virer (vert).
 - Par compte: `charges à provisionner + enveloppes à virer` (la dette entrante et le reliquat positif sont intégrés au montant d’enveloppes à virer). Si des lignes référencent un compte non configuré, elles restent visibles et incluses dans les totaux.
 - Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
-- Épargne auto: l'ajustement ne s'applique plus dès que la charge Épargne est cochée pour le mois en cours.
+- Épargne auto: l'ajustement ne s'applique plus dès que la charge Épargne est cochée pour le mois en cours. Avant cochage, le calcul peut réduire l'épargne sous son plancher configuré (jusqu'à `0`) et l'UI affiche une alerte explicative.
 
 </details>

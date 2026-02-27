@@ -157,12 +157,10 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
     if (r.id === savings.id) return acc;
     return acc + (r.scope === 'commun' ? r.myShareCents : r.amountCents);
   }, 0);
-  const savingsFloorCents = Math.max(0, savings.amountCents);
-  // Rule: wire envelopes with incoming debt catch-up and positive reliquat applied
-  // before allocating extra to Epargne (floor kept).
-  const remainingAboveFloorCents = salaryCents - otherChargesTotalCents - budgetsToWireCents - savingsFloorCents;
-  const extraSavingsCents = Math.max(0, remainingAboveFloorCents);
-  const nextSavingsAmountCents = savingsFloorCents + extraSavingsCents;
+  // Rule: wire charges and envelopes first, then allocate the remaining amount to Epargne.
+  // This can go below the configured Epargne floor (down to 0) when envelopes increase.
+  const rawSavingsCents = salaryCents - otherChargesTotalCents - budgetsToWireCents;
+  const nextSavingsAmountCents = Math.max(0, rawSavingsCents);
 
   if (savings.amountCents === nextSavingsAmountCents) return rows;
   return rows.map((r) => {

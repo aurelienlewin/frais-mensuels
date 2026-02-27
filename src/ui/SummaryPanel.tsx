@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { centsToEuros, eurosToCents, formatEUR, parseEuroAmount } from '../lib/money';
 import { budgetsForMonth, chargesForMonth, totalsByAccount, totalsForMonth } from '../state/selectors';
 import { useStoreState } from '../state/store';
@@ -115,9 +115,12 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       if (r.id === selected.row.id) return acc;
       return acc + (r.scope === 'commun' ? r.myShareCents : r.amountCents);
     }, 0);
+    const requiredWithoutSavingsCents = otherChargesTotalCents + totals.totalBudgetsCents;
     const floorCents = Math.max(0, selected.global.amountCents);
     const currentCents = Math.max(0, selected.row.amountCents);
     const surplusCents = Math.max(0, currentCents - floorCents);
+    const belowFloorCents = Math.max(0, floorCents - currentCents);
+    const shortfallAfterZeroCents = Math.max(0, requiredWithoutSavingsCents - salaryCents);
     const baseBeforeCarryCents = salaryCents - otherChargesTotalCents - totals.totalBudgetsBaseCents - floorCents;
     const afterDebtCents = baseBeforeCarryCents - reliquatDebtImpactCents;
     const withCreditCents = afterDebtCents + reliquatCreditImpactCents;
@@ -138,12 +141,26 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       floorCents,
       currentCents,
       surplusCents,
+      belowFloorCents,
       structuralSurplusCents,
       bonusCreditSurplusCents,
       debtImpactCents: reliquatDebtImpactCents,
+      salaryCents,
+      requiredWithoutSavingsCents,
+      shortfallAfterZeroCents,
       locked,
     };
-  }, [charges, reliquatCreditImpactCents, reliquatDebtImpactCents, state.charges, state.months, state.salaryCents, totals.totalBudgetsBaseCents, ym]);
+  }, [
+    charges,
+    reliquatCreditImpactCents,
+    reliquatDebtImpactCents,
+    state.charges,
+    state.months,
+    state.salaryCents,
+    totals.totalBudgetsBaseCents,
+    totals.totalBudgetsCents,
+    ym,
+  ]);
 
   const repartition = (() => {
     const perso = totals.totalPersoCents;
@@ -227,6 +244,38 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     [savingsRepartition],
   );
   const [activeChartId, setActiveChartId] = useState<'savings' | 'global'>(() => (savingsRepartition ? 'savings' : 'global'));
+  const savingsBelowFloorWarning = useMemo(() => {
+    if (!autoSavingsBreakdown) return null;
+    if (autoSavingsBreakdown.locked) return null;
+    if (autoSavingsBreakdown.belowFloorCents <= 0) return null;
+    return autoSavingsBreakdown;
+  }, [autoSavingsBreakdown]);
+  const [savingsFloorWarningOpen, setSavingsFloorWarningOpen] = useState(false);
+  const [dismissedSavingsFloorWarningKey, setDismissedSavingsFloorWarningKey] = useState<string | null>(null);
+  const savingsFloorWarningKey = useMemo(() => {
+    if (!savingsBelowFloorWarning) return null;
+    return [
+      ym,
+      savingsBelowFloorWarning.floorCents,
+      savingsBelowFloorWarning.currentCents,
+      savingsBelowFloorWarning.requiredWithoutSavingsCents,
+      savingsBelowFloorWarning.salaryCents,
+      savingsBelowFloorWarning.shortfallAfterZeroCents,
+    ].join(':');
+  }, [savingsBelowFloorWarning, ym]);
+  useEffect(() => {
+    if (!savingsFloorWarningKey) {
+      setSavingsFloorWarningOpen(false);
+      setDismissedSavingsFloorWarningKey(null);
+      return;
+    }
+    if (dismissedSavingsFloorWarningKey === savingsFloorWarningKey) return;
+    setSavingsFloorWarningOpen(true);
+  }, [dismissedSavingsFloorWarningKey, savingsFloorWarningKey]);
+  const dismissSavingsFloorWarning = () => {
+    setSavingsFloorWarningOpen(false);
+    if (savingsFloorWarningKey) setDismissedSavingsFloorWarningKey(savingsFloorWarningKey);
+  };
   useEffect(() => {
     if (chartSlides.includes(activeChartId)) return;
     setActiveChartId(chartSlides[0]);
@@ -329,6 +378,27 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               <div className="mt-1 text-[11px] text-emerald-100/90">
                 Épargne: {formatEUR(autoSavingsBreakdown.floorCents)} → {formatEUR(autoSavingsBreakdown.currentCents)}
                 {autoSavingsBreakdown.locked ? ' (figée: charge cochée)' : ''}
+              </div>
+            </div>
+          ) : null}
+          {savingsBelowFloorWarning ? (
+            <div className="rounded-2xl border border-amber-300/35 bg-[linear-gradient(135deg,rgba(251,191,36,0.2),rgba(146,64,14,0.18))] px-4 py-3 shadow-[0_20px_48px_-28px_rgba(245,158,11,0.8)]">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-100/90">Alerte épargne</div>
+              <div className="mt-1 flex items-end justify-between gap-3">
+                <div className="text-sm font-medium leading-tight text-amber-100">Montant réduit sous le plancher</div>
+                <div className="text-2xl font-semibold tabular-nums text-amber-50">-{formatEUR(savingsBelowFloorWarning.belowFloorCents)}</div>
+              </div>
+              <div className="mt-1 text-[11px] text-amber-100/90">
+                Épargne: {formatEUR(savingsBelowFloorWarning.floorCents)} → {formatEUR(savingsBelowFloorWarning.currentCents)}
+              </div>
+              <div className="mt-2 flex justify-end">
+                <button
+                  type="button"
+                  className="rounded-xl border border-amber-100/25 bg-amber-100/15 px-3 py-1.5 text-[11px] font-semibold text-amber-50 transition-colors hover:bg-amber-100/20"
+                  onClick={() => setSavingsFloorWarningOpen(true)}
+                >
+                  Voir le détail
+                </button>
               </div>
             </div>
           ) : null}
@@ -635,8 +705,161 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           </div>
         </details>
       </div>
+      {savingsBelowFloorWarning ? (
+        <SavingsFloorWarningModal
+          open={savingsFloorWarningOpen}
+          onClose={dismissSavingsFloorWarning}
+          floorCents={savingsBelowFloorWarning.floorCents}
+          currentCents={savingsBelowFloorWarning.currentCents}
+          belowFloorCents={savingsBelowFloorWarning.belowFloorCents}
+          salaryCents={savingsBelowFloorWarning.salaryCents}
+          requiredWithoutSavingsCents={savingsBelowFloorWarning.requiredWithoutSavingsCents}
+          shortfallAfterZeroCents={savingsBelowFloorWarning.shortfallAfterZeroCents}
+        />
+      ) : null}
       </section>
     );
+}
+
+function SavingsFloorWarningModal({
+  open,
+  onClose,
+  floorCents,
+  currentCents,
+  belowFloorCents,
+  salaryCents,
+  requiredWithoutSavingsCents,
+  shortfallAfterZeroCents,
+}: {
+  open: boolean;
+  onClose: () => void;
+  floorCents: number;
+  currentCents: number;
+  belowFloorCents: number;
+  salaryCents: number;
+  requiredWithoutSavingsCents: number;
+  shortfallAfterZeroCents: number;
+}) {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const prevActiveRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    prevActiveRef.current = (document.activeElement as HTMLElement | null) ?? null;
+    window.requestAnimationFrame(() => {
+      const root = dialogRef.current;
+      if (!root) return;
+      const first = root.querySelector<HTMLElement>('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+      (first ?? root).focus();
+    });
+    return () => {
+      prevActiveRef.current?.focus?.();
+      prevActiveRef.current = null;
+    };
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <button type="button" aria-label="Fermer l'alerte" className="absolute inset-0 bg-black/72" onClick={onClose} />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Alerte réduction épargne"
+        className="relative w-[min(100%,460px)] rounded-3xl border border-amber-300/35 bg-ink-950/96 p-5 shadow-[0_22px_90px_-40px_rgba(0,0,0,0.95)]"
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            onClose();
+            return;
+          }
+          if (e.key !== 'Tab') return;
+
+          const root = dialogRef.current;
+          if (!root) return;
+          const focusables = Array.from(
+            root.querySelectorAll<HTMLElement>('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'),
+          ).filter((x) => !x.hasAttribute('disabled') && x.getAttribute('aria-hidden') !== 'true');
+          if (focusables.length === 0) return;
+
+          const first = focusables[0]!;
+          const last = focusables[focusables.length - 1]!;
+          const active = document.activeElement as HTMLElement | null;
+          const shift = (e as unknown as { shiftKey?: boolean }).shiftKey === true;
+
+          if (shift && active === first) {
+            e.preventDefault();
+            last.focus();
+            return;
+          }
+          if (!shift && active === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-amber-200/90">Alerte</div>
+            <h3 className="mt-1 text-base font-semibold text-amber-50">Épargne réduite sous le plancher</h3>
+          </div>
+          <button
+            type="button"
+            className="rounded-xl border border-amber-100/20 bg-amber-100/10 px-3 py-1.5 text-xs text-amber-100 transition-colors hover:bg-amber-100/15"
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="mt-3 space-y-2 text-sm text-amber-50/95">
+          <p>
+            Les enveloppes du mois consomment plus de marge que prévu. L'épargne auto est donc abaissée pour garder un calcul cohérent.
+          </p>
+          <div className="rounded-2xl border border-amber-100/20 bg-amber-100/8 p-3 text-xs">
+            <div className="flex items-center justify-between gap-3">
+              <span>Épargne configurée</span>
+              <span className="font-semibold tabular-nums">{formatEUR(floorCents)}</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <span>Épargne recalculée</span>
+              <span className="font-semibold tabular-nums">{formatEUR(currentCents)}</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <span>Réduction appliquée</span>
+              <span className="font-semibold tabular-nums">-{formatEUR(belowFloorCents)}</span>
+            </div>
+            <div className="mt-2 h-px bg-amber-100/15" />
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <span>Salaire du mois</span>
+              <span className="font-semibold tabular-nums">{formatEUR(salaryCents)}</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <span>Charges + enveloppes (hors épargne)</span>
+              <span className="font-semibold tabular-nums">{formatEUR(requiredWithoutSavingsCents)}</span>
+            </div>
+          </div>
+          {shortfallAfterZeroCents > 0 ? (
+            <div className="rounded-xl border border-rose-300/35 bg-rose-500/12 px-3 py-2 text-xs text-rose-100">
+              Même avec une épargne à 0, il manque encore {formatEUR(shortfallAfterZeroCents)} sur le mois.
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            className="rounded-2xl border border-amber-100/25 bg-amber-100/15 px-4 py-2 text-sm font-semibold text-amber-50 transition-colors hover:bg-amber-100/20"
+            onClick={onClose}
+          >
+            Compris
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
   function AccountsEditor() {
