@@ -473,7 +473,7 @@ export function AppView({
                 </button>
               </div>
 
-              <div className="flex items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(15,23,42,0.88),rgba(30,41,59,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.95)]">
+              <div className="flex items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]">
                 <button
                   className="rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/12 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5"
                   onClick={() => setYm(todayYm)}
@@ -512,7 +512,7 @@ export function AppView({
                 </button>
               </div>
 
-              <div className="flex items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(15,23,42,0.88),rgba(30,41,59,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.95)]">
+              <div className="flex items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]">
                 <select
                   className={cx(
                     'hidden h-10 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10 sm:block',
