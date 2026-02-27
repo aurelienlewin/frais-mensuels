@@ -1,8 +1,9 @@
 import { getSession, getUserById, SESSION_COOKIE, touchSession } from '../_auth.js';
 import { kvConfigured } from '../_kv.js';
 import { json, methodNotAllowed, parseCookies, setCookie, unauthorized } from '../_http.js';
+import type { HttpRequest, HttpResponse } from '../_http.js';
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: HttpRequest, res: HttpResponse) {
   if (!kvConfigured()) {
     return json(res, 501, {
       ok: false,

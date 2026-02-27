@@ -1,5 +1,5 @@
 import { methodNotAllowed } from './_http.js';
-import { Readable } from 'node:stream';
+import type { HttpRequest, HttpResponse } from './_http.js';
 
 type BgTheme = { id: string; keywords: string };
 
@@ -52,7 +52,7 @@ async function fetchImage(url: string) {
   return { upstream, contentType };
 }
 
-function redirectToLocal(res: any) {
+function redirectToLocal(res: HttpResponse) {
   res.statusCode = 302;
   res.setHeader('Location', LOCAL_FALLBACK);
   res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -60,7 +60,7 @@ function redirectToLocal(res: any) {
   res.end();
 }
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: HttpRequest, res: HttpResponse) {
   if (req?.method !== 'GET' && req?.method !== 'HEAD') return methodNotAllowed(res, ['GET', 'HEAD']);
 
   try {
@@ -102,18 +102,8 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    if (!picked.upstream.body) {
-      const buf = Buffer.from(await picked.upstream.arrayBuffer());
-      res.end(buf);
-      return;
-    }
-
-    try {
-      Readable.fromWeb(picked.upstream.body as any).pipe(res);
-    } catch {
-      const buf = Buffer.from(await picked.upstream.arrayBuffer());
-      res.end(buf);
-    }
+    const buf = Buffer.from(await picked.upstream.arrayBuffer());
+    res.end(buf);
   } catch {
     redirectToLocal(res);
   }

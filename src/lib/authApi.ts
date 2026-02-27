@@ -2,6 +2,7 @@ export type AuthUser = { id: string; email: string };
 
 type ApiOk<T> = { ok: true } & T;
 type ApiErr = { ok: false; error: string; message?: string; reasons?: string[] };
+type ApiThrownError = Error & { status?: number };
 
 async function parseJson(res: Response): Promise<unknown | null> {
   try {
@@ -28,8 +29,8 @@ export async function authMe(): Promise<AuthUser | null> {
     const body = await api<ApiOk<{ user: AuthUser }>>('/api/auth/me', { method: 'GET', headers: { Accept: 'application/json' } });
     return body.user;
   } catch (e) {
-    const err = e as any;
-    if (err?.status === 401) return null;
+    const err = e as ApiThrownError;
+    if (err.status === 401) return null;
     throw e;
   }
 }

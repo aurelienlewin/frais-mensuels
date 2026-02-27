@@ -387,19 +387,19 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           </div>
         </details>
       </div>
-	    </section>
-	  );
+      </section>
+    );
 }
 
-	function AccountsEditor() {
-	  const { state, dispatch } = useStoreState();
-	  const activeAccounts = state.accounts.filter((a) => a.active);
-	  const inactiveAccounts = state.accounts.filter((a) => !a.active);
+  function AccountsEditor() {
+    const { state, dispatch } = useStoreState();
+    const activeAccounts = state.accounts.filter((a) => a.active);
+    const inactiveAccounts = state.accounts.filter((a) => !a.active);
     const [addDraft, setAddDraft] = useState<{ rawId: string; kind: Account['kind'] }>({
       rawId: '',
       kind: 'perso',
     });
-	  const [removeDraft, setRemoveDraft] = useState<{ accountId: Account['id']; moveToAccountId: Account['id'] } | null>(null);
+    const [removeDraft, setRemoveDraft] = useState<{ accountId: Account['id']; moveToAccountId: Account['id'] } | null>(null);
 
   const baseSelect = 'fm-input-select h-8 px-2 text-[11px] font-semibold uppercase tracking-wide shadow-inner shadow-black/20';
   const addId = addDraft.rawId
@@ -413,7 +413,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       <div className="fm-card-soft p-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ajouter un compte</div>
         <div className="mt-2 grid gap-2">
-	          <input
+            <input
             className="fm-input h-8 px-3 text-[13px] font-semibold"
             placeholder="ex: BOURSO_PERSO"
             value={addDraft.rawId}
@@ -450,21 +450,21 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         <div className="mt-2 text-[11px] text-slate-400">Astuce: espaces → “_”, tout est mis en majuscules.</div>
       </div>
 
-	      {activeAccounts.map((a) => {
-	        const moveTargets = activeAccounts.filter((x) => x.id !== a.id);
-	        const canRemove = moveTargets.length > 0;
-	        const removing = removeDraft?.accountId === a.id;
-	        const activeRemove = removing ? removeDraft : null;
+        {activeAccounts.map((a) => {
+          const moveTargets = activeAccounts.filter((x) => x.id !== a.id);
+          const canRemove = moveTargets.length > 0;
+          const removing = removeDraft?.accountId === a.id;
+          const activeRemove = removing ? removeDraft : null;
 
-	        return (
-	          <div key={a.id} className="fm-card-soft px-3 py-2">
-	            <div className="grid gap-3 sm:flex sm:items-center sm:gap-3">
-	              <div className="min-w-0 flex-1">
+          return (
+            <div key={a.id} className="fm-card-soft px-3 py-2">
+              <div className="grid gap-3 sm:flex sm:items-center sm:gap-3">
+                <div className="min-w-0 flex-1">
                   <InlineTextInput
                     ariaLabel={`Nom du compte: ${a.id}`}
                     value={a.name}
                     disabled={false}
-	                    className="fm-input h-8 px-3 text-[13px] font-semibold ring-0"
+                      className="fm-input h-8 px-3 text-[13px] font-semibold ring-0"
                     onCommit={(name) => {
                       const nextName = name.trim() || a.id;
                       if (nextName === a.name) return;
@@ -474,7 +474,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   <div className="mt-1 min-w-0 truncate text-[11px] text-slate-400">
                     ID: <span className="font-mono">{a.id}</span>
                   </div>
-	              </div>
+                </div>
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2">
                   <select
                     className={cx(baseSelect, 'h-9 w-full sm:h-8 sm:w-auto')}
@@ -506,24 +506,24 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                 </div>
             </div>
 
-	            {removing && activeRemove ? (
+              {removing && activeRemove ? (
               <div className="fm-card-soft mt-3 flex flex-wrap items-center justify-between gap-2 p-3">
                 <div className="text-xs text-slate-300">Déplacer charges/budgets vers</div>
                 <div className="flex flex-wrap items-center gap-2">
-	                  <select
-	                    className={cx(baseSelect, 'h-9')}
-	                    value={activeRemove.moveToAccountId}
-	                    onChange={(e) =>
-	                      setRemoveDraft((cur) => (cur ? { ...cur, moveToAccountId: e.target.value as Account['id'] } : cur))
-	                    }
-	                    aria-label="Compte cible"
-	                  >
-	                    {moveTargets.map((t) => (
-	                      <option key={t.id} value={t.id}>
-	                        {t.name && t.name !== t.id ? `${t.name} (${t.id})` : t.id}
-	                      </option>
-	                    ))}
-	                  </select>
+                    <select
+                      className={cx(baseSelect, 'h-9')}
+                      value={activeRemove.moveToAccountId}
+                      onChange={(e) =>
+                        setRemoveDraft((cur) => (cur ? { ...cur, moveToAccountId: e.target.value as Account['id'] } : cur))
+                      }
+                      aria-label="Compte cible"
+                    >
+                      {moveTargets.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name && t.name !== t.id ? `${t.name} (${t.id})` : t.id}
+                        </option>
+                      ))}
+                    </select>
                   <button
                     type="button"
                     className="fm-btn-soft h-9 rounded-2xl px-4 text-sm"
@@ -548,34 +548,34 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         );
       })}
 
-	      {inactiveAccounts.length ? (
-	        <details className="fm-card mt-3 px-3 py-2">
-	          <summary className="cursor-pointer select-none text-sm font-medium text-slate-300">Comptes supprimés</summary>
-	          <div className="mt-3 space-y-2">
-	            {inactiveAccounts.map((a) => (
-	              <div key={a.id} className="fm-card-soft grid gap-2 px-3 py-2 sm:flex sm:items-center sm:gap-3">
-	                <div className="min-w-0 flex-1">
+        {inactiveAccounts.length ? (
+          <details className="fm-card mt-3 px-3 py-2">
+            <summary className="cursor-pointer select-none text-sm font-medium text-slate-300">Comptes supprimés</summary>
+            <div className="mt-3 space-y-2">
+              {inactiveAccounts.map((a) => (
+                <div key={a.id} className="fm-card-soft grid gap-2 px-3 py-2 sm:flex sm:items-center sm:gap-3">
+                  <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold text-slate-200">{a.name || a.id}</div>
                     {a.name && a.name !== a.id ? (
                       <div className="mt-0.5 truncate font-mono text-[11px] text-slate-400">{a.id}</div>
                     ) : null}
-	                </div>
-	                <button
-	                  type="button"
-	                  className="fm-btn-ghost h-9 w-full px-3 text-[11px] font-semibold sm:h-8 sm:w-auto"
-	                  onClick={() => dispatch({ type: 'UPDATE_ACCOUNT', accountId: a.id, patch: { active: true } })}
-	                  aria-label={`Restaurer le compte: ${a.id}`}
-	                >
-	                  Restaurer
-	                </button>
-	              </div>
-	            ))}
-	          </div>
-	        </details>
-	      ) : null}
-	    </div>
-	  );
-	}
+                  </div>
+                  <button
+                    type="button"
+                    className="fm-btn-ghost h-9 w-full px-3 text-[11px] font-semibold sm:h-8 sm:w-auto"
+                    onClick={() => dispatch({ type: 'UPDATE_ACCOUNT', accountId: a.id, patch: { active: true } })}
+                    aria-label={`Restaurer le compte: ${a.id}`}
+                  >
+                    Restaurer
+                  </button>
+                </div>
+              ))}
+            </div>
+          </details>
+        ) : null}
+      </div>
+    );
+  }
 
 function LegendRow({
   label,

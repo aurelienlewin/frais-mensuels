@@ -225,15 +225,15 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
           </div>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-[120px_1fr]">
-	            <div className="relative">
-	              <input
-	                ref={amountRef}
-	                className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45 sm:text-sm"
-	                type="text"
-	                inputMode="decimal"
-	                placeholder="10"
-	                value={amount}
-	                onChange={(e) => setAmount(e.target.value)}
+              <div className="relative">
+              <input
+                ref={amountRef}
+                className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm"
+                type="text"
+                inputMode="decimal"
+                placeholder="10"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') submit();
                 }}
@@ -241,14 +241,14 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
               />
               <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs text-slate-400">€</div>
             </div>
-	
-	            <input
-	              ref={labelRef}
-	              className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45 sm:text-sm"
-	              placeholder={open === 'perso' ? 'ex: resto' : 'ex: plein'}
-	              value={label}
-	              onChange={(e) => setLabel(e.target.value)}
-	              onKeyDown={(e) => {
+  
+            <input
+              ref={labelRef}
+              className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm"
+              placeholder={open === 'perso' ? 'ex: resto' : 'ex: plein'}
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+                onKeyDown={(e) => {
                 if (e.key === 'Enter') submit();
               }}
               aria-label="Libellé"
@@ -261,7 +261,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
                 Aucun budget correspondant trouvé. Choisis une enveloppe cible pour cet ajout.
               </div>
               <select
-                className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 text-base text-slate-100 outline-none focus:border-white/25 sm:h-9 sm:text-xs"
+                className="fm-input-select h-10 rounded-2xl px-3 text-base sm:h-9 sm:text-xs"
                 value={budgetId}
                 onChange={(e) => setBudgetId(e.target.value)}
                 aria-label="Budget cible"

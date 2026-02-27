@@ -174,21 +174,21 @@ function BudgetSetupCard({
 
       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_140px]">
         <input
-          className="h-9 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
+          className="fm-input h-9 rounded-2xl px-3 text-sm"
           value={name}
           onChange={(e) => setName(e.target.value)}
           aria-label={`Nom enveloppe: ${title}`}
         />
-	        <div className="relative">
-	          <input
-	            className="h-9 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-3 pr-10 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
-	            placeholder="0"
-	            inputMode="decimal"
-	            type="text"
-	            value={amount}
-	            onChange={(e) => setAmount(e.target.value)}
-	            aria-label={`Montant enveloppe (euros): ${title}`}
-	          />
+        <div className="relative">
+          <input
+            className="fm-input h-9 rounded-2xl px-3 pr-10 text-sm"
+            placeholder="0"
+            inputMode="decimal"
+            type="text"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            aria-label={`Montant enveloppe (euros): ${title}`}
+          />
           <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-slate-400">€</div>
         </div>
       </div>
@@ -206,25 +206,25 @@ function BudgetSetupCard({
             'h-9 rounded-2xl border border-slate-200/25 bg-slate-400/12 px-4 text-sm font-semibold text-slate-100 transition-colors hover:bg-slate-400/18',
             !canSubmit && 'opacity-50 hover:bg-slate-400/12',
           )}
-	          disabled={!canSubmit}
-	          onClick={() => {
-	            const cleanName = name.trim();
-	            if (!cleanName || !accountId) return;
-	            const euros = amount.trim() === '' ? 0 : parseEuroAmount(amount);
-	            if (euros === null || euros < 0) return;
-	            const amountCents = eurosToCents(euros);
+          disabled={!canSubmit}
+          onClick={() => {
+            const cleanName = name.trim();
+            if (!cleanName || !accountId) return;
+            const euros = amount.trim() === '' ? 0 : parseEuroAmount(amount);
+            if (euros === null || euros < 0) return;
+            const amountCents = eurosToCents(euros);
 
-	            if (existing) {
-	              dispatch({
-	                type: 'UPDATE_BUDGET',
-	                budgetId: existing.id,
-	                patch: { name: cleanName, amountCents, accountId, scope: 'perso', active: true },
-	              });
-	              return;
-	            }
-	            dispatch({ type: 'ADD_BUDGET', budget: { name: cleanName, amountCents, accountId, scope: 'perso', active: true } });
-	          }}
-	        >
+            if (existing) {
+              dispatch({
+                type: 'UPDATE_BUDGET',
+                budgetId: existing.id,
+                patch: { name: cleanName, amountCents, accountId, scope: 'perso', active: true },
+              });
+              return;
+            }
+            dispatch({ type: 'ADD_BUDGET', budget: { name: cleanName, amountCents, accountId, scope: 'perso', active: true } });
+          }}
+        >
           {existing ? 'Mettre à jour' : 'Créer'}
         </button>
       </div>

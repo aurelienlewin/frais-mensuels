@@ -4,6 +4,11 @@ import App from './App';
 import './styles.css';
 import { kickDynamicBackground } from './lib/backgroundClient';
 
+type DebugWindow = Window & {
+  requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => void;
+  __debugOverflow?: () => void;
+};
+
 let swRegistration: ServiceWorkerRegistration | null = null;
 
 function kickBackground(options?: { force?: boolean }) {
@@ -12,7 +17,7 @@ function kickBackground(options?: { force?: boolean }) {
 
 function scheduleBackgroundWarmup() {
   const runner = () => kickBackground();
-  const w = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => void };
+  const w = window as DebugWindow;
   if (typeof w.requestIdleCallback === 'function') {
     w.requestIdleCallback(runner, { timeout: 1200 });
     return;
@@ -47,7 +52,6 @@ function installOverflowDebug() {
         (o.el as HTMLElement).setAttribute('data-overflow-x', '1');
       }
 
-      // eslint-disable-next-line no-console
       console.log(
         '[overflow-debug] top offenders:',
         offenders.slice(0, 12).map((o) => ({
@@ -58,7 +62,8 @@ function installOverflowDebug() {
       );
     };
 
-    (window as any).__debugOverflow = mark;
+    const w = window as DebugWindow;
+    w.__debugOverflow = mark;
     window.addEventListener('resize', () => window.requestAnimationFrame(mark));
     window.addEventListener('load', () => window.requestAnimationFrame(mark));
     window.requestAnimationFrame(mark);

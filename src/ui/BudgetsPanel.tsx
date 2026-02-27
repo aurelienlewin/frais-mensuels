@@ -258,16 +258,16 @@ function BudgetCard({
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
             <div className="min-w-0">
               <div className="text-xs text-slate-400">Montant réservé</div>
-	            <div className="mt-1">
+              <div className="mt-1">
                 <InlineNumberInput
-	              ariaLabel="Montant du budget (euros)"
-	              value={centsToEuros(budget.amountCents)}
+                ariaLabel="Montant du budget (euros)"
+                value={centsToEuros(budget.amountCents)}
                   step={0.01}
                   min={0}
                   suffix="€"
-	              disabled={!canEdit}
-	              onCommit={(euros) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { amountCents: eurosToCents(euros) } })}
-	            />
+                disabled={!canEdit}
+                onCommit={(euros) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { amountCents: eurosToCents(euros) } })}
+              />
               </div>
             </div>
             <div className="grid gap-2">
@@ -275,19 +275,19 @@ function BudgetCard({
                 <div className="fm-stat-label text-xs">Montant cible</div>
                 <div className="fm-stat-value text-slate-200">{formatEUR(budget.amountCents)}</div>
               </div>
-	            <div className="fm-stat-row">
-	              <div className="fm-stat-label text-xs">À virer ce mois</div>
-	              <div className="fm-stat-value font-semibold text-sky-200">{formatEUR(budget.fundingCents)}</div>
-	            </div>
+              <div className="fm-stat-row">
+                <div className="fm-stat-label text-xs">À virer ce mois</div>
+                <div className="fm-stat-value font-semibold text-sky-200">{formatEUR(budget.fundingCents)}</div>
+              </div>
             </div>
           </div>
 
-	        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
-	          <div>Dépensé / à virer</div>
-	          <div className={cx('tabular-nums whitespace-nowrap', over ? 'text-rose-200' : 'text-slate-300')}>
-	            {formatEUR(budget.spentCents)} / {formatEUR(budget.fundingCents)}
-	          </div>
-	        </div>
+          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
+            <div>Dépensé / à virer</div>
+            <div className={cx('tabular-nums whitespace-nowrap', over ? 'text-rose-200' : 'text-slate-300')}>
+              {formatEUR(budget.spentCents)} / {formatEUR(budget.fundingCents)}
+            </div>
+          </div>
           <div
             className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
             role="progressbar"
@@ -302,9 +302,9 @@ function BudgetCard({
             />
           </div>
 
-	        <div className="mt-3 fm-stat-row">
-	          <div className="fm-stat-label text-xs">Reste du mois</div>
-	          <div className={cx('fm-stat-value', over ? 'text-rose-200' : 'text-emerald-200')}>
+          <div className="mt-3 fm-stat-row">
+            <div className="fm-stat-label text-xs">Reste du mois</div>
+            <div className={cx('fm-stat-value', over ? 'text-rose-200' : 'text-emerald-200')}>
               {formatEUR(budget.remainingToFundCents)}
             </div>
           </div>
@@ -321,18 +321,18 @@ function BudgetCard({
             {canToggleCarryHandling ? (
               <div className="rounded-lg border border-white/10 bg-white/5 p-2">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Entrant (mois précédent)</div>
-	              {budget.carryOverHandled && budget.carryOverSourceDebtCents > 0 ? (
+                {budget.carryOverHandled && budget.carryOverSourceDebtCents > 0 ? (
                   <div className="mt-1 flex items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-100">
                     <div>Reliquat entrant traité</div>
                     <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverSourceDebtCents)}</div>
                   </div>
                 ) : null}
-	              {!budget.carryOverHandled && budget.carryOverDebtCents > 0 ? (
-	                <div className="mt-1 flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
-	                  <div>Reliquat entrant appliqué</div>
-	                  <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverDebtCents)}</div>
-	                </div>
-	              ) : null}
+                {!budget.carryOverHandled && budget.carryOverDebtCents > 0 ? (
+                  <div className="mt-1 flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
+                    <div>Reliquat entrant appliqué</div>
+                    <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverDebtCents)}</div>
+                  </div>
+                ) : null}
                 <label className="mt-1.5 flex items-center gap-2 text-xs text-slate-200">
                   <input
                     type="checkbox"
@@ -454,27 +454,27 @@ function BudgetCard({
               onChange={(e) => setAmount(e.target.value)}
               aria-label="Montant"
             />
-	            <button
-	              className={cx(
-	                'fm-btn-ghost h-9 px-3 text-sm',
-	                !canEdit && 'opacity-50',
-	              )}
-	              disabled={!canEdit}
-	              onClick={() => {
-	                const amt = parseEuroAmount(amount);
-	                if (amt === null || amt <= 0) return;
-	                const lbl = label.trim();
-	                if (!lbl) return;
+              <button
+                className={cx(
+                  'fm-btn-ghost h-9 px-3 text-sm',
+                  !canEdit && 'opacity-50',
+                )}
+                disabled={!canEdit}
+                onClick={() => {
+                  const amt = parseEuroAmount(amount);
+                  if (amt === null || amt <= 0) return;
+                  const lbl = label.trim();
+                  if (!lbl) return;
 
-	                dispatch({
-	                  type: 'ADD_BUDGET_EXPENSE',
-	                  ym,
-	                  budgetId: budget.id,
-	                  expense: { date, label: lbl, amountCents: eurosToCents(amt) },
-	                });
-	                setLabel('');
-	                setAmount('');
-	              }}
+                  dispatch({
+                    type: 'ADD_BUDGET_EXPENSE',
+                    ym,
+                    budgetId: budget.id,
+                    expense: { date, label: lbl, amountCents: eurosToCents(amt) },
+                  });
+                  setLabel('');
+                  setAmount('');
+                }}
             >
               Ajouter
             </button>

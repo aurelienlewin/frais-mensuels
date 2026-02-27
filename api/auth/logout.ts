@@ -1,8 +1,9 @@
 import { deleteSession, SESSION_COOKIE } from '../_auth.js';
 import { kvConfigured } from '../_kv.js';
 import { clearCookie, json, methodNotAllowed, parseCookies } from '../_http.js';
+import type { HttpRequest, HttpResponse } from '../_http.js';
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: HttpRequest, res: HttpResponse) {
   if (!kvConfigured()) {
     return json(res, 501, {
       ok: false,

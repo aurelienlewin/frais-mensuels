@@ -224,24 +224,24 @@ export function StoreProvider({ children, storageKey }: { children: React.ReactN
     setSaving((s) => ({ ...s, status: 'saving' }));
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
 
-	    saveTimer.current = window.setTimeout(() => {
-	      (async () => {
-	        try {
-	          await saveAppState(storageKey, stateRef.current);
-	          lastPersistedModifiedAt.current = mod ?? stateRef.current.modifiedAt ?? new Date().toISOString();
-	          const pending = pendingSummaryRef.current;
-	          if (pending) pendingSummaryRef.current = null;
-	          const msg = pending
-	            ? pending.count === 1
-	              ? `Sauvegardé · ${pending.last}`
-	              : `Sauvegardé · ${pending.last} (+${pending.count - 1})`
-	            : undefined;
-	          setSaving({ status: 'idle', lastSavedAt: new Date().toISOString(), lastSavedMessage: msg });
-	        } catch {
-	          setSaving({ status: 'error' });
-	        }
-	      })();
-	    }, 250);
+      saveTimer.current = window.setTimeout(() => {
+        (async () => {
+          try {
+            await saveAppState(storageKey, stateRef.current);
+            lastPersistedModifiedAt.current = mod ?? stateRef.current.modifiedAt ?? new Date().toISOString();
+            const pending = pendingSummaryRef.current;
+            if (pending) pendingSummaryRef.current = null;
+            const msg = pending
+              ? pending.count === 1
+                ? `Sauvegardé · ${pending.last}`
+                : `Sauvegardé · ${pending.last} (+${pending.count - 1})`
+              : undefined;
+            setSaving({ status: 'idle', lastSavedAt: new Date().toISOString(), lastSavedMessage: msg });
+          } catch {
+            setSaving({ status: 'error' });
+          }
+        })();
+      }, 250);
 
     return () => {
       if (saveTimer.current) window.clearTimeout(saveTimer.current);

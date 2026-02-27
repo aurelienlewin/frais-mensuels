@@ -1,34 +1,62 @@
-export function json(res: any, status: number, body: unknown) {
+export type HttpHeaders = Record<string, string | string[] | undefined>;
+
+export type HttpRequest = AsyncIterable<Uint8Array | string> & {
+  method?: string;
+  headers?: HttpHeaders;
+  body?: unknown;
+  socket?: { remoteAddress?: string | undefined; encrypted?: boolean };
+  connection?: { encrypted?: boolean };
+  destroy?: () => void;
+};
+
+export type HttpResponse = {
+  statusCode: number;
+  setHeader(name: string, value: string | string[]): void;
+  getHeader(name: string): string | string[] | number | undefined;
+  end(body?: string | Uint8Array): void;
+};
+
+function firstHeaderValue(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] ?? '';
+  return typeof value === 'string' ? value : '';
+}
+
+function readEnv(): Record<string, string | undefined> {
+  const globalObj = globalThis as { process?: { env?: Record<string, string | undefined> } };
+  return globalObj.process?.env ?? {};
+}
+
+export function json(res: HttpResponse, status: number, body: unknown) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
   res.end(JSON.stringify(body));
 }
 
-export function badRequest(res: any, message: string) {
+export function badRequest(res: HttpResponse, message: string) {
   return json(res, 400, { ok: false, error: 'BAD_REQUEST', message });
 }
 
-export function unauthorized(res: any, message = 'Unauthorized') {
+export function unauthorized(res: HttpResponse, message = 'Unauthorized') {
   return json(res, 401, { ok: false, error: 'UNAUTHORIZED', message });
 }
 
-export function notFound(res: any) {
+export function notFound(res: HttpResponse) {
   return json(res, 404, { ok: false, error: 'NOT_FOUND' });
 }
 
-export function methodNotAllowed(res: any, allow: string[]) {
+export function methodNotAllowed(res: HttpResponse, allow: string[]) {
   res.statusCode = 405;
   res.setHeader('Allow', allow.join(', '));
   res.setHeader('Cache-Control', 'no-store');
   res.end('Method Not Allowed');
 }
 
-export function serverError(res: any, message = 'Server error') {
+export function serverError(res: HttpResponse, message = 'Server error') {
   return json(res, 500, { ok: false, error: 'SERVER_ERROR', message });
 }
 
-const DEFAULT_MAX_JSON_BYTES = 1_000_000; // ~1MB
+const DEFAULT_MAX_JSON_BYTES = 1_000_000;
 
 export class PayloadTooLargeError extends Error {
   code = 'PAYLOAD_TOO_LARGE' as const;
@@ -39,26 +67,28 @@ export class PayloadTooLargeError extends Error {
   }
 }
 
-export async function readJsonBody(req: any, opts?: { maxBytes?: number }): Promise<any | null> {
+export async function readJsonBody(req: HttpRequest, opts?: { maxBytes?: number }): Promise<unknown | null> {
   if (req.body && typeof req.body === 'object') return req.body;
   const maxBytes = Math.max(1, Math.floor(opts?.maxBytes ?? DEFAULT_MAX_JSON_BYTES));
   const chunks: Uint8Array[] = [];
   let total = 0;
+
   for await (const chunk of req) {
     const bytes = typeof chunk === 'string' ? new TextEncoder().encode(chunk) : chunk;
     total += bytes.length;
     if (total > maxBytes) {
-      if (typeof req?.destroy === 'function') req.destroy();
+      if (typeof req.destroy === 'function') req.destroy();
       throw new PayloadTooLargeError(maxBytes);
     }
     chunks.push(bytes);
   }
+
   if (chunks.length === 0) return null;
   const merged = new Uint8Array(total);
-  let off = 0;
+  let offset = 0;
   for (const c of chunks) {
-    merged.set(c, off);
-    off += c.length;
+    merged.set(c, offset);
+    offset += c.length;
   }
   const raw = new TextDecoder().decode(merged);
   if (!raw) return null;
@@ -69,22 +99,25 @@ function trustProxy(env: Record<string, string | undefined>): boolean {
   return String(env.TRUST_PROXY || '').toLowerCase() === 'true' || Boolean(env.VERCEL) || Boolean(env.VERCEL_ENV);
 }
 
-export function getClientIp(req: any, opts?: { trustProxy?: boolean }): string {
-  const env = ((globalThis as any)?.process?.env ?? {}) as Record<string, string | undefined>;
+export function getClientIp(req: HttpRequest, opts?: { trustProxy?: boolean }): string {
+  const env = readEnv();
   const shouldTrustProxy = typeof opts?.trustProxy === 'boolean' ? opts.trustProxy : trustProxy(env);
+
   if (shouldTrustProxy) {
-    const xf = req?.headers?.['x-forwarded-for'];
-    if (typeof xf === 'string' && xf.trim()) return xf.split(',')[0]!.trim();
-    const xr = req?.headers?.['x-real-ip'];
-    if (typeof xr === 'string' && xr.trim()) return xr.trim();
+    const xf = firstHeaderValue(req.headers?.['x-forwarded-for']);
+    if (xf.trim()) return xf.split(',')[0]!.trim();
+    const xr = firstHeaderValue(req.headers?.['x-real-ip']);
+    if (xr.trim()) return xr.trim();
   }
-  const ra = req?.socket?.remoteAddress;
-  return typeof ra === 'string' && ra.trim() ? ra.trim() : '0.0.0.0';
+
+  const remoteAddress = req.socket?.remoteAddress;
+  return typeof remoteAddress === 'string' && remoteAddress.trim() ? remoteAddress.trim() : '0.0.0.0';
 }
 
-export function parseCookies(req: any): Record<string, string> {
-  const header = req?.headers?.cookie;
-  if (typeof header !== 'string' || !header) return {};
+export function parseCookies(req: HttpRequest): Record<string, string> {
+  const header = firstHeaderValue(req.headers?.cookie);
+  if (!header) return {};
+
   const out: Record<string, string> = {};
   for (const part of header.split(';')) {
     const [k, ...rest] = part.split('=');
@@ -100,23 +133,18 @@ export function parseCookies(req: any): Record<string, string> {
   return out;
 }
 
-function isSecureRequest(req: any, env: Record<string, string | undefined>): boolean {
-  // Prefer trusted proxy headers when available (Vercel / reverse proxies).
-  const proto = req?.headers?.['x-forwarded-proto'] ?? req?.headers?.['x-forwarded-protocol'];
-  if (typeof proto === 'string' && proto.trim()) {
-    const p = proto.split(',')[0]!.trim().toLowerCase();
-    if (p === 'https') return true;
-    if (p === 'http') return false;
-  }
+function isSecureRequest(req: HttpRequest, env: Record<string, string | undefined>): boolean {
+  const protoHeader = req.headers?.['x-forwarded-proto'] ?? req.headers?.['x-forwarded-protocol'];
+  const proto = firstHeaderValue(protoHeader).trim().toLowerCase();
+  if (proto === 'https') return true;
+  if (proto === 'http') return false;
 
-  const xfSsl = req?.headers?.['x-forwarded-ssl'];
-  if (typeof xfSsl === 'string' && xfSsl.trim().toLowerCase() === 'on') return true;
+  const forwardedSsl = firstHeaderValue(req.headers?.['x-forwarded-ssl']).trim().toLowerCase();
+  if (forwardedSsl === 'on') return true;
 
-  // Direct TLS (non-proxied).
-  if (req?.socket?.encrypted) return true;
-  if (req?.connection?.encrypted) return true;
+  if (req.socket?.encrypted) return true;
+  if (req.connection?.encrypted) return true;
 
-  // Best-effort fallback: Vercel prod/preview are always HTTPS from the browser.
   const vercelEnv = String(env.VERCEL_ENV || '').toLowerCase();
   if ((env.VERCEL || env.VERCEL_ENV) && vercelEnv && vercelEnv !== 'development') return true;
 
@@ -124,8 +152,8 @@ function isSecureRequest(req: any, env: Record<string, string | undefined>): boo
 }
 
 export function setCookie(
-  req: any,
-  res: any,
+  req: HttpRequest,
+  res: HttpResponse,
   name: string,
   value: string,
   opts?: { maxAgeSeconds?: number; httpOnly?: boolean },
@@ -135,8 +163,7 @@ export function setCookie(
   const parts = [`${name}=${encodeURIComponent(value)}`, 'Path=/', 'SameSite=Lax'];
   if (httpOnly) parts.push('HttpOnly');
 
-  // Best-effort: set Secure when behind HTTPS (Vercel / reverse proxy) or forced via env.
-  const env = ((globalThis as any)?.process?.env ?? {}) as Record<string, string | undefined>;
+  const env = readEnv();
   const forceSecure = String(env.FORCE_SECURE_COOKIES || '').toLowerCase() === 'true';
   const secure = forceSecure || isSecureRequest(req, env);
   if (secure) parts.push('Secure');
@@ -145,11 +172,13 @@ export function setCookie(
     parts.push(`Max-Age=${maxAge}`);
     parts.push(`Expires=${new Date(Date.now() + maxAge * 1000).toUTCString()}`);
   }
+
+  const nextCookie = parts.join('; ');
   const existing = res.getHeader('Set-Cookie');
-  const next = typeof existing === 'string' ? [existing, parts.join('; ')] : Array.isArray(existing) ? [...existing, parts.join('; ')] : [parts.join('; ')];
+  const next = typeof existing === 'string' ? [existing, nextCookie] : Array.isArray(existing) ? [...existing, nextCookie] : [nextCookie];
   res.setHeader('Set-Cookie', next);
 }
 
-export function clearCookie(req: any, res: any, name: string) {
+export function clearCookie(req: HttpRequest, res: HttpResponse, name: string) {
   setCookie(req, res, name, '', { maxAgeSeconds: 0 });
 }

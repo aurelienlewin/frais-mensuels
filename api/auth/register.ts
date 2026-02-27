@@ -1,8 +1,9 @@
 import { createSession, createUser, emailExists, passwordPolicy, rateLimit, SESSION_COOKIE } from '../_auth.js';
 import { kvConfigured } from '../_kv.js';
 import { PayloadTooLargeError, badRequest, getClientIp, json, methodNotAllowed, readJsonBody, setCookie } from '../_http.js';
+import type { HttpRequest, HttpResponse } from '../_http.js';
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: HttpRequest, res: HttpResponse) {
   if (!kvConfigured()) {
     return json(res, 501, {
       ok: false,
@@ -19,9 +20,10 @@ export default async function handler(req: any, res: any) {
   const allowed = await rateLimit('register', ip, 10, 60 * 60);
   if (!allowed) return json(res, 429, { ok: false, error: 'RATE_LIMITED', message: 'Too many requests' });
 
-  let body: any = null;
+  let body: Record<string, unknown> | null = null;
   try {
-    body = await readJsonBody(req);
+    const parsed = await readJsonBody(req);
+    body = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
   } catch (e) {
     if (e instanceof PayloadTooLargeError) {
       return json(res, 413, { ok: false, error: 'PAYLOAD_TOO_LARGE', message: e.message });

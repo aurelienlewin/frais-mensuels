@@ -3,6 +3,7 @@ import { deflateSync, inflateSync } from 'node:zlib';
 import { getSession, getUserById, SESSION_COOKIE, touchSession } from './_auth.js';
 import { kvConfigured, kvDel, kvGet, kvSet } from './_kv.js';
 import { PayloadTooLargeError, badRequest, json, methodNotAllowed, parseCookies, readJsonBody, setCookie, unauthorized } from './_http.js';
+import type { HttpRequest, HttpResponse } from './_http.js';
 
 const PREFIX = 'fm:state:';
 const CHUNK_SIZE = 900;
@@ -14,7 +15,8 @@ const STATE_SECRET_ENV_KEYS = ['SYNC_STATE_SECRET', 'KV_STATE_SECRET', 'STATE_SE
 let cachedStateKey: Buffer | null | undefined = undefined;
 
 function readEnv(): Record<string, string | undefined> {
-  return ((globalThis as any)?.process?.env ?? {}) as Record<string, string | undefined>;
+  const globalObj = globalThis as { process?: { env?: Record<string, string | undefined> } };
+  return globalObj.process?.env ?? {};
 }
 
 function resolveStateKey(): Buffer | null {
@@ -69,18 +71,27 @@ function partKey(userId: string, idx: number) {
   return `${PREFIX}${userId}:p:${idx}`;
 }
 
-function isStateMeta(m: any): m is StateMeta {
-  if (!m || typeof m !== 'object') return false;
-  if (m.v === 1) return typeof m.modifiedAt === 'string' && typeof m.updatedAt === 'string' && typeof m.chunks === 'number';
-  if (m.v === 2)
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+}
+
+function isStateMeta(m: unknown): m is StateMeta {
+  const obj = asRecord(m);
+  if (!obj) return false;
+  const version = obj.v;
+  if (version === 1) {
+    return typeof obj.modifiedAt === 'string' && typeof obj.updatedAt === 'string' && typeof obj.chunks === 'number';
+  }
+  if (version === 2) {
     return (
-      (m.enc === 'deflate' || m.enc === 'deflate+aes-256-gcm') &&
-      typeof m.modifiedAt === 'string' &&
-      typeof m.updatedAt === 'string' &&
-      typeof m.chunks === 'number' &&
-      typeof m.rawLen === 'number' &&
-      (typeof m.payloadLen === 'number' || typeof m.compressedLen === 'number')
+      (obj.enc === 'deflate' || obj.enc === 'deflate+aes-256-gcm') &&
+      typeof obj.modifiedAt === 'string' &&
+      typeof obj.updatedAt === 'string' &&
+      typeof obj.chunks === 'number' &&
+      typeof obj.rawLen === 'number' &&
+      (typeof obj.payloadLen === 'number' || typeof obj.compressedLen === 'number')
     );
+  }
   return false;
 }
 
@@ -194,7 +205,7 @@ async function putStateRecord(userId: string, modifiedAt: string, state: unknown
   return meta;
 }
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: HttpRequest, res: HttpResponse) {
   if (!kvConfigured()) {
     return json(res, 501, {
       ok: false,
@@ -232,9 +243,10 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  let body: any = null;
+  let body: Record<string, unknown> | null = null;
   try {
-    body = await readJsonBody(req, { maxBytes: 5_000_000 });
+    const parsed = await readJsonBody(req, { maxBytes: 5_000_000 });
+    body = asRecord(parsed);
   } catch (e) {
     if (e instanceof PayloadTooLargeError) {
       return json(res, 413, { ok: false, error: 'PAYLOAD_TOO_LARGE', message: e.message });
@@ -242,9 +254,10 @@ export default async function handler(req: any, res: any) {
     return badRequest(res, 'Invalid JSON');
   }
 
-  const state = body?.state as unknown;
+  const state = body?.state;
   if (!state || typeof state !== 'object') return badRequest(res, 'Missing state');
-  const modifiedAtRaw = typeof body?.modifiedAt === 'string' ? body.modifiedAt : (state as any)?.modifiedAt;
+  const stateRecord = asRecord(state);
+  const modifiedAtRaw = typeof body?.modifiedAt === 'string' ? body.modifiedAt : stateRecord?.modifiedAt;
   const modifiedAt = typeof modifiedAtRaw === 'string' && modifiedAtRaw.length <= 64 ? modifiedAtRaw : new Date().toISOString();
   const force = body?.force === true;
 

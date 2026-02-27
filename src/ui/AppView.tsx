@@ -350,7 +350,7 @@ export function AppView({
       >
         Aller au contenu
       </a>
-	      <header
+        <header
           data-app-header="1"
           className="sticky top-0 z-30 border-b border-white/15 bg-ink-950/95 pt-[env(safe-area-inset-top)]"
         >
@@ -501,11 +501,11 @@ export function AppView({
                 </option>
                 {archivedMonths.map((m) => (
                   <option key={m} value={m}>
-	                  {monthLabelFr(m)}
-	                </option>
-	              ))}
-		              </select>
-	
+                    {monthLabelFr(m)}
+                  </option>
+                ))}
+                  </select>
+  
               <details
                 ref={menuRef}
                 className="absolute right-[calc(0.75rem_+_env(safe-area-inset-right))] top-2 flex-shrink-0 sm:relative sm:right-auto sm:top-auto"
@@ -534,45 +534,45 @@ export function AppView({
                       strokeLinejoin="round"
                     />
                   </svg>
-	                </summary>
+                  </summary>
                 <div
                   className="absolute right-0 z-20 mt-2 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)] sm:left-auto sm:right-0 sm:translate-x-0 sm:w-[280px]"
                   style={{ maxWidth: 'calc(100vw - 1.5rem - env(safe-area-inset-right))' }}
                 >
-		                  <div className="px-3 py-2 text-xs text-slate-400">
-		                    Connecté: <span className="font-mono text-slate-200">{user.email}</span>
-		                  </div>
+                      <div className="px-3 py-2 text-xs text-slate-400">
+                        Connecté: <span className="font-mono text-slate-200">{user.email}</span>
+                      </div>
                       {sessionUnverified ? (
                         <div className="px-3 pb-2 text-[11px] text-amber-200">
                           Session locale (non vérifiée). Reconnexion automatique dès que possible.
                         </div>
                       ) : null}
 
-		                  <button
-		                    className={cx(
-		                      'w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10',
-		                      (!online || cloud.status === 'syncing') && 'opacity-50 hover:bg-transparent',
-		                    )}
-		                    disabled={!online || cloud.status === 'syncing'}
-		                    onClick={() => {
-		                      cloud.syncNow();
-		                      menuRef.current?.removeAttribute('open');
-		                    }}
-		                    type="button"
-		                  >
-		                    Synchroniser (cloud){cloud.status === 'syncing' ? '…' : ''}
-		                  </button>
+                      <button
+                        className={cx(
+                          'w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10',
+                          (!online || cloud.status === 'syncing') && 'opacity-50 hover:bg-transparent',
+                        )}
+                        disabled={!online || cloud.status === 'syncing'}
+                        onClick={() => {
+                          cloud.syncNow();
+                          menuRef.current?.removeAttribute('open');
+                        }}
+                        type="button"
+                      >
+                        Synchroniser (cloud){cloud.status === 'syncing' ? '…' : ''}
+                      </button>
 
-		                  <button
-		                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
-		                    onClick={() => {
-		                      setTourOpen(true);
-		                      menuRef.current?.removeAttribute('open');
-		                    }}
-		                    type="button"
-		                  >
-		                    Guide (tour)
-		                  </button>
+                      <button
+                        className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+                        onClick={() => {
+                          setTourOpen(true);
+                          menuRef.current?.removeAttribute('open');
+                        }}
+                        type="button"
+                      >
+                        Guide (tour)
+                      </button>
 
                       <button
                         className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
@@ -639,21 +639,21 @@ export function AppView({
                         </select>
                       </div>
 
-		                  <button
-		                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-rose-400/10"
-		                    onClick={async () => {
-		                      await onLogout();
-		                      menuRef.current?.removeAttribute('open');
-		                    }}
-		                    type="button"
-		                  >
-		                    Se déconnecter
-		                  </button>
+                      <button
+                        className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-rose-400/10"
+                        onClick={async () => {
+                          await onLogout();
+                          menuRef.current?.removeAttribute('open');
+                        }}
+                        type="button"
+                      >
+                        Se déconnecter
+                      </button>
 
-		                  <div className="my-1 h-px bg-white/10" />
-		                  <button
-		                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
-		                    onClick={() => {
+                      <div className="my-1 h-px bg-white/10" />
+                      <button
+                        className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+                        onClick={() => {
                       const json = exportJson();
                       const blob = new Blob([json], { type: 'application/json' });
                       const url = URL.createObjectURL(blob);
@@ -896,16 +896,16 @@ export function AppView({
             <span className="hidden max-[360px]:inline">Fenêtre: ±3 mois.</span>
           </div>
         </div>
-	      </header>
+        </header>
 
-	      <main
-	        id="main"
-	        tabIndex={-1}
-	        className="mx-auto max-w-6xl pt-6 pb-24 max-[360px]:pt-4 max-[360px]:pb-20 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]"
-	      >
-	        <div className="grid gap-4 max-[360px]:gap-3 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
-	          <SummaryPanel ym={ym} />
-	          <div className="space-y-6 max-[360px]:space-y-4">
+        <main
+          id="main"
+          tabIndex={-1}
+          className="mx-auto max-w-6xl pt-6 pb-24 max-[360px]:pt-4 max-[360px]:pb-20 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]"
+        >
+          <div className="grid gap-4 max-[360px]:gap-3 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
+            <SummaryPanel ym={ym} />
+            <div className="space-y-6 max-[360px]:space-y-4">
             <ChargesTable ym={ym} archived={archived} />
             <BudgetsPanel ym={ym} archived={archived} />
           </div>
