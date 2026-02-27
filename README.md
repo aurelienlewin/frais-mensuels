@@ -11,6 +11,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat inclus), total à provisionner, reste à vivre.
 - Vue par compte orientée action: montant à approvisionner en début de mois, avec contrôle d’intégrité (somme des comptes = total à provisionner).
+- Transparence calculs: bloc repliable "Détails du calcul" dans Totaux et info-bulle sur "Reste du mois" des enveloppes.
 - UI mobile/lecture: boutons de sections renforcés et pills plus lisibles via utilitaires Tailwind v4 récents (`pointer-coarse`, `text-shadow-*`, `wrap-break-word` / `wrap-anywhere`).
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
 - Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).

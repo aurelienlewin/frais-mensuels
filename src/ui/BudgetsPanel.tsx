@@ -15,6 +15,24 @@ function isFuelBudget(name: string) {
   return ['essence', 'carbur', 'gasoil', 'diesel'].some((k) => s.includes(k));
 }
 
+function FormulaHint({ label, text }: { label: string; text: string }) {
+  return (
+    <span className="group relative inline-flex">
+      <button
+        type="button"
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-white/20 bg-white/8 text-[10px] font-semibold leading-none text-slate-300 transition-colors hover:bg-white/16 focus-visible:bg-white/16"
+        aria-label={label}
+        title={text}
+      >
+        i
+      </button>
+      <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-60 -translate-x-1/2 rounded-xl border border-white/15 bg-ink-950/95 px-2.5 py-2 text-[11px] leading-relaxed text-slate-100 opacity-0 shadow-[0_16px_35px_-18px_rgba(0,0,0,0.95)] transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:hidden">
+        {text}
+      </span>
+    </span>
+  );
+}
+
 export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state } = useStoreState();
   const [budgetsOpen, setBudgetsOpen] = useState(true);
@@ -317,7 +335,15 @@ function BudgetCard({
           </div>
 
           <div className="mt-3 fm-stat-row">
-            <div className="fm-stat-label text-xs">Reste du mois</div>
+            <div className="fm-stat-label text-xs">
+              <span className="inline-flex items-center gap-1.5">
+                <span>Reste du mois</span>
+                <FormulaHint
+                  label={`Formule reste du mois pour ${budget.name}`}
+                  text="Reste du mois = montant cible - dépensé. Le rattrapage de dette n'augmente pas ce reste affiché."
+                />
+              </span>
+            </div>
             <div className={cx('fm-stat-value', over ? 'text-rose-200' : 'text-emerald-200')}>
               {formatEUR(budget.remainingToFundCents)}
             </div>

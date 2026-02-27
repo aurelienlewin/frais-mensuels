@@ -59,6 +59,8 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     () => budgets.reduce((acc, b) => acc + Math.max(0, -b.carryOverMyShareCents), 0),
     [budgets],
   );
+  const recomputedBudgetsToWireCents = totals.totalBudgetsBaseCents + reliquatDebtImpactCents - reliquatCreditImpactCents;
+  const recomputedProvisionCents = totals.totalPourMoiCents + recomputedBudgetsToWireCents;
 
   const repartition = (() => {
     const perso = totals.totalPersoCents;
@@ -224,6 +226,40 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               valueClassName={totals.resteAVivreApresEnveloppesCents < 0 ? 'text-rose-200' : 'text-emerald-200'}
             />
           </div>
+          <details className="group mt-2 rounded-xl border border-white/10 bg-ink-950/25 px-3 py-2 open:bg-ink-950/45">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs font-medium text-slate-200">
+              <span>Détails du calcul</span>
+              <span className="text-[11px] text-slate-400 transition-transform group-open:rotate-180">▾</span>
+            </summary>
+            <div className="mt-2 space-y-1.5 text-[11px] leading-relaxed text-slate-300">
+              <div className="flex items-center justify-between gap-2">
+                <span>Enveloppes cibles</span>
+                <span className="tabular-nums text-slate-100">{formatEUR(totals.totalBudgetsBaseCents)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>+ Dette entrante</span>
+                <span className="tabular-nums text-rose-200">{formatEUR(reliquatDebtImpactCents)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>- Reliquat positif</span>
+                <span className="tabular-nums text-emerald-200">{formatEUR(reliquatCreditImpactCents)}</span>
+              </div>
+              <div className="h-px bg-white/10" />
+              <div className="flex items-center justify-between gap-2">
+                <span>Enveloppes à virer</span>
+                <span className="tabular-nums font-semibold text-sky-200">{formatEUR(recomputedBudgetsToWireCents)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span>Charges à provisionner</span>
+                <span className="tabular-nums text-slate-100">{formatEUR(totals.totalPourMoiCents)}</span>
+              </div>
+              <div className="h-px bg-white/10" />
+              <div className="flex items-center justify-between gap-2">
+                <span>Total à provisionner</span>
+                <span className="tabular-nums font-semibold text-slate-50">{formatEUR(recomputedProvisionCents)}</span>
+              </div>
+            </div>
+          </details>
 
           <div className="fm-card-soft px-4 py-3">
             <div className="flex items-center justify-between text-xs text-slate-400">
