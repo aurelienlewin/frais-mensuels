@@ -22,17 +22,17 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Auth simple: login/register, cookie HTTP-only, reset via recovery code.
 - Optimisations perfs: calculs mensuels dédupliqués, scans O(n²) évités, sync Redis chunkée/concurrente.
 
-## Stack (2026-02-27)
+## Stack
 
 - React 19 + React DOM 19
 - Vite 7 + `@vitejs/plugin-react` 5
 - Tailwind CSS 4.2.1 (PostCSS via `@tailwindcss/postcss`)
 - TypeScript 5.9
 
-Migration notable appliquée: passage Tailwind v4 CSS-first (`@import "tailwindcss"`, `@source`, `@theme` dans `src/styles.css`, sans `tailwind.config` JS).
+Configuration Tailwind: approche CSS-first (`@import "tailwindcss"`, `@source`, `@theme` dans `src/styles.css`, sans `tailwind.config` JS).
 Conventions UI: composants utilitaires Tailwind v4 dans `@layer components` (`fm-panel`, `fm-card`, `fm-input`, `fm-btn-*`, `fm-stat-*`) pour harmoniser Résumé, Enveloppes et formulaires.
-Pass Tailwind v4 récent: adoption d'utilitaires/variants `pointer-coarse:*`, `text-shadow-*`, `wrap-break-word` et `wrap-anywhere` pour améliorer l'ergonomie tactile et la lisibilité des contenus longs.
-Fond dynamique: crossfade en 2 couches piloté par tokens Tailwind v4 CSS-first (`@theme` avec `--duration-bg-crossfade` et `--ease-bg-crossfade`) pour n'afficher l'image suivante qu'après chargement/décodage, avec rotation auto plus fréquente (~3m à ~3m45 sur appareils standard).
+Utilitaires UI: usage de `pointer-coarse:*`, `text-shadow-*`, `wrap-break-word` et `wrap-anywhere` pour l'ergonomie tactile et la lisibilité.
+Fond dynamique: crossfade en 2 couches piloté par tokens Tailwind v4 CSS-first (`@theme` avec `--duration-bg-crossfade` et `--ease-bg-crossfade`) pour n'afficher l'image suivante qu'après chargement/décodage, avec rotation automatique fréquente (~3m à ~3m45 sur appareils standard).
 
 ## Démarrer
 
@@ -69,9 +69,9 @@ L'API accepte (ordre de priorite):
 </details>
 
 <details>
-<summary>Performance (2026-02-27)</summary>
+<summary>Performance</summary>
 
-Optimisations appliquées sans changement fonctionnel:
+Architecture de performance actuelle:
 - `src/state/selectors.ts`: suppression de scans linéaires répétés (`find`/`includes`) via maps/sets, et réutilisation de données pré-calculées pour les totaux.
 - `src/ui/AppView.tsx` et `src/ui/SummaryPanel.tsx`: mutualisation des résultats `chargesForMonth` / `budgetsForMonth` pour éviter les recomputations multiples par rendu.
 - `api/state.ts`: lecture/écriture/suppression des chunks Redis en batches concurrents (latence de sync réduite, surtout sur gros états).
