@@ -5,6 +5,7 @@ import { useStoreState } from '../state/store';
 import { cx } from './cx';
 
 type Mode = 'perso' | 'essence';
+const FUEL_EXPENSE_LABEL = 'Essence';
 
 function todayIsoLocal() {
   const d = new Date();
@@ -64,7 +65,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
     setChooserOpen(false);
     prevActiveRef.current = (document.activeElement as HTMLElement | null) ?? null;
     setAmount('');
-    if (open === 'essence') setLabel('Plein');
+    if (open === 'essence') setLabel(FUEL_EXPENSE_LABEL);
     if (open === 'perso') setLabel('');
     const inferredId = inferred[open];
     setBudgetId(inferredId || activeBudgets[0]?.id || '');
@@ -125,7 +126,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
     if (!id) return;
     const amt = parseEuroAmount(amount);
     if (amt === null || amt <= 0) return;
-    const lbl = label.trim() || (open === 'essence' ? 'Plein' : '');
+    const lbl = open === 'essence' ? FUEL_EXPENSE_LABEL : label.trim();
     if (!lbl) return;
 
     dispatch({
@@ -244,11 +245,12 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
   
             <input
               ref={labelRef}
-              className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm"
-              placeholder={open === 'perso' ? 'ex: resto' : 'ex: plein'}
-              value={label}
+              className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm disabled:opacity-90"
+              placeholder={open === 'perso' ? 'ex: resto' : FUEL_EXPENSE_LABEL}
+              value={open === 'essence' ? FUEL_EXPENSE_LABEL : label}
+              disabled={open === 'essence'}
               onChange={(e) => setLabel(e.target.value)}
-                onKeyDown={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === 'Enter') submit();
               }}
               aria-label="Libellé"

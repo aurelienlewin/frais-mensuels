@@ -14,6 +14,7 @@ function isFuelBudget(name: string) {
   const s = normalizeSearch(name);
   return ['essence', 'carbur', 'gasoil', 'diesel'].some((k) => s.includes(k));
 }
+const FUEL_EXPENSE_LABEL = 'Essence';
 
 function FormulaHint({ label, text }: { label: string; text: string }) {
   return (
@@ -227,9 +228,9 @@ function BudgetCard({
 
   useEffect(() => {
     setDate(`${ym}-01`);
-    setLabel('');
+    setLabel(isFuelBudget(budget.name) ? FUEL_EXPENSE_LABEL : '');
     setAmount('');
-  }, [ym]);
+  }, [ym, budget.name]);
 
   const canEdit = !archived && Boolean(model);
   const canDelete = !archived && Boolean(model?.active);
@@ -255,7 +256,8 @@ function BudgetCard({
     () => [...budget.expenses].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
     [budget.expenses],
   );
-  const defaultLabelPlaceholder = isFuelBudget(budget.name) ? 'ex: plein / essence / gasoil' : 'ex: resto';
+  const isFuel = isFuelBudget(budget.name);
+  const defaultLabelPlaceholder = isFuel ? FUEL_EXPENSE_LABEL : 'ex: resto';
   const minDate = `${ym}-01`;
   const maxDate = `${ym}-${pad2(daysInMonth(ym))}`;
 
@@ -494,9 +496,12 @@ function BudgetCard({
             <input
               className="fm-input h-9 px-3 text-sm"
               placeholder={defaultLabelPlaceholder}
-              value={label}
-              disabled={!canEdit}
-              onChange={(e) => setLabel(e.target.value)}
+              value={isFuel ? FUEL_EXPENSE_LABEL : label}
+              disabled={!canEdit || isFuel}
+              onChange={(e) => {
+                if (isFuel) return;
+                setLabel(e.target.value);
+              }}
               aria-label="Libellé"
             />
             <input
@@ -518,8 +523,8 @@ function BudgetCard({
                 onClick={() => {
                   const amt = parseEuroAmount(amount);
                   if (amt === null || amt <= 0) return;
-                  const lbl = label.trim();
-                  if (!lbl) return;
+                  const lbl = isFuel ? FUEL_EXPENSE_LABEL : label.trim();
+                  if (!isFuel && !lbl) return;
 
                   dispatch({
                     type: 'ADD_BUDGET_EXPENSE',
@@ -527,7 +532,7 @@ function BudgetCard({
                     budgetId: budget.id,
                     expense: { date, label: lbl, amountCents: eurosToCents(amt) },
                   });
-                  setLabel('');
+                  setLabel(isFuel ? FUEL_EXPENSE_LABEL : '');
                   setAmount('');
                 }}
             >
@@ -576,7 +581,7 @@ function BudgetCard({
 
               <div className="mt-2 flex items-center gap-2">
                 <div className="min-w-0 flex-1 text-sm text-slate-100">
-                  {canEdit ? (
+                  {canEdit && !isFuel ? (
                     <InlineTextInput
                       ariaLabel="Libellé de dépense"
                       value={e.label}
@@ -589,7 +594,7 @@ function BudgetCard({
                       }}
                     />
                   ) : (
-                    <div className="truncate">{e.label}</div>
+                    <div className="truncate">{isFuel ? FUEL_EXPENSE_LABEL : e.label}</div>
                   )}
                 </div>
 
@@ -661,7 +666,7 @@ function BudgetCard({
                     )}
                   </td>
                   <td className="px-3 py-2 text-slate-100">
-                    {canEdit ? (
+                    {canEdit && !isFuel ? (
                       <InlineTextInput
                         ariaLabel="Libellé de dépense"
                         value={e.label}
@@ -674,7 +679,7 @@ function BudgetCard({
                         }}
                       />
                     ) : (
-                      e.label
+                      isFuel ? FUEL_EXPENSE_LABEL : e.label
                     )}
                   </td>
                   <td className="px-3 py-2 text-right font-medium tabular-nums text-slate-100">

@@ -40,6 +40,27 @@ function todayIsoLocal() {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
+const FUEL_EXPENSE_LABEL = 'Essence';
+
+function normalizeBudgetName(name: string) {
+  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function isFuelBudgetName(name: string) {
+  const normalized = normalizeBudgetName(name);
+  return ['essence', 'carbur', 'gasoil', 'diesel'].some((keyword) => normalized.includes(keyword));
+}
+
+function resolveBudgetName(state: AppState, month: MonthData, budgetId: string) {
+  const globalName = state.budgets.find((b) => b.id === budgetId)?.name;
+  if (typeof globalName === 'string' && globalName.trim()) return globalName;
+  return month.budgets[budgetId]?.snapshot?.name ?? '';
+}
+
+function shouldForceFuelExpenseLabel(state: AppState, month: MonthData, budgetId: string) {
+  return isFuelBudgetName(resolveBudgetName(state, month, budgetId));
+}
+
 function ensureMonth(state: AppState, ym: MonthData['ym']): MonthData {
   const existing = state.months[ym];
   if (existing) return existing;
@@ -383,7 +404,12 @@ export function reducer(state: AppState, action: Action): AppState {
         return withMonth(state, action.ym, (m) => {
           const existing = m.budgets[action.budgetId];
           const prev = existing?.expenses ?? [];
-          const next: BudgetExpense = { ...action.expense, id: uid('exp') };
+          const forceFuelLabel = shouldForceFuelExpenseLabel(state, m, action.budgetId);
+          const next: BudgetExpense = {
+            ...action.expense,
+            label: forceFuelLabel ? FUEL_EXPENSE_LABEL : action.expense.label,
+            id: uid('exp'),
+          };
           return {
             ...m,
             budgets: {
@@ -402,17 +428,19 @@ export function reducer(state: AppState, action: Action): AppState {
           const existing = m.budgets[action.budgetId];
           const prev = existing?.expenses ?? [];
           if (!existing || prev.length === 0) return m;
+          const forceFuelLabel = shouldForceFuelExpenseLabel(state, m, action.budgetId);
 
           const nextExpenses = prev.map((e) => {
             if (e.id !== action.expenseId) return e;
             const patch = action.patch;
             const nextAmountCents =
               typeof patch.amountCents === 'number' && Number.isFinite(patch.amountCents) ? Math.max(0, Math.round(patch.amountCents)) : e.amountCents;
+            const nextLabel = typeof patch.label === 'string' ? patch.label : e.label;
             return {
               ...e,
               ...patch,
               date: typeof patch.date === 'string' ? patch.date : e.date,
-              label: typeof patch.label === 'string' ? patch.label : e.label,
+              label: forceFuelLabel ? FUEL_EXPENSE_LABEL : nextLabel,
               amountCents: nextAmountCents,
             };
           });

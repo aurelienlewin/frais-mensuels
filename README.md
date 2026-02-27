@@ -9,6 +9,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Reliquat d’enveloppe: un dépassement non traité ou un reste positif non consommé est reporté cumulativement sur les mois suivants pour la même enveloppe (même si des mois intermédiaires n'ont pas été ouverts) et réduit le montant à virer.
 - Reliquat traité: une case à cocher par enveloppe permet de marquer le reliquat entrant comme géré manuellement (il n'est alors plus appliqué au calcul du mois).
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
+- Dépenses d’enveloppe Essence: le libellé est forcé à `Essence` (saisie enveloppe + ajout rapide), sans saisie manuelle requise.
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat positif inclus), total à provisionner, reste à vivre.
 - Épargne auto (option par convention): s'il existe une unique charge récurrente perso nommée comme `Epargne` / `Virement épargne`, son montant du mois garde d'abord le montant configuré (plancher), puis ajoute l'excédent de reste. Les dettes entrantes d'enveloppe sont d'abord prélevées sur le reste; le reliquat positif continue de réduire l'enveloppe à virer.
 - Vue par compte orientée action: montant à approvisionner en début de mois, avec contrôle d’intégrité (somme des comptes = total à provisionner).
@@ -109,6 +110,7 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Montant d’enveloppe à virer: `max(0, montant enveloppe - reliquat positif entrant)`.
 - Dette entrante: n’augmente pas le virement d’enveloppe; elle est prélevée sur le reste du mois.
 - Reste du mois (enveloppe): `montant cible - dépensé` (la dette reportée n’augmente pas ce reste affiché).
+- Enveloppe Essence: chaque dépense est stockée avec le libellé `Essence` (le libellé utilisateur est ignoré pour cette enveloppe).
 - Consolidation mensuelle du reliquat (entrant vers mois suivant): base de reste `max(montant cible, reliquat positif entrant - dette entrante)` puis `reste = base de reste - dépensé`.
 - Reliquat positif sortant: `max(0, reste)` (reporté comme reliquat entrant).
 - Dette reportée fin de mois: `max(0, -reste)` (reportée uniquement si non traitée).
