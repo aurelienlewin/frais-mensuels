@@ -474,7 +474,13 @@ export function totalsByAccount(state: AppState, ym: YM, precomputed?: MonthComp
     byAccount.set(key, prev);
   }
 
-  const order = state.accounts.map((a) => a.id);
+  const orderedKnownIds = state.accounts.map((a) => a.id);
+  const knownIdSet = new Set(orderedKnownIds);
+  const unknownIds = Array.from(byAccount.keys())
+    .filter((id) => !knownIdSet.has(id))
+    .sort((a, b) => a.localeCompare(b));
+  const order = [...orderedKnownIds, ...unknownIds];
+
   return order
     .map((id) => {
       const a = accounts.get(id);
@@ -495,6 +501,7 @@ export function totalsByAccount(state: AppState, ym: YM, precomputed?: MonthComp
         budgetsCarryOverCents: t.budgetsCarryOverCents,
         budgetsCents: t.budgetsCents,
         totalCents: t.chargesTotalCents + t.budgetsCents,
+        isKnownAccount: Boolean(a),
       };
     })
     .filter((x) => x.chargesTotalCents !== 0 || x.budgetsBaseCents !== 0 || x.budgetsCarryOverCents !== 0 || x.budgetsCents !== 0);

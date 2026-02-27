@@ -26,6 +26,9 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     () => totalsByAccount(state, ym, { charges, budgets }),
     [budgets, charges, state.accounts, ym],
   );
+  const totalByAccountCents = useMemo(() => byAccount.reduce((acc, a) => acc + a.totalCents, 0), [byAccount]);
+  const accountSummaryDeltaCents = totals.totalProvisionCents - totalByAccountCents;
+  const hasUnknownAccountSummaryRow = useMemo(() => byAccount.some((a) => !a.isKnownAccount), [byAccount]);
   const chargesByAccount = useMemo(() => {
     const map = new Map<Account['id'], { ids: string[]; unpaidCount: number }>();
     for (const r of charges) {
@@ -272,6 +275,16 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 
         <div className="mt-8 max-[360px]:mt-6">
           <div className="text-sm font-medium text-slate-200 text-shadow-2xs">Par compte (montant à approvisionner)</div>
+          {accountSummaryDeltaCents !== 0 ? (
+            <div className="mt-2 rounded-lg border border-rose-300/30 bg-rose-500/12 px-3 py-2 text-xs text-rose-100">
+              Incohérence détectée: total par compte ({formatEUR(totalByAccountCents)}) vs total à provisionner ({formatEUR(totals.totalProvisionCents)}).
+            </div>
+          ) : null}
+          {hasUnknownAccountSummaryRow ? (
+            <div className="mt-2 rounded-lg border border-amber-300/30 bg-amber-500/12 px-3 py-2 text-xs text-amber-100">
+              Certains montants pointent vers un identifiant de compte non configuré. Ils restent inclus dans les totaux.
+            </div>
+          ) : null}
           <div className="mt-3 space-y-2">
             {byAccount.map((a) => {
               const meta = chargesByAccount.get(a.accountId) ?? null;
@@ -318,6 +331,11 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                         {allPaid ? (
                           <span className="fm-chip-pill border-emerald-200/25 bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
                             OK ✓
+                          </span>
+                        ) : null}
+                        {!a.isKnownAccount ? (
+                          <span className="fm-chip-pill border-amber-300/30 bg-amber-500/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-100">
+                            hors liste
                           </span>
                         ) : null}
                       </div>

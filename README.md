@@ -10,7 +10,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Reliquat traité: une case à cocher par enveloppe permet de marquer le reliquat entrant comme géré manuellement (il n'est alors plus déduit du mois).
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat inclus), total à provisionner, reste à vivre.
-- Vue par compte orientée action: montant à approvisionner en début de mois.
+- Vue par compte orientée action: montant à approvisionner en début de mois, avec contrôle d’intégrité (somme des comptes = total à provisionner).
 - UI mobile/lecture: boutons de sections renforcés et pills plus lisibles via utilitaires Tailwind v4 récents (`pointer-coarse`, `text-shadow-*`, `wrap-break-word` / `wrap-anywhere`).
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
 - Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
@@ -108,7 +108,7 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Dette reportée fin de mois: `max(0, dépensé - max(0, montant enveloppe - reliquat entrant appliqué précédent))`.
 - Exemple enveloppe récurrente: cible `100`, dépensé `80` sur le mois N -> reliquat positif `20` reporté -> mois N+1: `à virer = 80`.
 - Total à provisionner du mois: `charges (pour moi) + enveloppes à virer`.
-- Par compte: `charges à provisionner + enveloppes à virer` (reliquat déjà déduit dans "enveloppes à virer", qu'il s'agisse d'une dette ou d'un reliquat positif).
+- Par compte: `charges à provisionner + enveloppes à virer` (reliquat déjà déduit dans "enveloppes à virer", qu'il s'agisse d'une dette ou d'un reliquat positif). Si des lignes référencent un compte non configuré, elles restent visibles et incluses dans les totaux.
 - Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
 
 </details>
