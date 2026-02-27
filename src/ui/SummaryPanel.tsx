@@ -265,6 +265,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               const meta = chargesByAccount.get(a.accountId) ?? null;
               const allPaid = Boolean(meta && meta.ids.length > 0 && meta.unpaidCount === 0);
               const canMarkAll = !archived && Boolean(meta && meta.unpaidCount > 0);
+              const hasBudgets = a.budgetsBaseCents !== 0 || a.budgetsCarryOverCents !== 0 || a.budgetsCents !== 0;
               const bulkLabel = (() => {
                 if (archived) return 'Mois archivé';
                 if (!meta || meta.ids.length === 0) return 'Aucune charge à cocher';
@@ -276,9 +277,9 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   key={a.accountId}
                   type="button"
                   className={cx(
-                    'fm-card grid min-w-0 grid-cols-[minmax(0,1fr)_120px] items-center gap-3 px-4 py-3 text-left transition-colors',
-                    canMarkAll ? 'hover:bg-white/10' : 'opacity-75',
-                    allPaid && 'opacity-60',
+                    'fm-card min-w-0 px-4 py-3 text-left transition-colors',
+                    canMarkAll ? 'hover:bg-white/10' : 'opacity-80',
+                    allPaid && 'opacity-70',
                   )}
                   disabled={!canMarkAll}
                   title={bulkLabel}
@@ -288,33 +289,72 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                     dispatch({ type: 'SET_CHARGES_PAID', ym, chargeIds: meta.ids, paid: true });
                   }}
                 >
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <div className="truncate text-sm text-slate-100" title={a.accountName}>
-                        {a.accountName}
-                      </div>
-                      {allPaid ? (
-                        <span className="flex-none rounded-full border border-emerald-200/20 bg-emerald-400/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-100">
-                          OK ✓
+                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_132px] sm:items-center">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="min-w-0 break-words text-sm font-semibold leading-tight text-slate-100">
+                          {a.accountName}
+                        </div>
+                        <span
+                          className={cx(
+                            'fm-chip-pill px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                            a.kind === 'commun' ? 'border-sky-200/30 bg-sky-400/15 text-sky-50' : 'border-emerald-200/30 bg-emerald-400/15 text-emerald-50',
+                          )}
+                        >
+                          {a.kind}
                         </span>
+                        {allPaid ? (
+                          <span className="fm-chip-pill border-emerald-200/25 bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
+                            OK ✓
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {a.accountName !== a.accountId ? (
+                        <div className="mt-1 break-all font-mono text-[11px] text-slate-400">{a.accountId}</div>
+                      ) : null}
+
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <span className="fm-chip-pill px-2 py-0.5 text-[11px]">
+                          Charges: <span className="tabular-nums text-slate-100">{formatEUR(a.chargesTotalCents)}</span>
+                        </span>
+                        <span className="fm-chip-pill px-2 py-0.5 text-[11px]">
+                          Cochées: <span className="tabular-nums text-slate-100">{formatEUR(a.chargesPaidCents)}</span>
+                        </span>
+                        {hasBudgets ? (
+                          <span className="fm-chip-pill px-2 py-0.5 text-[11px]">
+                            Env. à virer: <span className="tabular-nums text-slate-100">{formatEUR(a.budgetsCents)}</span>
+                          </span>
+                        ) : null}
+                        {hasBudgets ? (
+                          <span className="fm-chip-pill px-2 py-0.5 text-[11px]">
+                            Cible: <span className="tabular-nums text-slate-100">{formatEUR(a.budgetsBaseCents)}</span>
+                          </span>
+                        ) : null}
+                        {a.budgetsCarryOverCents > 0 ? (
+                          <span className="fm-chip-pill border-rose-200/25 bg-rose-500/12 px-2 py-0.5 text-[11px] text-rose-100">
+                            Reliquat: <span className="tabular-nums">-{formatEUR(a.budgetsCarryOverCents)}</span>
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {canMarkAll ? (
+                        <div className="mt-1.5 text-[11px] text-slate-400">
+                          Appui: cocher toutes les charges liées à ce compte.
+                        </div>
                       ) : null}
                     </div>
-                    <div className="mt-0.5 truncate text-xs text-slate-400">
-                      Charges: {formatEUR(a.chargesTotalCents)} ({formatEUR(a.chargesPaidCents)} cochées)
-                      {a.budgetsBaseCents || a.budgetsCents || a.budgetsCarryOverCents
-                        ? ` · Enveloppes à virer: ${formatEUR(a.budgetsCents)} (cible ${formatEUR(a.budgetsBaseCents)}${
-                            a.budgetsCarryOverCents ? `, reliquat -${formatEUR(a.budgetsCarryOverCents)}` : ''
-                          })`
-                        : ''}
+
+                    <div className="sm:justify-self-end">
+                      <div
+                        className={cx(
+                          'inline-flex rounded-xl px-3 py-1.5 text-sm font-semibold tabular-nums',
+                          a.kind === 'commun' ? 'bg-sky-400/10 text-sky-200' : 'bg-emerald-400/10 text-emerald-200',
+                        )}
+                      >
+                        {formatEUR(a.totalCents)}
+                      </div>
                     </div>
-                  </div>
-                  <div
-                    className={cx(
-                      'rounded-xl px-2 py-1 text-right text-sm font-semibold tabular-nums',
-                      a.kind === 'commun' ? 'bg-sky-400/10 text-sky-200' : 'bg-emerald-400/10 text-emerald-200',
-                    )}
-                  >
-                    {formatEUR(a.totalCents)}
                   </div>
                 </button>
               );
