@@ -16,6 +16,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Cartes "Par compte" optimisées lecture rapide: total mis en avant + lignes métriques alignées (charges, cochées, enveloppes, impact reliquat).
 - Transparence calculs: bloc repliable "Détails du calcul" dans Totaux et info-bulle sur "Reste du mois" des enveloppes.
 - UI mobile/lecture: boutons de sections renforcés et pills plus lisibles via utilitaires Tailwind v4 récents (`pointer-coarse`, `text-shadow-*`, `wrap-break-word` / `wrap-anywhere`).
+- Ajout rapide mobile (iOS Safari): la modale se repositionne au-dessus du clavier (Visual Viewport) pour rester visible pendant la saisie.
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
 - Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
 - Auth simple: login/register, cookie HTTP-only, reset via recovery code.
@@ -31,7 +32,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 Migration notable appliquée: passage Tailwind v4 CSS-first (`@import "tailwindcss"`, `@source`, `@theme` dans `src/styles.css`, sans `tailwind.config` JS).
 Conventions UI: composants utilitaires Tailwind v4 dans `@layer components` (`fm-panel`, `fm-card`, `fm-input`, `fm-btn-*`, `fm-stat-*`) pour harmoniser Résumé, Enveloppes et formulaires.
 Pass Tailwind v4 récent: adoption d'utilitaires/variants `pointer-coarse:*`, `text-shadow-*`, `wrap-break-word` et `wrap-anywhere` pour améliorer l'ergonomie tactile et la lisibilité des contenus longs.
-Fond dynamique: crossfade en 2 couches piloté par tokens Tailwind v4 CSS-first (`@theme` avec `--duration-bg-crossfade` et `--ease-bg-crossfade`) pour n'afficher l'image suivante qu'après chargement/décodage.
+Fond dynamique: crossfade en 2 couches piloté par tokens Tailwind v4 CSS-first (`@theme` avec `--duration-bg-crossfade` et `--ease-bg-crossfade`) pour n'afficher l'image suivante qu'après chargement/décodage, avec rotation auto plus fréquente (~3m à ~3m45 sur appareils standard).
 
 ## Démarrer
 
@@ -119,5 +120,6 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Dans le panneau Totaux, l’impact reliquat distingue: dette entrante ajoutée au virement d’enveloppe (rouge) et reliquat positif à déduire sur l’enveloppe à virer (vert).
 - Par compte: `charges à provisionner + enveloppes à virer` (la dette entrante et le reliquat positif sont intégrés au montant d’enveloppes à virer). Si des lignes référencent un compte non configuré, elles restent visibles et incluses dans les totaux.
 - Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
+- Épargne auto: l'ajustement ne s'applique plus dès que la charge Épargne est cochée pour le mois en cours.
 
 </details>
