@@ -51,6 +51,14 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 
   const ratio =
     totals.salaryCents > 0 ? Math.min(1, Math.max(0, totals.totalPourMoiAvecEnveloppesCents / totals.salaryCents)) : 0;
+  const reliquatDebtImpactCents = useMemo(
+    () => budgets.reduce((acc, b) => acc + Math.max(0, b.carryOverMyShareCents), 0),
+    [budgets],
+  );
+  const reliquatCreditImpactCents = useMemo(
+    () => budgets.reduce((acc, b) => acc + Math.max(0, -b.carryOverMyShareCents), 0),
+    [budgets],
+  );
 
   const repartition = (() => {
     const perso = totals.totalPersoCents;
@@ -191,11 +199,20 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           <div className="grid gap-2">
             <Row label="Charges à provisionner (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
             <Row label="Enveloppes cibles (ma part)" value={formatEUR(totals.totalBudgetsBaseCents)} />
-            {totals.totalBudgetsCarryOverCents !== 0 ? (
+            {reliquatDebtImpactCents > 0 ? (
               <Row
-                label="Impact reliquat entrant (enveloppes)"
-                value={formatSignedCents(totals.totalBudgetsCarryOverCents)}
-                valueClassName={totals.totalBudgetsCarryOverCents > 0 ? 'text-rose-200' : 'text-emerald-200'}
+                label="Impact dette entrante (enveloppes)"
+                value={formatSignedCents(reliquatDebtImpactCents)}
+                valueClassName="text-rose-200"
+                rowClassName="fm-reliquat-negative"
+              />
+            ) : null}
+            {reliquatCreditImpactCents > 0 ? (
+              <Row
+                label="Impact reliquat positif (enveloppes)"
+                value={formatSignedCents(-reliquatCreditImpactCents)}
+                valueClassName="text-emerald-200"
+                rowClassName="fm-reliquat-positive"
               />
             ) : null}
             <Row label="Enveloppes à virer (ma part)" value={formatEUR(totals.totalBudgetsCents)} strong />
@@ -654,14 +671,16 @@ function Row({
   value,
   strong,
   valueClassName,
+  rowClassName,
 }: {
   label: string;
   value: string;
   strong?: boolean;
   valueClassName?: string;
+  rowClassName?: string;
 }) {
   return (
-    <div className="fm-stat-row">
+    <div className={cx('fm-stat-row', rowClassName)}>
       <div className={cx('fm-stat-label', strong ? 'text-slate-200' : 'text-slate-400')}>
         {label}
       </div>
