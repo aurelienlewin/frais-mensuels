@@ -10,6 +10,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Reliquat traité: une case à cocher par enveloppe permet de marquer le reliquat entrant comme géré manuellement (il n'est alors plus appliqué au calcul du mois).
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat inclus), total à provisionner, reste à vivre.
+- Épargne auto (option par convention): s'il existe une unique charge récurrente perso nommée comme `Epargne` / `Virement épargne`, son montant du mois est auto-calculé avec le disponible restant après charges + enveloppes (base + dette d'abord, puis reliquat positif).
 - Vue par compte orientée action: montant à approvisionner en début de mois, avec contrôle d’intégrité (somme des comptes = total à provisionner).
 - Transparence calculs: bloc repliable "Détails du calcul" dans Totaux et info-bulle sur "Reste du mois" des enveloppes.
 - UI mobile/lecture: boutons de sections renforcés et pills plus lisibles via utilitaires Tailwind v4 récents (`pointer-coarse`, `text-shadow-*`, `wrap-break-word` / `wrap-anywhere`).

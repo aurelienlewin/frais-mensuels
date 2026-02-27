@@ -96,6 +96,61 @@ function todayIsoLocal() {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
+function normalizeNameForMatch(s: string) {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isAutoSavingsChargeName(name: string) {
+  const normalized = normalizeNameForMatch(name);
+  return normalized === 'epargne' || normalized === 'virement epargne' || normalized.includes('epargne');
+}
+
+function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[]) {
+  if (rows.length === 0) return rows;
+
+  const globalById = chargeById(state.charges);
+  const candidates = rows.filter((r) => {
+    const global = globalById.get(r.id);
+    if (!global || !global.active) return false; // recurring charge only
+    if (r.scope !== 'perso') return false;
+    return isAutoSavingsChargeName(r.name);
+  });
+
+  // Avoid auto-fill ambiguity if user has several "épargne" recurring charges.
+  if (candidates.length !== 1) return rows;
+  const savings = candidates[0]!;
+
+  const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
+  const budgets = budgetsForMonth(state, ym);
+  const budgetsBaseCents = budgets.reduce((acc, b) => acc + b.baseMyShareCents, 0);
+  const budgetsDebtImpactCents = budgets.reduce((acc, b) => acc + Math.max(0, b.carryOverMyShareCents), 0);
+  const budgetsCreditImpactCents = budgets.reduce((acc, b) => acc + Math.max(0, -b.carryOverMyShareCents), 0);
+  const otherChargesTotalCents = rows.reduce((acc, r) => {
+    if (r.id === savings.id) return acc;
+    return acc + (r.scope === 'commun' ? r.myShareCents : r.amountCents);
+  }, 0);
+  // Priority: cover base envelopes + incoming debt first, then apply positive carry-over,
+  // and route only the remaining amount to the recurring Epargne charge.
+  const availableForSavingsCents =
+    salaryCents - otherChargesTotalCents - budgetsBaseCents - budgetsDebtImpactCents + budgetsCreditImpactCents;
+  const nextSavingsAmountCents = Math.max(0, availableForSavingsCents);
+
+  if (savings.amountCents === nextSavingsAmountCents) return rows;
+  return rows.map((r) => {
+    if (r.id !== savings.id) return r;
+    return {
+      ...r,
+      amountCents: nextSavingsAmountCents,
+      myShareCents: nextSavingsAmountCents,
+    };
+  });
+}
+
 function resolveSnapshot(
   month: MonthData | undefined,
   charges: Map<string, AppState['charges'][number]>,
@@ -214,7 +269,7 @@ export function chargesForMonth(state: AppState, ym: YM): ChargeResolved[] {
     if (a.dayOfMonth !== b.dayOfMonth) return a.dayOfMonth - b.dayOfMonth;
     return a.name.localeCompare(b.name);
   });
-  return rows;
+  return applyAutoSavingsForMonth(state, ym, rows);
 }
 
 function resolveBudgetSnapshot(
