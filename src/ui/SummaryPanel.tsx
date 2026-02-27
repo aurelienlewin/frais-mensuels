@@ -124,10 +124,22 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               {summaryOpen ? '−' : '+'}
             </span>
           </button>
+          <button
+            type="button"
+            className="fm-btn-ghost hidden h-8 w-10 items-center justify-center text-xs font-medium text-slate-200 sm:flex"
+            onClick={() => setSummaryOpen((v) => !v)}
+            aria-expanded={summaryOpen}
+            aria-label={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
+            title={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
+          >
+            <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
+              {summaryOpen ? '▴' : '▾'}
+            </span>
+          </button>
         </div>
       </div>
 
-      <div className={cx(!summaryOpen && 'hidden sm:block')}>
+      <div className={cx(!summaryOpen && 'hidden')}>
         <div className="mt-6 space-y-3 max-[360px]:mt-4">
           <label className="grid gap-1">
             <div className="text-xs text-slate-400">Salaire</div>

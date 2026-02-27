@@ -17,6 +17,7 @@ function isFuelBudget(name: string) {
 
 export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state } = useStoreState();
+  const [budgetsOpen, setBudgetsOpen] = useState(true);
   const budgets = useMemo(
     () => budgetsForMonth(state, ym),
     [state.accounts, state.budgets, state.months, ym],
@@ -29,11 +30,42 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
       className="fm-panel motion-hover motion-pop overflow-hidden"
     >
       <div className="border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
-        <div className="text-sm text-slate-300">Enveloppes</div>
-        <h2 className="mt-1 text-xl font-semibold tracking-tight">Budgets & dépenses</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-sm text-slate-300">Enveloppes</div>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight">Budgets & dépenses</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="fm-mobile-section-toggle sm:hidden"
+              onClick={() => setBudgetsOpen((v) => !v)}
+              aria-expanded={budgetsOpen}
+              aria-label={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
+              title={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
+            >
+              <span>{budgetsOpen ? 'Replier' : 'Voir'} enveloppes</span>
+              <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
+                {budgetsOpen ? '−' : '+'}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="fm-btn-ghost hidden h-8 w-10 items-center justify-center text-xs font-medium text-slate-200 sm:flex"
+              onClick={() => setBudgetsOpen((v) => !v)}
+              aria-expanded={budgetsOpen}
+              aria-label={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
+              title={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
+            >
+              <span aria-hidden="true" className="text-[18px] font-semibold leading-none">
+                {budgetsOpen ? '▴' : '▾'}
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-6 p-4 max-[360px]:space-y-4 max-[360px]:p-3 sm:p-6">
+      <div className={cx('space-y-6 p-4 max-[360px]:space-y-4 max-[360px]:p-3 sm:p-6', !budgetsOpen && 'hidden')}>
         <AddBudgetCard disabled={archived} />
         {budgets.map((b) => (
           <BudgetCard key={b.id} ym={ym} budget={b} model={modelById.get(b.id) ?? null} archived={archived} />
