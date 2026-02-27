@@ -6,7 +6,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 
 - Charges mensuelles avec part %, comptes, auto/manuel, et statut OK.
 - Enveloppes (budgets) + dépenses + reste du mois + dette reportée.
-- Reliquat d’enveloppe: un dépassement d’un mois est reporté sur le mois suivant pour la même enveloppe et réduit le montant à virer.
+- Reliquat d’enveloppe: un dépassement non traité est reporté cumulativement sur les mois suivants pour la même enveloppe (même si des mois intermédiaires n'ont pas été ouverts) et réduit le montant à virer.
 - Reliquat traité: une case à cocher par enveloppe permet de marquer le reliquat entrant comme géré manuellement (il n'est alors plus déduit du mois).
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat inclus), total à provisionner, reste à vivre.

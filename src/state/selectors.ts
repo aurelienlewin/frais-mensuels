@@ -235,6 +235,23 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
   const accounts = accountById(state.accounts);
   const budgets = budgetById(state.budgets);
   const rowCache = new Map<string, BudgetResolved | null>();
+  const firstCarryMonthByBudgetId = new Map<string, YM>();
+
+  for (const [monthKey, monthState] of Object.entries(state.months) as Array<[YM, MonthData]>) {
+    for (const [budgetId, budgetMonthState] of Object.entries(monthState.budgets)) {
+      const hasCarrySignal =
+        Boolean(budgetMonthState.snapshot) ||
+        (budgetMonthState.expenses?.length ?? 0) > 0 ||
+        budgetMonthState.carryOverHandled === true ||
+        budgetMonthState.carryForwardHandled === true;
+      if (!hasCarrySignal) continue;
+
+      const currentFirst = firstCarryMonthByBudgetId.get(budgetId);
+      if (!currentFirst || monthKey < currentFirst) {
+        firstCarryMonthByBudgetId.set(budgetId, monthKey);
+      }
+    }
+  }
 
   const ids: string[] = [];
   const seen = new Set<string>();
@@ -283,7 +300,8 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
 
     let carryOverSourceDebtCents = 0;
     const prevYm = ymAdd(targetYm, -1);
-    if (state.months[prevYm]) {
+    const firstCarryYm = firstCarryMonthByBudgetId.get(budgetId) ?? targetYm;
+    if (prevYm >= firstCarryYm) {
       const prev = resolveBudgetRow(prevYm, budgetId);
       carryOverSourceDebtCents = prev?.carryForwardDebtCents ?? 0;
     }
