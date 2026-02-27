@@ -38,6 +38,8 @@ export type BudgetResolved = {
   adjustedAmountCents: number;
   fundingCents: number;
   carryOverDebtCents: number;
+  baseMyShareCents: number;
+  carryOverMyShareCents: number;
   accountId: AccountId;
   accountName: string;
   scope: ChargeScope;
@@ -249,7 +251,9 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
           ? Math.max(0, Math.min(100, Math.round(snap.splitPercent)))
           : 50
         : 100;
+    const baseMyShareCents = scope === 'commun' ? Math.round((snap.amountCents * splitPercent) / 100) : snap.amountCents;
     const myShareCents = scope === 'commun' ? Math.round((fundingCents * splitPercent) / 100) : fundingCents;
+    const carryOverMyShareCents = Math.max(0, baseMyShareCents - myShareCents);
     const row = {
       id: budgetId,
       name: snap.name,
@@ -257,6 +261,8 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       adjustedAmountCents,
       fundingCents,
       carryOverDebtCents,
+      baseMyShareCents,
+      carryOverMyShareCents,
       accountId: snap.accountId,
       accountName: accName,
       scope,
@@ -303,6 +309,8 @@ export function totalsForMonth(state: AppState, ym: YM) {
   }
 
   const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
+  const totalBudgetsBaseCents = budgets.reduce((acc, b) => acc + b.baseMyShareCents, 0);
+  const totalBudgetsCarryOverCents = budgets.reduce((acc, b) => acc + b.carryOverMyShareCents, 0);
   const totalBudgetsCents = budgets.reduce((acc, b) => acc + b.myShareCents, 0);
   const totalBudgetSpentCents = budgets.reduce((acc, b) => acc + b.spentCents, 0);
   const totalPourMoiAvecEnveloppesCents = totalPourMoiCents + totalBudgetsCents;
@@ -313,6 +321,8 @@ export function totalsForMonth(state: AppState, ym: YM) {
     totalCommunPartCents,
     totalPersoCents,
     totalPourMoiCents,
+    totalBudgetsBaseCents,
+    totalBudgetsCarryOverCents,
     totalBudgetsCents,
     totalBudgetSpentCents,
     totalPourMoiAvecEnveloppesCents,
@@ -327,10 +337,19 @@ export function totalsByAccount(state: AppState, ym: YM) {
   const rows = chargesForMonth(state, ym);
   const budgets = budgetsForMonth(state, ym);
 
-  const byAccount = new Map<AccountId, { chargesTotalCents: number; chargesPaidCents: number; budgetsCents: number }>();
+  const byAccount = new Map<
+    AccountId,
+    { chargesTotalCents: number; chargesPaidCents: number; budgetsCents: number; budgetsBaseCents: number; budgetsCarryOverCents: number }
+  >();
   for (const r of rows) {
     const key: AccountId = r.destination?.kind === 'account' ? r.destination.accountId : r.accountId;
-    const prev = byAccount.get(key) ?? { chargesTotalCents: 0, chargesPaidCents: 0, budgetsCents: 0 };
+    const prev = byAccount.get(key) ?? {
+      chargesTotalCents: 0,
+      chargesPaidCents: 0,
+      budgetsCents: 0,
+      budgetsBaseCents: 0,
+      budgetsCarryOverCents: 0,
+    };
     const mineCents = r.scope === 'commun' ? r.myShareCents : r.amountCents;
     prev.chargesTotalCents += mineCents;
     if (r.paid) prev.chargesPaidCents += mineCents;
@@ -339,8 +358,16 @@ export function totalsByAccount(state: AppState, ym: YM) {
 
   for (const b of budgets) {
     const key: AccountId = b.accountId;
-    const prev = byAccount.get(key) ?? { chargesTotalCents: 0, chargesPaidCents: 0, budgetsCents: 0 };
+    const prev = byAccount.get(key) ?? {
+      chargesTotalCents: 0,
+      chargesPaidCents: 0,
+      budgetsCents: 0,
+      budgetsBaseCents: 0,
+      budgetsCarryOverCents: 0,
+    };
     prev.budgetsCents += b.myShareCents;
+    prev.budgetsBaseCents += b.baseMyShareCents;
+    prev.budgetsCarryOverCents += b.carryOverMyShareCents;
     byAccount.set(key, prev);
   }
 
@@ -348,13 +375,21 @@ export function totalsByAccount(state: AppState, ym: YM) {
   return order
     .map((id) => {
       const a = state.accounts.find((x) => x.id === id);
-      const t = byAccount.get(id) ?? { chargesTotalCents: 0, chargesPaidCents: 0, budgetsCents: 0 };
+      const t = byAccount.get(id) ?? {
+        chargesTotalCents: 0,
+        chargesPaidCents: 0,
+        budgetsCents: 0,
+        budgetsBaseCents: 0,
+        budgetsCarryOverCents: 0,
+      };
       return {
         accountId: id,
         accountName: a?.name ?? id,
         kind: a?.kind ?? 'perso',
         chargesTotalCents: t.chargesTotalCents,
         chargesPaidCents: t.chargesPaidCents,
+        budgetsBaseCents: t.budgetsBaseCents,
+        budgetsCarryOverCents: t.budgetsCarryOverCents,
         budgetsCents: t.budgetsCents,
         totalCents: t.chargesTotalCents + t.budgetsCents,
       };

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { monthLabelFr, monthLabelShortFr, ymAdd, ymFromDate, type YM } from '../lib/date';
+import { centsToEuros } from '../lib/money';
 import { useStore } from '../state/store';
+import { budgetsForMonth, totalsByAccount, totalsForMonth } from '../state/selectors';
 import { ChargesTable } from './ChargesTable';
 import { BudgetsPanel } from './BudgetsPanel';
 import { SummaryPanel } from './SummaryPanel';
@@ -10,6 +12,20 @@ import { AccountsSetupPrompt, EssentialBudgetsSetupPrompt } from './OnboardingSe
 import { cx } from './cx';
 import type { AuthUser } from '../lib/authApi';
 import { kickDynamicBackground } from '../lib/backgroundClient';
+
+function csvCell(value: string | number) {
+  const s = String(value);
+  if (/[;"\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function csvLine(values: Array<string | number>) {
+  return values.map(csvCell).join(';');
+}
+
+function toEuroCsv(cents: number) {
+  return centsToEuros(cents).toFixed(2);
+}
 
 export function AppView({
   initialYm,
@@ -169,7 +185,7 @@ export function AppView({
             </p>
             <Example>Menu ⋯ → “Synchroniser (cloud)” → mêmes données sur iOS + desktop</Example>
             <p className="text-xs text-slate-400">
-              Tu peux aussi exporter/importer un JSON depuis le menu pour une sauvegarde manuelle.
+              Tu peux aussi exporter/importer un JSON (sauvegarde) ou exporter un rapport CSV détaillé depuis le menu.
             </p>
           </>
         ),
@@ -178,6 +194,18 @@ export function AppView({
   }, []);
 
   const archived = state.months[ym]?.archived ?? false;
+  const reportTotals = useMemo(
+    () => totalsForMonth(state, ym),
+    [state.accounts, state.budgets, state.charges, state.months, ym],
+  );
+  const reportBudgets = useMemo(
+    () => budgetsForMonth(state, ym),
+    [state.accounts, state.budgets, state.months, ym],
+  );
+  const reportByAccount = useMemo(
+    () => totalsByAccount(state, ym),
+    [state.accounts, state.budgets, state.charges, state.months, ym],
+  );
   const todayYm = useMemo(() => ymFromDate(new Date()), []);
   const statusText =
     saving.status === 'saving'
@@ -635,6 +663,74 @@ export function AppView({
                     type="button"
                   >
                     Exporter (JSON)
+                  </button>
+
+                  <button
+                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+                    onClick={() => {
+                      const month = monthLabelFr(ym);
+                      const lines: string[] = [];
+
+                      lines.push(csvLine(['Mois', month, ym]));
+                      lines.push('');
+
+                      lines.push('Synthèse');
+                      lines.push(csvLine(['Champ', 'Montant (€)']));
+                      lines.push(csvLine(['Charges (pour moi)', toEuroCsv(reportTotals.totalPourMoiCents)]));
+                      lines.push(csvLine(['Enveloppes cibles (ma part)', toEuroCsv(reportTotals.totalBudgetsBaseCents)]));
+                      lines.push(csvLine(['Reliquat reporté', `-${toEuroCsv(reportTotals.totalBudgetsCarryOverCents)}`]));
+                      lines.push(csvLine(['Enveloppes à virer (ma part)', toEuroCsv(reportTotals.totalBudgetsCents)]));
+                      lines.push(csvLine(['Total (charges + enveloppes)', toEuroCsv(reportTotals.totalPourMoiAvecEnveloppesCents)]));
+                      lines.push(csvLine(['Reste à vivre (après enveloppes)', toEuroCsv(reportTotals.resteAVivreApresEnveloppesCents)]));
+                      lines.push('');
+
+                      lines.push('Enveloppes');
+                      lines.push(
+                        csvLine(['Enveloppe', 'Montant cible (€)', 'Reliquat reporté (€)', 'Budget ajusté (€)', 'À virer (€)', 'Dépensé (€)', 'Reste (€)']),
+                      );
+                      for (const b of reportBudgets) {
+                        lines.push(
+                          csvLine([
+                            b.name,
+                            toEuroCsv(b.amountCents),
+                            toEuroCsv(-b.carryOverDebtCents),
+                            toEuroCsv(b.adjustedAmountCents),
+                            toEuroCsv(b.fundingCents),
+                            toEuroCsv(b.spentCents),
+                            toEuroCsv(b.remainingCents),
+                          ]),
+                        );
+                      }
+                      lines.push('');
+
+                      lines.push('Par compte');
+                      lines.push(csvLine(['Compte', 'Charges (€)', 'Enveloppes cibles (€)', 'Reliquat reporté (€)', 'Enveloppes à virer (€)', 'Total (€)']));
+                      for (const a of reportByAccount) {
+                        lines.push(
+                          csvLine([
+                            a.accountName,
+                            toEuroCsv(a.chargesTotalCents),
+                            toEuroCsv(a.budgetsBaseCents),
+                            toEuroCsv(-a.budgetsCarryOverCents),
+                            toEuroCsv(a.budgetsCents),
+                            toEuroCsv(a.totalCents),
+                          ]),
+                        );
+                      }
+
+                      const csv = `${lines.join('\n')}\n`;
+                      const blob = new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8;' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `fraismensuels-rapport-${ym}.csv`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      menuRef.current?.removeAttribute('open');
+                    }}
+                    type="button"
+                  >
+                    Exporter (rapport CSV)
                   </button>
 
                   <button

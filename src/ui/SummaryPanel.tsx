@@ -166,7 +166,15 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             <Row label="Charges perso" value={formatEUR(totals.totalPersoCents)} />
             <div className="my-2 h-px bg-white/10" />
             <Row label="Total charges (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
-            <Row label="Enveloppes à virer (ma part)" value={formatEUR(totals.totalBudgetsCents)} />
+            <Row label="Enveloppes cibles (ma part)" value={formatEUR(totals.totalBudgetsBaseCents)} />
+            {totals.totalBudgetsCarryOverCents > 0 ? (
+              <Row
+                label="Reliquat reporté"
+                value={`-${formatEUR(totals.totalBudgetsCarryOverCents)}`}
+                valueClassName="text-rose-200"
+              />
+            ) : null}
+            <Row label="Enveloppes à virer (ma part)" value={formatEUR(totals.totalBudgetsCents)} strong />
             <Row label="Total (charges + enveloppes)" value={formatEUR(totals.totalPourMoiAvecEnveloppesCents)} strong />
             <Row
               label="Reste à vivre (après enveloppes)"
@@ -281,7 +289,11 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                     </div>
                     <div className="mt-0.5 truncate text-xs text-slate-400">
                       {formatEUR(a.chargesPaidCents)} / {formatEUR(a.chargesTotalCents)} charges cochées
-                      {a.budgetsCents ? ` · enveloppes à virer ${formatEUR(a.budgetsCents)}` : ''}
+                      {a.budgetsCents || a.budgetsCarryOverCents
+                        ? ` · enveloppes à virer ${formatEUR(a.budgetsCents)}${
+                            a.budgetsCarryOverCents ? ` (reliquat -${formatEUR(a.budgetsCarryOverCents)})` : ''
+                          }`
+                        : ''}
                     </div>
                   </div>
                   <div

@@ -219,11 +219,11 @@ function BudgetCard({
             disabled={!canEdit}
             onCommit={(name) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { name } })}
           />
-          <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-400">
-            <div className={cx('tabular-nums whitespace-nowrap', over ? 'text-rose-200' : 'text-slate-300')}>
-              {formatEUR(budget.spentCents)} / {formatEUR(budget.fundingCents)}
-            </div>
-          </div>
+	          <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-400">
+	            <div className={cx('tabular-nums whitespace-nowrap', over ? 'text-rose-200' : 'text-slate-300')}>
+	              {formatEUR(budget.spentCents)} / {formatEUR(budget.adjustedAmountCents)}
+	            </div>
+	          </div>
           <div
             className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
             role="progressbar"
@@ -241,28 +241,38 @@ function BudgetCard({
 
         <div className="w-full max-w-[260px]">
           <div className="text-xs text-slate-400">Montant réservé</div>
-          <InlineNumberInput
-            ariaLabel="Montant du budget (euros)"
-            value={centsToEuros(budget.amountCents)}
+	          <InlineNumberInput
+	            ariaLabel="Montant du budget (euros)"
+	            value={centsToEuros(budget.amountCents)}
             step={0.01}
             min={0}
             suffix="€"
-            disabled={!canEdit}
-            onCommit={(euros) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { amountCents: eurosToCents(euros) } })}
-          />
+	            disabled={!canEdit}
+	            onCommit={(euros) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { amountCents: eurosToCents(euros) } })}
+	          />
           <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-            <div>À virer ce mois</div>
-            <div className="tabular-nums text-slate-200">{formatEUR(budget.fundingCents)}</div>
+            <div>Montant cible</div>
+            <div className="tabular-nums text-slate-200">{formatEUR(budget.amountCents)}</div>
           </div>
-          {budget.carryOverDebtCents > 0 ? (
-            <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-              <div>Reliquat (mois précédent)</div>
-              <div className="tabular-nums text-rose-200">-{formatEUR(budget.carryOverDebtCents)}</div>
-            </div>
-          ) : null}
+	          <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+	            <div>À virer ce mois</div>
+	            <div className="tabular-nums font-semibold text-sky-200">{formatEUR(budget.fundingCents)}</div>
+	          </div>
+	          {budget.carryOverDebtCents > 0 ? (
+	            <div className="mt-2 flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
+	              <div>Reliquat (mois précédent)</div>
+	              <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverDebtCents)}</div>
+	            </div>
+	          ) : null}
           <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-            <div>Reste</div>
-            <div className={cx('tabular-nums', over ? 'text-rose-200' : 'text-emerald-200')}>{formatEUR(budget.remainingCents)}</div>
+            <div>Budget ajusté</div>
+            <div className={cx('tabular-nums', budget.adjustedAmountCents < 0 ? 'text-rose-200' : 'text-slate-100')}>
+              {formatEUR(budget.adjustedAmountCents)}
+            </div>
+          </div>
+	          <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+	            <div>Reste</div>
+	            <div className={cx('tabular-nums', over ? 'text-rose-200' : 'text-emerald-200')}>{formatEUR(budget.remainingCents)}</div>
           </div>
         </div>
       </div>

@@ -31,6 +31,7 @@ Ouvrir l'app dans le navigateur puis utiliser "Installer" si proposé.
 
 - Menu `...` en haut à droite -> `Exporter (JSON)` pour sauvegarder.
 - `Importer (JSON)` pour restaurer.
+- `Exporter (rapport CSV)` pour obtenir un état mensuel détaillé (enveloppes cibles, reliquat reporté, enveloppes à virer, détail par compte).
 
 <details>
 <summary>Cloud: configuration Redis (Vercel / Upstash)</summary>
