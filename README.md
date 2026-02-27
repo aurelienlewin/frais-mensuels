@@ -32,7 +32,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 Configuration Tailwind: approche CSS-first (`@import "tailwindcss"`, `@source`, `@theme` dans `src/styles.css`, sans `tailwind.config` JS).
 Conventions UI: composants utilitaires Tailwind v4 dans `@layer components` (`fm-panel`, `fm-card`, `fm-input`, `fm-btn-*`, `fm-stat-*`) pour harmoniser Résumé, Enveloppes et formulaires.
 Utilitaires UI: usage de `pointer-coarse:*`, `text-shadow-*`, `wrap-break-word` et `wrap-anywhere` pour l'ergonomie tactile et la lisibilité.
-Fond dynamique: crossfade en 2 couches piloté par tokens Tailwind v4 CSS-first (`@theme` avec `--duration-bg-crossfade` et `--ease-bg-crossfade`) pour n'afficher l'image suivante qu'après chargement/décodage, avec rotation automatique fréquente (~3m à ~3m45 sur appareils standard).
+Fond dynamique: crossfade en 2 couches piloté par tokens Tailwind v4 CSS-first (`@theme` avec `--duration-bg-crossfade` et `--ease-bg-crossfade`) pour n'afficher l'image suivante qu'après chargement/décodage, avec rotation automatique fréquente (~1m à ~1m15 sur appareils standard).
 
 ## Démarrer
 
