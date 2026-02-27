@@ -4,8 +4,8 @@ const LOCAL_FALLBACK_URL = '/bg-snowy.jpg';
 const FALLBACK_CSS = `url("${LOCAL_FALLBACK_URL}")`;
 
 const SAVED_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 3; // keep last good remote for 3 days
-const AUTO_ROTATE_MS = 1000 * 60 * 12;
-const AUTO_ROTATE_JITTER_MS = 1000 * 60 * 3;
+const AUTO_ROTATE_MS = 1000 * 60 * 3;
+const AUTO_ROTATE_JITTER_MS = 1000 * 45;
 const CROSSFADE_MS = 520;
 const CROSSFADE_SETTLE_MS = 70;
 const PRELOAD_TIMEOUT_MS = 1000 * 12;
