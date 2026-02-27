@@ -24,6 +24,8 @@ export function DonutChart({
   centerContainerClassName,
   centerTopClassName,
   centerBottomClassName,
+  centerHint,
+  centerHintClassName,
   ariaLabel,
   className,
 }: {
@@ -38,6 +40,8 @@ export function DonutChart({
   centerContainerClassName?: string;
   centerTopClassName?: string;
   centerBottomClassName?: string;
+  centerHint?: string;
+  centerHintClassName?: string;
   ariaLabel: string;
   className?: string;
 }) {
@@ -119,7 +123,7 @@ export function DonutChart({
           centerContainerClassName,
         )}
       >
-        {(centerTop || centerBottom) ? (
+        {(centerTop || centerBottom || centerHint) ? (
           <div className="rounded-2xl border border-white/20 bg-ink-950/85 px-3 py-1.5 shadow-[0_10px_40px_-25px_rgba(0,0,0,0.85)] shadow-black/30">
             {centerTop ? (
               <div className={cx('text-[11px] font-semibold leading-none text-slate-300', centerTopClassName)}>{centerTop}</div>
@@ -128,6 +132,9 @@ export function DonutChart({
               <div className={cx('mt-0.5 text-sm font-semibold leading-none tabular-nums text-slate-100', centerBottomClassName)}>
                 {centerBottom}
               </div>
+            ) : null}
+            {centerHint ? (
+              <div className={cx('mt-1 text-[10px] leading-tight text-slate-400', centerHintClassName)}>{centerHint}</div>
             ) : null}
           </div>
         ) : null}

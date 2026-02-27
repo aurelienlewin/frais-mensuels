@@ -122,7 +122,10 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     const belowFloorCents = Math.max(0, floorCents - currentCents);
     const shortfallAfterZeroCents = Math.max(0, requiredWithoutSavingsCents - salaryCents);
     const baseBeforeCarryCents = salaryCents - otherChargesTotalCents - totals.totalBudgetsBaseCents - floorCents;
+    const structuralGrossBeforeDebtCents = Math.max(0, baseBeforeCarryCents);
     const afterDebtCents = baseBeforeCarryCents - reliquatDebtImpactCents;
+    const structuralNetBeforeModelAdjustCents = Math.max(0, afterDebtCents);
+    const structuralDebtAbsorbedCents = Math.max(0, structuralGrossBeforeDebtCents - structuralNetBeforeModelAdjustCents);
     const withCreditCents = afterDebtCents + reliquatCreditImpactCents;
     let structuralSurplusCents = Math.max(0, afterDebtCents);
     let bonusCreditSurplusCents = Math.max(0, withCreditCents) - structuralSurplusCents;
@@ -145,6 +148,8 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       structuralSurplusCents,
       bonusCreditSurplusCents,
       debtImpactCents: reliquatDebtImpactCents,
+      structuralGrossBeforeDebtCents,
+      structuralDebtAbsorbedCents,
       salaryCents,
       requiredWithoutSavingsCents,
       shortfallAfterZeroCents,
@@ -228,6 +233,9 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       locked: autoSavingsBreakdown.locked,
       hasSurplus: autoSavingsBreakdown.surplusCents > 0,
       debtImpactCents: autoSavingsBreakdown.debtImpactCents,
+      structuralGrossBeforeDebtCents: autoSavingsBreakdown.structuralGrossBeforeDebtCents,
+      structuralDebtAbsorbedCents: autoSavingsBreakdown.structuralDebtAbsorbedCents,
+      structuralSurplusCents: autoSavingsBreakdown.structuralSurplusCents,
       bonusCreditSurplusCents: autoSavingsBreakdown.bonusCreditSurplusCents,
     };
   }, [autoSavingsBreakdown]);
@@ -237,6 +245,10 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   const savingsCenterBottom = activeSavingsSeg ? formatEUR(activeSavingsSeg.value) : formatEUR(savingsRepartition?.totalCents ?? 0);
   const savingsCenterTone =
     activeSavingsSeg?.id === 'savings-surplus-core' || activeSavingsSeg?.id === 'savings-surplus-credit' ? 'text-emerald-200' : 'text-slate-200';
+  const savingsCenterHint =
+    !activeSavingsSeg && savingsRepartition
+      ? `Brut ${formatEUR(savingsRepartition.structuralGrossBeforeDebtCents)} - dette ${formatEUR(savingsRepartition.structuralDebtAbsorbedCents)} = net ${formatEUR(savingsRepartition.structuralSurplusCents)}`
+      : undefined;
   const savingsCurrentCents = autoSavingsBreakdown?.currentCents ?? 0;
   const chargesWithoutSavingsCents = Math.max(0, totals.totalPourMoiCents - savingsCurrentCents);
   const chartSlides = useMemo<Array<'savings' | 'global'>>(
@@ -441,8 +453,8 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         </div>
 
         <div className="fm-card mt-6 overflow-hidden p-4 max-[360px]:mt-4 max-[360px]:p-3">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+            <div className="min-w-0">
               <div className="text-sm font-medium text-slate-200">
                 {activeChartId === 'savings' ? 'Répartition épargne' : 'Répartition'}
               </div>
@@ -456,39 +468,41 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   : repartition.label}
               </div>
             </div>
-            <div className="flex items-start gap-2">
-              <div className="text-right">
+            <div className="grid grid-cols-[84px_64px] items-start gap-2">
+              <div className="w-[84px] text-right">
                 <div className="text-xs font-semibold tabular-nums text-slate-200">
                   {activeChartId === 'savings' ? formatEUR(savingsRepartition?.totalCents ?? 0) : formatEUR(repartition.baseCents)}
                 </div>
                 <div className="text-[11px] text-slate-400">{activeChartId === 'savings' ? 'total épargne' : 'base'}</div>
               </div>
-              {canCycleCharts ? (
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
-                    onClick={() =>
-                      setActiveChartId(chartSlides[(activeSlideIndex - 1 + chartSlides.length) % chartSlides.length])
-                    }
-                    aria-label="Graphique précédent"
-                    title="Graphique précédent"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
-                    onClick={() =>
-                      setActiveChartId(chartSlides[(activeSlideIndex + 1) % chartSlides.length])
-                    }
-                    aria-label="Graphique suivant"
-                    title="Graphique suivant"
-                  >
-                    ›
-                  </button>
-                </div>
-              ) : null}
+              <div className="flex h-7 items-center justify-end gap-1">
+                {canCycleCharts ? (
+                  <>
+                    <button
+                      type="button"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
+                      onClick={() =>
+                        setActiveChartId(chartSlides[(activeSlideIndex - 1 + chartSlides.length) % chartSlides.length])
+                      }
+                      aria-label="Graphique précédent"
+                      title="Graphique précédent"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
+                      onClick={() =>
+                        setActiveChartId(chartSlides[(activeSlideIndex + 1) % chartSlides.length])
+                      }
+                      aria-label="Graphique suivant"
+                      title="Graphique suivant"
+                    >
+                      ›
+                    </button>
+                  </>
+                ) : null}
+              </div>
             </div>
           </div>
 
@@ -506,6 +520,8 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   centerTop={savingsCenterTop}
                   centerBottom={savingsCenterBottom}
                   centerBottomClassName={savingsCenterTone}
+                  centerHint={savingsCenterHint}
+                  centerHintClassName="max-w-[132px] tabular-nums"
                 />
                 <div className="min-w-0 space-y-2">
                   {savingsRepartition.segments.map((s) => (
