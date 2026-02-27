@@ -700,18 +700,25 @@ function Row({
   rowClassName?: string;
   tone?: 'neutral' | 'positive' | 'negative';
 }) {
-  const labelToneClass = tone === 'negative' ? 'text-rose-100' : tone === 'positive' ? 'text-emerald-100' : undefined;
-  const valueToneClass = tone === 'negative' ? 'text-rose-200' : tone === 'positive' ? 'text-emerald-200' : undefined;
+  const labelClass = (() => {
+    if (tone === 'negative') return 'text-rose-100';
+    if (tone === 'positive') return 'text-emerald-100';
+    return strong ? 'text-slate-200' : 'text-slate-400';
+  })();
+  const valueClass = (() => {
+    if (tone === 'negative') return 'text-rose-200';
+    if (tone === 'positive') return 'text-emerald-200';
+    return strong ? 'font-semibold text-slate-100' : 'text-slate-200';
+  })();
   return (
     <div className={cx('fm-stat-row', rowClassName)}>
-      <div className={cx('fm-stat-label', strong ? 'text-slate-200' : 'text-slate-400', labelToneClass)}>
+      <div className={cx('fm-stat-label', labelClass)}>
         {label}
       </div>
       <div
         className={cx(
           'fm-stat-value',
-          strong ? 'font-semibold text-slate-100' : 'text-slate-200',
-          valueToneClass,
+          valueClass,
           valueClassName,
         )}
       >
