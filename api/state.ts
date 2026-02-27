@@ -6,6 +6,9 @@ import { PayloadTooLargeError, badRequest, json, methodNotAllowed, parseCookies,
 
 const PREFIX = 'fm:state:';
 const CHUNK_SIZE = 900;
+const KV_READ_BATCH_SIZE = 10;
+const KV_WRITE_BATCH_SIZE = 8;
+const KV_DELETE_BATCH_SIZE = 16;
 const STATE_SECRET_ENV_KEYS = ['SYNC_STATE_SECRET', 'KV_STATE_SECRET', 'STATE_SECRET', 'SYNC_REDIS_STATE_SECRET'];
 
 let cachedStateKey: Buffer | null | undefined = undefined;
@@ -29,6 +32,16 @@ function resolveStateKey(): Buffer | null {
 function compareIso(a: string, b: string) {
   if (a === b) return 0;
   return a < b ? -1 : 1;
+}
+
+async function runBatched(total: number, batchSize: number, worker: (index: number) => Promise<void>): Promise<void> {
+  const step = Math.max(1, Math.floor(batchSize));
+  for (let start = 0; start < total; start += step) {
+    const end = Math.min(total, start + step);
+    const jobs: Promise<void>[] = [];
+    for (let i = start; i < end; i += 1) jobs.push(worker(i));
+    await Promise.all(jobs);
+  }
 }
 
 function chunkString(value: string): string[] {
@@ -139,12 +152,17 @@ function decodeStatePayload(meta: StateMeta, raw: string): unknown {
 async function getStateRecord(userId: string): Promise<{ meta: StateMeta; state: unknown } | null> {
   const meta = await getStateMeta(userId);
   if (!meta) return null;
-  const chunks: string[] = [];
-  for (let i = 0; i < meta.chunks; i += 1) {
+  const chunks = new Array<string>(meta.chunks);
+  let missing = false;
+  await runBatched(meta.chunks, KV_READ_BATCH_SIZE, async (i) => {
     const part = await kvGet(partKey(userId, i));
-    if (typeof part !== 'string') return null;
-    chunks.push(part);
-  }
+    if (typeof part !== 'string') {
+      missing = true;
+      return;
+    }
+    chunks[i] = part;
+  });
+  if (missing) return null;
   const raw = chunks.join('');
   const state = decodeStatePayload(meta, raw);
   return { meta, state };
@@ -154,9 +172,9 @@ async function putStateRecord(userId: string, modifiedAt: string, state: unknown
   const updatedAt = new Date().toISOString();
   const encoded = encodeStatePayload(state);
   const chunks = chunkString(encoded.payload);
-  for (let i = 0; i < chunks.length; i += 1) {
+  await runBatched(chunks.length, KV_WRITE_BATCH_SIZE, async (i) => {
     await kvSet(partKey(userId, i), chunks[i]!);
-  }
+  });
   const meta: StateMeta = {
     v: 2,
     enc: encoded.enc,
@@ -168,9 +186,10 @@ async function putStateRecord(userId: string, modifiedAt: string, state: unknown
   };
   await kvSet(metaKey(userId), JSON.stringify(meta));
   if (prevMeta && prevMeta.chunks > chunks.length) {
-    for (let i = chunks.length; i < prevMeta.chunks; i += 1) {
-      await kvDel(partKey(userId, i));
-    }
+    const staleCount = prevMeta.chunks - chunks.length;
+    await runBatched(staleCount, KV_DELETE_BATCH_SIZE, async (offset) => {
+      await kvDel(partKey(userId, chunks.length + offset));
+    });
   }
   return meta;
 }
@@ -198,7 +217,7 @@ export default async function handler(req: any, res: any) {
   const user = await getUserById(sess.userId);
   if (!user) return unauthorized(res);
   if (sess.sessionVersion !== user.sessionVersion) return unauthorized(res);
-  await touchSession(token);
+  await touchSession(token, sess);
   // Refresh cookie TTL (rolling sessions).
   setCookie(req, res, SESSION_COOKIE, token, { maxAgeSeconds: 60 * 60 * 24 * 30, httpOnly: true });
 

@@ -12,6 +12,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
 - Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
 - Auth simple: login/register, cookie HTTP-only, reset via recovery code.
+- Optimisations perfs: calculs mensuels dédupliqués, scans O(n²) évités, sync Redis chunkée/concurrente.
 
 ## Stack (2026-02-27)
 
@@ -54,6 +55,17 @@ L'API accepte (ordre de priorite):
 - `SYNC_REDIS_REST_URL` + `SYNC_REDIS_REST_TOKEN` (recommandé)
 - `KV_REST_API_URL` + `KV_REST_API_TOKEN` (Vercel KV)
 - `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (Upstash)
+
+</details>
+
+<details>
+<summary>Performance (2026-02-27)</summary>
+
+Optimisations appliquées sans changement fonctionnel:
+- `src/state/selectors.ts`: suppression de scans linéaires répétés (`find`/`includes`) via maps/sets, et réutilisation de données pré-calculées pour les totaux.
+- `src/ui/AppView.tsx` et `src/ui/SummaryPanel.tsx`: mutualisation des résultats `chargesForMonth` / `budgetsForMonth` pour éviter les recomputations multiples par rendu.
+- `api/state.ts`: lecture/écriture/suppression des chunks Redis en batches concurrents (latence de sync réduite, surtout sur gros états).
+- `api/_auth.ts`: `touchSession` accepte une session déjà chargée pour éviter un `kvGet` redondant.
 
 </details>
 

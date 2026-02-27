@@ -230,8 +230,8 @@ export async function getSession(token: string): Promise<SessionRecordV1 | null>
   }
 }
 
-export async function touchSession(token: string): Promise<void> {
-  const sess = await getSession(token);
+export async function touchSession(token: string, currentSession?: SessionRecordV1 | null): Promise<void> {
+  const sess = currentSession ?? (await getSession(token));
   if (!sess) return;
   const next = { ...sess, lastSeenAt: nowIso() };
   await kvSet(sessionKey(token), JSON.stringify(next));

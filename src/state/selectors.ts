@@ -52,9 +52,26 @@ export type BudgetResolved = {
   remainingCents: number;
 };
 
+type MonthComputedInputs = {
+  charges?: ChargeResolved[];
+  budgets?: BudgetResolved[];
+};
+
 function accountById(accounts: Account[]) {
   const map = new Map<AccountId, Account>();
   for (const a of accounts) map.set(a.id, a);
+  return map;
+}
+
+function chargeById(charges: AppState['charges']) {
+  const map = new Map<string, AppState['charges'][number]>();
+  for (const c of charges) map.set(c.id, c);
+  return map;
+}
+
+function budgetById(budgets: AppState['budgets']) {
+  const map = new Map<string, AppState['budgets'][number]>();
+  for (const b of budgets) map.set(b.id, b);
   return map;
 }
 
@@ -68,22 +85,23 @@ function todayIsoLocal() {
 }
 
 function resolveSnapshot(
-  state: AppState,
+  month: MonthData | undefined,
+  charges: Map<string, AppState['charges'][number]>,
   ym: YM,
   chargeId: string,
+  todayIso: string,
 ): { paid: boolean; snap: MonthChargeSnapshot | null } {
-  const month = state.months[ym];
   const monthState = month?.charges[chargeId];
   if (monthState?.snapshot && month?.archived) return { paid: monthState.paid, snap: monthState.snapshot };
 
-  const ch = state.charges.find((c) => c.id === chargeId);
+  const ch = charges.get(chargeId);
   // Month-only charges (planned/one-off): stored as a snapshot in the month, not in global charges.
   if (!ch && monthState?.snapshot) return { paid: monthState.paid, snap: monthState.snapshot };
   const defaultPaid =
     !month?.archived &&
     !monthState &&
     ch?.payment === 'auto' &&
-    dueDateIso(ym, ch?.dayOfMonth ?? 1) <= todayIsoLocal();
+    dueDateIso(ym, ch?.dayOfMonth ?? 1) <= todayIso;
   const paid = monthState?.paid ?? defaultPaid ?? false;
   if (!ch) return { paid, snap: null };
   return {
@@ -104,18 +122,26 @@ function resolveSnapshot(
 
 export function chargesForMonth(state: AppState, ym: YM): ChargeResolved[] {
   const month = state.months[ym];
+  const monthCharges = month?.charges;
   const accounts = accountById(state.accounts);
+  const charges = chargeById(state.charges);
+  const todayIso = todayIsoLocal();
 
   const ids: string[] = [];
+  const seen = new Set<string>();
   if (month?.archived) {
     for (const [id, st] of Object.entries(month.charges)) {
-      if (st.snapshot && !st.removed) ids.push(id);
+      if (st.snapshot && !st.removed) {
+        ids.push(id);
+        seen.add(id);
+      }
     }
   } else {
     for (const ch of state.charges) {
       if (!ch.active) continue;
-      if (month?.charges[ch.id]?.removed) continue;
+      if (monthCharges?.[ch.id]?.removed) continue;
       ids.push(ch.id);
+      seen.add(ch.id);
     }
   }
 
@@ -123,13 +149,15 @@ export function chargesForMonth(state: AppState, ym: YM): ChargeResolved[] {
   if (!month?.archived && month) {
     for (const id of Object.keys(month.charges)) {
       if (month.charges[id]?.removed) continue;
-      if (!ids.includes(id)) ids.push(id);
+      if (seen.has(id)) continue;
+      ids.push(id);
+      seen.add(id);
     }
   }
 
   const rows: ChargeResolved[] = [];
   for (const id of ids) {
-    const { paid, snap } = resolveSnapshot(state, ym, id);
+    const { paid, snap } = resolveSnapshot(month, charges, ym, id, todayIso);
     if (!snap) continue;
     const splitPercent =
       snap.scope === 'commun'
@@ -178,16 +206,15 @@ export function chargesForMonth(state: AppState, ym: YM): ChargeResolved[] {
 }
 
 function resolveBudgetSnapshot(
-  state: AppState,
-  ym: YM,
+  month: MonthData | undefined,
+  budgets: Map<string, AppState['budgets'][number]>,
   budgetId: string,
 ): { expenses: BudgetExpense[]; snap: MonthBudgetSnapshot | null } {
-  const month = state.months[ym];
   const monthState = month?.budgets[budgetId];
   const expenses = monthState?.expenses ?? [];
   if (month?.archived && monthState?.snapshot) return { expenses, snap: monthState.snapshot };
 
-  const b = state.budgets.find((x) => x.id === budgetId);
+  const b = budgets.get(budgetId);
   if (!b) return { expenses, snap: null };
   return { expenses, snap: { name: b.name, amountCents: b.amountCents, accountId: b.accountId, scope: b.scope, splitPercent: b.splitPercent } };
 }
@@ -195,12 +222,16 @@ function resolveBudgetSnapshot(
 export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
   const month = state.months[ym];
   const accounts = accountById(state.accounts);
+  const budgets = budgetById(state.budgets);
   const rowCache = new Map<string, BudgetResolved | null>();
 
   const ids: string[] = [];
+  const seen = new Set<string>();
   if (month?.archived) {
     for (const [id, st] of Object.entries(month.budgets)) {
-      if (st.snapshot) ids.push(id);
+      if (!st.snapshot) continue;
+      ids.push(id);
+      seen.add(id);
     }
   } else {
     const enabledForMonth = (b: Budget) => {
@@ -210,7 +241,9 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     };
 
     for (const b of state.budgets) {
-      if (enabledForMonth(b)) ids.push(b.id);
+      if (!enabledForMonth(b)) continue;
+      ids.push(b.id);
+      seen.add(b.id);
     }
 
     // Keep month expenses visible even if envelope got deleted later.
@@ -218,7 +251,9 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       for (const [id, st] of Object.entries(month.budgets)) {
         const hasExpenses = Boolean(st.expenses?.length);
         if (!hasExpenses) continue;
-        if (!ids.includes(id)) ids.push(id);
+        if (seen.has(id)) continue;
+        ids.push(id);
+        seen.add(id);
       }
     }
   }
@@ -228,7 +263,8 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     const cached = rowCache.get(key);
     if (cached !== undefined) return cached;
 
-    const { expenses, snap } = resolveBudgetSnapshot(state, targetYm, budgetId);
+    const targetMonth = state.months[targetYm];
+    const { expenses, snap } = resolveBudgetSnapshot(targetMonth, budgets, budgetId);
     if (!snap) {
       rowCache.set(key, null);
       return null;
@@ -294,9 +330,9 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
   return rows;
 }
 
-export function totalsForMonth(state: AppState, ym: YM) {
-  const rows = chargesForMonth(state, ym);
-  const budgets = budgetsForMonth(state, ym);
+export function totalsForMonth(state: AppState, ym: YM, precomputed?: MonthComputedInputs) {
+  const rows = precomputed?.charges ?? chargesForMonth(state, ym);
+  const budgets = precomputed?.budgets ?? budgetsForMonth(state, ym);
 
   let totalCommunCents = 0;
   let totalCommunPartCents = 0;
@@ -342,9 +378,10 @@ export function totalsForMonth(state: AppState, ym: YM) {
   };
 }
 
-export function totalsByAccount(state: AppState, ym: YM) {
-  const rows = chargesForMonth(state, ym);
-  const budgets = budgetsForMonth(state, ym);
+export function totalsByAccount(state: AppState, ym: YM, precomputed?: MonthComputedInputs) {
+  const rows = precomputed?.charges ?? chargesForMonth(state, ym);
+  const budgets = precomputed?.budgets ?? budgetsForMonth(state, ym);
+  const accounts = accountById(state.accounts);
 
   const byAccount = new Map<
     AccountId,
@@ -383,7 +420,7 @@ export function totalsByAccount(state: AppState, ym: YM) {
   const order = state.accounts.map((a) => a.id);
   return order
     .map((id) => {
-      const a = state.accounts.find((x) => x.id === id);
+      const a = accounts.get(id);
       const t = byAccount.get(id) ?? {
         chargesTotalCents: 0,
         chargesPaidCents: 0,

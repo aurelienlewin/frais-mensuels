@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { monthLabelFr, monthLabelShortFr, ymAdd, ymFromDate, type YM } from '../lib/date';
 import { centsToEuros } from '../lib/money';
 import { useStore } from '../state/store';
-import { budgetsForMonth, totalsByAccount, totalsForMonth } from '../state/selectors';
+import { budgetsForMonth, chargesForMonth, totalsByAccount, totalsForMonth } from '../state/selectors';
 import { ChargesTable } from './ChargesTable';
 import { BudgetsPanel } from './BudgetsPanel';
 import { SummaryPanel } from './SummaryPanel';
@@ -194,17 +194,21 @@ export function AppView({
   }, []);
 
   const archived = state.months[ym]?.archived ?? false;
-  const reportTotals = useMemo(
-    () => totalsForMonth(state, ym),
-    [state.accounts, state.budgets, state.charges, state.months, ym],
+  const reportCharges = useMemo(
+    () => chargesForMonth(state, ym),
+    [state.accounts, state.charges, state.months, ym],
   );
   const reportBudgets = useMemo(
     () => budgetsForMonth(state, ym),
     [state.accounts, state.budgets, state.months, ym],
   );
+  const reportTotals = useMemo(
+    () => totalsForMonth(state, ym, { charges: reportCharges, budgets: reportBudgets }),
+    [reportBudgets, reportCharges, state.months, state.salaryCents, ym],
+  );
   const reportByAccount = useMemo(
-    () => totalsByAccount(state, ym),
-    [state.accounts, state.budgets, state.charges, state.months, ym],
+    () => totalsByAccount(state, ym, { charges: reportCharges, budgets: reportBudgets }),
+    [reportBudgets, reportCharges, state.accounts, ym],
   );
   const todayYm = useMemo(() => ymFromDate(new Date()), []);
   const statusText =

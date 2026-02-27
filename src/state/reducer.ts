@@ -52,14 +52,19 @@ function ensureMonth(state: AppState, ym: MonthData['ym']): MonthData {
 }
 
 function nextMonthChargeSortOrder(state: AppState, month: MonthData, scope: Charge['scope']): number {
-  const maxGlobal = state.charges
-    .filter((c) => c.scope === scope)
-    .reduce((acc, c) => Math.max(acc, c.sortOrder), 0);
-  const maxLocal = Object.values(month.charges)
-    .map((st) => st.snapshot)
-    .filter(Boolean)
-    .filter((snap) => snap!.scope === scope)
-    .reduce((acc, snap) => Math.max(acc, snap!.sortOrder), 0);
+  let maxGlobal = 0;
+  for (const c of state.charges) {
+    if (c.scope !== scope) continue;
+    if (c.sortOrder > maxGlobal) maxGlobal = c.sortOrder;
+  }
+
+  let maxLocal = 0;
+  for (const st of Object.values(month.charges)) {
+    const snap = st.snapshot;
+    if (!snap || snap.scope !== scope) continue;
+    if (snap.sortOrder > maxLocal) maxLocal = snap.sortOrder;
+  }
+
   return Math.max(maxGlobal, maxLocal) + 10;
 }
 
@@ -441,8 +446,9 @@ export function reducer(state: AppState, action: Action): AppState {
         const ordered = action.orderedIds;
         const existingIds = new Set(state.charges.filter((c) => c.scope === scope).map((c) => c.id));
         const wanted = ordered.filter((id) => existingIds.has(id));
+        const wantedSet = new Set(wanted);
         const remaining = state.charges
-          .filter((c) => c.scope === scope && !wanted.includes(c.id))
+          .filter((c) => c.scope === scope && !wantedSet.has(c.id))
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map((c) => c.id);
         const full = [...wanted, ...remaining];

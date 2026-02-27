@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { centsToEuros, eurosToCents, formatEUR, parseEuroAmount } from '../lib/money';
-import { chargesForMonth, totalsByAccount, totalsForMonth } from '../state/selectors';
+import { budgetsForMonth, chargesForMonth, totalsByAccount, totalsForMonth } from '../state/selectors';
 import { useStoreState } from '../state/store';
 import type { YM } from '../lib/date';
 import { cx } from './cx';
@@ -10,17 +10,21 @@ import type { Account } from '../state/types';
 
 export function SummaryPanel({ ym }: { ym: YM }) {
   const { state, dispatch } = useStoreState();
-  const totals = useMemo(
-    () => totalsForMonth(state, ym),
-    [state.accounts, state.budgets, state.charges, state.months, ym],
-  );
   const charges = useMemo(
     () => chargesForMonth(state, ym),
     [state.accounts, state.charges, state.months, ym],
   );
+  const budgets = useMemo(
+    () => budgetsForMonth(state, ym),
+    [state.accounts, state.budgets, state.months, ym],
+  );
+  const totals = useMemo(
+    () => totalsForMonth(state, ym, { charges, budgets }),
+    [budgets, charges, state.months, state.salaryCents, ym],
+  );
   const byAccount = useMemo(
-    () => totalsByAccount(state, ym),
-    [state.accounts, state.budgets, state.charges, state.months, ym],
+    () => totalsByAccount(state, ym, { charges, budgets }),
+    [budgets, charges, state.accounts, ym],
   );
   const chargesByAccount = useMemo(() => {
     const map = new Map<Account['id'], { ids: string[]; unpaidCount: number }>();
