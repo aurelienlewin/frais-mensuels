@@ -119,6 +119,7 @@ function isAutoSavingsChargeName(name: string) {
 
 function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[]) {
   if (rows.length === 0) return rows;
+  if (state.months[ym]?.archived) return rows;
 
   const globalById = chargeById(state.charges);
   const candidates = rows
@@ -145,6 +146,9 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
 
   if (candidates.length === 0) return rows;
   const savings = candidates[0]!.row;
+  const savingsMonthState = state.months[ym]?.charges[savings.id];
+  const savingsLockedForMonth = savingsMonthState?.paid === true;
+  if (savingsLockedForMonth) return rows;
 
   const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
   const budgets = budgetsForMonth(state, ym);
