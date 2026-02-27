@@ -182,6 +182,17 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   const savingsCenterTop = activeSavingsSeg?.label ?? 'Épargne';
   const savingsCenterBottom = activeSavingsSeg ? formatEUR(activeSavingsSeg.value) : formatEUR(savingsRepartition?.totalCents ?? 0);
   const savingsCenterTone = activeSavingsSeg?.id === 'savings-surplus' ? 'text-emerald-200' : 'text-slate-200';
+  const chartSlides = useMemo<Array<'savings' | 'global'>>(
+    () => (savingsRepartition ? ['savings', 'global'] : ['global']),
+    [savingsRepartition],
+  );
+  const [activeChartId, setActiveChartId] = useState<'savings' | 'global'>(() => (savingsRepartition ? 'savings' : 'global'));
+  useEffect(() => {
+    if (chartSlides.includes(activeChartId)) return;
+    setActiveChartId(chartSlides[0]);
+  }, [activeChartId, chartSlides]);
+  const activeSlideIndex = Math.max(0, chartSlides.indexOf(activeChartId));
+  const canCycleCharts = chartSlides.length > 1;
 
   return (
     <section
@@ -379,98 +390,139 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           </div>
         </div>
 
-        {savingsRepartition ? (
-          <div className="fm-card mt-6 overflow-hidden p-4 max-[360px]:mt-4 max-[360px]:p-3">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <div className="text-sm font-medium text-slate-200">Répartition épargne</div>
-                <div className="mt-0.5 text-xs text-slate-400">
-                  {savingsRepartition.locked ? 'Montant figé (charge cochée)' : 'Base + surplus automatique'}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs font-semibold tabular-nums text-slate-200">{formatEUR(savingsRepartition.totalCents)}</div>
-                <div className="text-[11px] text-slate-400">total épargne</div>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-4">
-              <DonutChart
-                ariaLabel="Répartition de l'épargne"
-                segments={savingsRepartition.segments}
-                total={Math.max(savingsRepartition.totalCents, 1)}
-                activeSegmentId={activeSavingsSegId}
-                onActiveSegmentIdChange={setActiveSavingsSegId}
-                className="motion-hover mx-auto"
-                centerContainerClassName="-translate-y-4"
-                centerTop={savingsCenterTop}
-                centerBottom={savingsCenterBottom}
-                centerBottomClassName={savingsCenterTone}
-              />
-
-              <div className="min-w-0 space-y-2">
-                {savingsRepartition.segments.map((s) => (
-                  <LegendRow
-                    key={s.id}
-                    label={s.label}
-                    valueCents={s.value}
-                    color={s.color}
-                    baseCents={Math.max(savingsRepartition.totalCents, 1)}
-                    active={activeSavingsSegId === s.id}
-                    onActivate={() => setActiveSavingsSegId(s.id)}
-                    onDeactivate={() => setActiveSavingsSegId(null)}
-                  />
-                ))}
-                {!savingsRepartition.hasSurplus ? (
-                  <div className="text-xs text-slate-400">Pas de surplus ce mois (épargne au montant de base).</div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        ) : null}
-
         <div className="fm-card mt-6 overflow-hidden p-4 max-[360px]:mt-4 max-[360px]:p-3">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <div className="text-sm font-medium text-slate-200">Répartition</div>
-              <div className="mt-0.5 text-xs text-slate-400">{repartition.label}</div>
+              <div className="text-sm font-medium text-slate-200">
+                {activeChartId === 'savings' ? 'Répartition épargne' : 'Répartition'}
+              </div>
+              <div className="mt-0.5 text-xs text-slate-400">
+                {activeChartId === 'savings'
+                  ? savingsRepartition?.locked
+                    ? 'Montant figé (charge cochée)'
+                    : 'Base + surplus automatique'
+                  : repartition.label}
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-xs font-semibold tabular-nums text-slate-200">{formatEUR(repartition.baseCents)}</div>
-              <div className="text-[11px] text-slate-400">base</div>
+            <div className="flex items-start gap-2">
+              <div className="text-right">
+                <div className="text-xs font-semibold tabular-nums text-slate-200">
+                  {activeChartId === 'savings' ? formatEUR(savingsRepartition?.totalCents ?? 0) : formatEUR(repartition.baseCents)}
+                </div>
+                <div className="text-[11px] text-slate-400">{activeChartId === 'savings' ? 'total épargne' : 'base'}</div>
+              </div>
+              {canCycleCharts ? (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
+                    onClick={() =>
+                      setActiveChartId(chartSlides[(activeSlideIndex - 1 + chartSlides.length) % chartSlides.length])
+                    }
+                    aria-label="Graphique précédent"
+                    title="Graphique précédent"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
+                    onClick={() =>
+                      setActiveChartId(chartSlides[(activeSlideIndex + 1) % chartSlides.length])
+                    }
+                    aria-label="Graphique suivant"
+                    title="Graphique suivant"
+                  >
+                    ›
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
 
           <div className="mt-4 grid gap-4">
-            <DonutChart
-              ariaLabel="Répartition du budget"
-              segments={repartition.segments}
-              total={repartition.baseCents}
-              activeSegmentId={activeSegId}
-              onActiveSegmentIdChange={setActiveSegId}
-              className="motion-hover mx-auto"
-              centerContainerClassName="-translate-y-4"
-              centerTop={centerTop}
-              centerBottom={centerBottom}
-              centerBottomClassName={centerTone}
-            />
+            {activeChartId === 'savings' && savingsRepartition ? (
+              <>
+                <DonutChart
+                  ariaLabel="Répartition de l'épargne"
+                  segments={savingsRepartition.segments}
+                  total={Math.max(savingsRepartition.totalCents, 1)}
+                  activeSegmentId={activeSavingsSegId}
+                  onActiveSegmentIdChange={setActiveSavingsSegId}
+                  className="motion-hover mx-auto"
+                  centerContainerClassName="-translate-y-4"
+                  centerTop={savingsCenterTop}
+                  centerBottom={savingsCenterBottom}
+                  centerBottomClassName={savingsCenterTone}
+                />
+                <div className="min-w-0 space-y-2">
+                  {savingsRepartition.segments.map((s) => (
+                    <LegendRow
+                      key={s.id}
+                      label={s.label}
+                      valueCents={s.value}
+                      color={s.color}
+                      baseCents={Math.max(savingsRepartition.totalCents, 1)}
+                      active={activeSavingsSegId === s.id}
+                      onActivate={() => setActiveSavingsSegId(s.id)}
+                      onDeactivate={() => setActiveSavingsSegId(null)}
+                    />
+                  ))}
+                  {!savingsRepartition.hasSurplus ? (
+                    <div className="text-xs text-slate-400">Pas de surplus ce mois (épargne au montant de base).</div>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <>
+                <DonutChart
+                  ariaLabel="Répartition du budget"
+                  segments={repartition.segments}
+                  total={repartition.baseCents}
+                  activeSegmentId={activeSegId}
+                  onActiveSegmentIdChange={setActiveSegId}
+                  className="motion-hover mx-auto"
+                  centerContainerClassName="-translate-y-4"
+                  centerTop={centerTop}
+                  centerBottom={centerBottom}
+                  centerBottomClassName={centerTone}
+                />
 
-            <div className="min-w-0 space-y-2">
-              {repartition.segments.map((s) => (
-                <LegendRow
-                  key={s.id}
-                  label={s.label}
-                  valueCents={s.value}
-                  color={s.color}
-                  baseCents={repartition.baseCents}
-                  active={activeSegId === s.id}
-                  onActivate={() => setActiveSegId(s.id)}
-                  onDeactivate={() => setActiveSegId(null)}
+                <div className="min-w-0 space-y-2">
+                  {repartition.segments.map((s) => (
+                    <LegendRow
+                      key={s.id}
+                      label={s.label}
+                      valueCents={s.value}
+                      color={s.color}
+                      baseCents={repartition.baseCents}
+                      active={activeSegId === s.id}
+                      onActivate={() => setActiveSegId(s.id)}
+                      onDeactivate={() => setActiveSegId(null)}
+                    />
+                  ))}
+                  {repartition.segments.length === 0 ? <div className="text-sm text-slate-400">Aucune donnée.</div> : null}
+                </div>
+              </>
+            )}
+          </div>
+          {canCycleCharts ? (
+            <div className="mt-3 flex items-center justify-center gap-2">
+              {chartSlides.map((id, idx) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={cx(
+                    'h-1.5 rounded-full border border-white/10 transition-all',
+                    activeSlideIndex === idx ? 'w-5 bg-slate-200/80' : 'w-1.5 bg-white/20 hover:bg-white/35',
+                  )}
+                  onClick={() => setActiveChartId(id)}
+                  aria-label={`Aller au graphique ${idx + 1}`}
+                  title={`Graphique ${idx + 1}`}
                 />
               ))}
-              {repartition.segments.length === 0 ? <div className="text-sm text-slate-400">Aucune donnée.</div> : null}
             </div>
-          </div>
+          ) : null}
         </div>
 
         <div className="mt-8 max-[360px]:mt-6">
