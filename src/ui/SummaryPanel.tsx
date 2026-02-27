@@ -71,7 +71,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   );
   const recomputedBudgetsToWireCents = totals.totalBudgetsBaseCents + reliquatDebtImpactCents - reliquatCreditImpactCents;
   const recomputedProvisionCents = totals.totalPourMoiCents + recomputedBudgetsToWireCents;
-  const autoSavingsSurplus = useMemo(() => {
+  const autoSavingsBreakdown = useMemo(() => {
     const globalsById = new Map(state.charges.map((c) => [c.id, c]));
     const normalizeName = (s: string) =>
       s
@@ -117,7 +117,6 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     const floorCents = Math.max(0, selected.global.amountCents);
     const currentCents = Math.max(0, selected.row.amountCents);
     const surplusCents = Math.max(0, currentCents - floorCents);
-    if (surplusCents <= 0) return null;
     const locked = state.months[ym]?.charges[selected.row.id]?.paid === true;
     return { floorCents, currentCents, surplusCents, locked };
   }, [charges, state.charges, state.months, ym]);
@@ -164,6 +163,25 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             : repartition.remainingCents < 0
               ? 'text-rose-200'
               : 'text-emerald-200';
+  const savingsRepartition = useMemo(() => {
+    if (!autoSavingsBreakdown) return null;
+    const baseCents = Math.min(autoSavingsBreakdown.floorCents, autoSavingsBreakdown.currentCents);
+    const segments: DonutSegment[] = [
+      { id: 'savings-base', label: 'Base configurée', value: baseCents, color: 'rgb(148 163 184)' },
+      { id: 'savings-surplus', label: 'Surplus auto', value: autoSavingsBreakdown.surplusCents, color: 'rgb(16 185 129)' },
+    ].filter((s) => s.value > 0);
+    return {
+      segments,
+      totalCents: autoSavingsBreakdown.currentCents,
+      locked: autoSavingsBreakdown.locked,
+      hasSurplus: autoSavingsBreakdown.surplusCents > 0,
+    };
+  }, [autoSavingsBreakdown]);
+  const [activeSavingsSegId, setActiveSavingsSegId] = useState<string | null>(null);
+  const activeSavingsSeg = savingsRepartition?.segments.find((s) => s.id === activeSavingsSegId) ?? null;
+  const savingsCenterTop = activeSavingsSeg?.label ?? 'Épargne';
+  const savingsCenterBottom = activeSavingsSeg ? formatEUR(activeSavingsSeg.value) : formatEUR(savingsRepartition?.totalCents ?? 0);
+  const savingsCenterTone = activeSavingsSeg?.id === 'savings-surplus' ? 'text-emerald-200' : 'text-slate-200';
 
   return (
     <section
@@ -257,16 +275,16 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               {formatEUR(totals.totalPourMoiCents)} charges + {formatEUR(totals.totalBudgetsCents)} enveloppes à virer
             </div>
           </div>
-          {autoSavingsSurplus ? (
+          {autoSavingsBreakdown && autoSavingsBreakdown.surplusCents > 0 ? (
             <div className="rounded-2xl border border-emerald-300/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.22),rgba(6,78,59,0.2))] px-4 py-3 shadow-[0_20px_48px_-28px_rgba(16,185,129,0.95)]">
               <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-100/90">Surplus épargne</div>
               <div className="mt-1 flex items-end justify-between gap-3">
                 <div className="text-sm font-medium leading-tight text-emerald-100">Ajout automatique ce mois</div>
-                <div className="text-2xl font-semibold tabular-nums text-emerald-50">+{formatEUR(autoSavingsSurplus.surplusCents)}</div>
+                <div className="text-2xl font-semibold tabular-nums text-emerald-50">+{formatEUR(autoSavingsBreakdown.surplusCents)}</div>
               </div>
               <div className="mt-1 text-[11px] text-emerald-100/90">
-                Épargne: {formatEUR(autoSavingsSurplus.floorCents)} → {formatEUR(autoSavingsSurplus.currentCents)}
-                {autoSavingsSurplus.locked ? ' (figée: charge cochée)' : ''}
+                Épargne: {formatEUR(autoSavingsBreakdown.floorCents)} → {formatEUR(autoSavingsBreakdown.currentCents)}
+                {autoSavingsBreakdown.locked ? ' (figée: charge cochée)' : ''}
               </div>
             </div>
           ) : null}
@@ -360,6 +378,56 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             </div>
           </div>
         </div>
+
+        {savingsRepartition ? (
+          <div className="fm-card mt-6 overflow-hidden p-4 max-[360px]:mt-4 max-[360px]:p-3">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="text-sm font-medium text-slate-200">Répartition épargne</div>
+                <div className="mt-0.5 text-xs text-slate-400">
+                  {savingsRepartition.locked ? 'Montant figé (charge cochée)' : 'Base + surplus automatique'}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs font-semibold tabular-nums text-slate-200">{formatEUR(savingsRepartition.totalCents)}</div>
+                <div className="text-[11px] text-slate-400">total épargne</div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4">
+              <DonutChart
+                ariaLabel="Répartition de l'épargne"
+                segments={savingsRepartition.segments}
+                total={Math.max(savingsRepartition.totalCents, 1)}
+                activeSegmentId={activeSavingsSegId}
+                onActiveSegmentIdChange={setActiveSavingsSegId}
+                className="motion-hover mx-auto"
+                centerContainerClassName="-translate-y-4"
+                centerTop={savingsCenterTop}
+                centerBottom={savingsCenterBottom}
+                centerBottomClassName={savingsCenterTone}
+              />
+
+              <div className="min-w-0 space-y-2">
+                {savingsRepartition.segments.map((s) => (
+                  <LegendRow
+                    key={s.id}
+                    label={s.label}
+                    valueCents={s.value}
+                    color={s.color}
+                    baseCents={Math.max(savingsRepartition.totalCents, 1)}
+                    active={activeSavingsSegId === s.id}
+                    onActivate={() => setActiveSavingsSegId(s.id)}
+                    onDeactivate={() => setActiveSavingsSegId(null)}
+                  />
+                ))}
+                {!savingsRepartition.hasSurplus ? (
+                  <div className="text-xs text-slate-400">Pas de surplus ce mois (épargne au montant de base).</div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <div className="fm-card mt-6 overflow-hidden p-4 max-[360px]:mt-4 max-[360px]:p-3">
           <div className="flex flex-wrap items-start justify-between gap-4">
