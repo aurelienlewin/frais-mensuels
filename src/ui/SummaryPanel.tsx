@@ -51,15 +51,12 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 
   const ratio =
     totals.salaryCents > 0 ? Math.min(1, Math.max(0, totals.totalPourMoiAvecEnveloppesCents / totals.salaryCents)) : 0;
-  const reliquatDebtImpactCents = useMemo(
-    () => budgets.reduce((acc, b) => acc + Math.max(0, b.carryOverMyShareCents), 0),
-    [budgets],
-  );
+  const reliquatDebtFromResteCents = useMemo(() => budgets.reduce((acc, b) => acc + b.carryOverDebtMyShareCents, 0), [budgets]);
   const reliquatCreditImpactCents = useMemo(
     () => budgets.reduce((acc, b) => acc + Math.max(0, -b.carryOverMyShareCents), 0),
     [budgets],
   );
-  const recomputedBudgetsToWireCents = totals.totalBudgetsBaseCents + reliquatDebtImpactCents - reliquatCreditImpactCents;
+  const recomputedBudgetsToWireCents = totals.totalBudgetsBaseCents - reliquatCreditImpactCents;
   const recomputedProvisionCents = totals.totalPourMoiCents + recomputedBudgetsToWireCents;
 
   const repartition = (() => {
@@ -75,7 +72,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       { id: 'commun', label: 'Commun (ma part)', value: commun, color: 'rgb(56 189 248)' },
       { id: 'perso', label: 'Perso', value: perso, color: 'rgb(52 211 153)' },
       { id: 'envelopes', label: 'Enveloppes', value: envelopes, color: 'rgb(167 139 250)' },
-      ...(remaining > 0 ? [{ id: 'remaining', label: 'Disponible', value: remaining, color: 'rgb(226 232 240)' }] : []),
+      ...(remaining > 0 ? [{ id: 'remaining', label: 'Reste', value: remaining, color: 'rgb(226 232 240)' }] : []),
     ].filter((s) => s.value > 0);
 
     return {
@@ -201,10 +198,10 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           <div className="grid gap-2">
             <Row label="Charges à provisionner (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
             <Row label="Enveloppes cibles (ma part)" value={formatEUR(totals.totalBudgetsBaseCents)} />
-            {reliquatDebtImpactCents > 0 ? (
+            {reliquatDebtFromResteCents > 0 ? (
               <Row
-                label="Dette entrante à ajouter (enveloppes)"
-                value={formatEUR(reliquatDebtImpactCents)}
+                label="Dette entrante prélevée sur reste"
+                value={formatEUR(reliquatDebtFromResteCents)}
                 valueClassName="text-rose-200"
                 rowClassName="fm-reliquat-negative"
               />
@@ -235,10 +232,6 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               <div className="flex items-center justify-between gap-2">
                 <span>Enveloppes cibles</span>
                 <span className="tabular-nums text-slate-100">{formatEUR(totals.totalBudgetsBaseCents)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span>+ Dette entrante</span>
-                <span className="tabular-nums text-rose-200">{formatEUR(reliquatDebtImpactCents)}</span>
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span>- Reliquat positif</span>
@@ -342,6 +335,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             {byAccount.map((a) => {
               const meta = chargesByAccount.get(a.accountId) ?? null;
               const allPaid = Boolean(meta && meta.ids.length > 0 && meta.unpaidCount === 0);
+              const unpaidCount = meta?.unpaidCount ?? 0;
               const canMarkAll = !archived && Boolean(meta && meta.unpaidCount > 0);
               const hasBudgets = a.budgetsBaseCents !== 0 || a.budgetsCarryOverCents !== 0 || a.budgetsCents !== 0;
               const bulkLabel = (() => {
@@ -355,9 +349,9 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   key={a.accountId}
                   type="button"
                   className={cx(
-                    'fm-card min-w-0 px-4 py-3 text-left transition-colors',
-                    canMarkAll ? 'hover:bg-white/10' : 'opacity-80',
-                    allPaid && 'opacity-70',
+                    'fm-account-summary-card text-left',
+                    canMarkAll ? 'fm-account-summary-card-clickable' : 'opacity-85',
+                    allPaid && 'opacity-75',
                   )}
                   disabled={!canMarkAll}
                   title={bulkLabel}
@@ -367,10 +361,10 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                     dispatch({ type: 'SET_CHARGES_PAID', ym, chargeIds: meta.ids, paid: true });
                   }}
                 >
-                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_132px] sm:items-center">
+                  <div className="fm-account-summary-head">
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="min-w-0 wrap-break-word text-sm font-semibold leading-tight text-slate-100">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <div className="min-w-0 wrap-break-word text-[15px] font-semibold leading-tight text-slate-100 text-shadow-2xs">
                           {a.accountName}
                         </div>
                         <span
@@ -398,56 +392,41 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                       ) : null}
 
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        <span className="fm-chip-pill-readable gap-1.5 px-2 py-0.5 text-[11px]">
-                          <span className="text-slate-300">Charges:</span>
-                          <span className="tabular-nums text-slate-100">{formatEUR(a.chargesTotalCents)}</span>
-                        </span>
-                        <span className="fm-chip-pill-readable gap-1.5 px-2 py-0.5 text-[11px]">
-                          <span className="text-slate-300">Cochées:</span>
-                          <span className="tabular-nums text-slate-100">{formatEUR(a.chargesPaidCents)}</span>
-                        </span>
-                        {hasBudgets ? (
-                          <span className="fm-chip-pill-readable gap-1.5 px-2 py-0.5 text-[11px]">
-                            <span className="text-slate-300">Env. à virer:</span>
-                            <span className="tabular-nums text-slate-100">{formatEUR(a.budgetsCents)}</span>
+                        {unpaidCount > 0 ? (
+                          <span className="fm-chip-pill border-amber-200/30 bg-amber-400/12 px-2 py-0.5 text-[10px] font-semibold text-amber-100">
+                            {unpaidCount} à cocher
                           </span>
                         ) : null}
-                        {hasBudgets ? (
-                          <span className="fm-chip-pill-readable gap-1.5 px-2 py-0.5 text-[11px]">
-                            <span className="text-slate-300">Cible:</span>
-                            <span className="tabular-nums text-slate-100">{formatEUR(a.budgetsBaseCents)}</span>
-                          </span>
-                        ) : null}
-                        {a.budgetsCarryOverCents !== 0 ? (
-                          <span
-                            className={cx(
-                              'fm-chip-pill-readable gap-1.5 px-2 py-0.5 text-[11px]',
-                              a.budgetsCarryOverCents > 0 ? 'fm-reliquat-negative' : 'fm-reliquat-positive',
-                            )}
-                          >
-                            <span>Impact reliquat:</span>
-                            <span className="tabular-nums">{formatSignedCents(a.budgetsCarryOverCents)}</span>
-                          </span>
+                        {canMarkAll ? (
+                          <span className="fm-chip-pill px-2 py-0.5 text-[10px] text-slate-300">Appui pour tout cocher</span>
                         ) : null}
                       </div>
-
-                      {canMarkAll ? (
-                        <div className="mt-1.5 text-[11px] text-slate-400">
-                          Appui: cocher toutes les charges liées à ce compte.
-                        </div>
-                      ) : null}
                     </div>
 
-                    <div className="sm:justify-self-end">
-                      <div
-                        className={cx(
-                          'inline-flex rounded-xl px-3 py-1.5 text-sm font-semibold tabular-nums',
-                          a.kind === 'commun' ? 'bg-sky-400/10 text-sky-200' : 'bg-emerald-400/10 text-emerald-200',
-                        )}
-                      >
-                        {formatEUR(a.totalCents)}
-                      </div>
+                    <div
+                      className={cx(
+                        'fm-account-summary-total',
+                        a.kind === 'commun'
+                          ? 'border-sky-200/30 bg-sky-400/12 text-sky-200'
+                          : 'border-emerald-200/30 bg-emerald-400/12 text-emerald-200',
+                      )}
+                    >
+                      {formatEUR(a.totalCents)}
                     </div>
+                  </div>
+
+                  <div className="mt-3 space-y-1.5">
+                    <AccountMetric label="Charges à provisionner" value={formatEUR(a.chargesTotalCents)} />
+                    <AccountMetric label="Charges cochées" value={formatEUR(a.chargesPaidCents)} />
+                    {hasBudgets ? <AccountMetric label="Enveloppes à virer" value={formatEUR(a.budgetsCents)} /> : null}
+                    {hasBudgets ? <AccountMetric label="Enveloppes cibles" value={formatEUR(a.budgetsBaseCents)} /> : null}
+                    {a.budgetsCarryOverCents !== 0 ? (
+                      <AccountMetric
+                        label="Impact reliquat"
+                        value={formatSignedCents(a.budgetsCarryOverCents)}
+                        rowClassName={a.budgetsCarryOverCents > 0 ? 'fm-reliquat-negative' : 'fm-reliquat-positive'}
+                      />
+                    ) : null}
                   </div>
                 </button>
               );
@@ -729,6 +708,25 @@ function Row({
       >
         {value}
       </div>
+    </div>
+  );
+}
+
+function AccountMetric({
+  label,
+  value,
+  rowClassName,
+  valueClassName,
+}: {
+  label: string;
+  value: string;
+  rowClassName?: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div className={cx('fm-account-summary-metric', rowClassName)}>
+      <span className="fm-account-summary-metric-label">{label}</span>
+      <span className={cx('fm-account-summary-metric-value', valueClassName)}>{value}</span>
     </div>
   );
 }

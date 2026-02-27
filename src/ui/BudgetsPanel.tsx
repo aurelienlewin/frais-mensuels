@@ -309,12 +309,12 @@ function BudgetCard({
           {!budget.carryOverHandled && budget.carryOverCreditCents > 0 ? (
             <div className="fm-reliquat-positive mt-3 rounded-xl border px-3 py-2 shadow-[0_12px_28px_-18px_rgba(16,185,129,0.85)]">
               <div className="text-[10px] font-semibold uppercase tracking-wide">Reliquat positif reporté</div>
-              <div className="mt-1 flex items-center justify-between gap-2 text-sm">
-                <div className="leading-tight">
-                  {formatEUR(budget.carryOverCreditCents)} déjà disponible du mois précédent
+                <div className="mt-1 flex items-center justify-between gap-2 text-sm">
+                  <div className="leading-tight">
+                  {formatEUR(budget.carryOverCreditCents)} déjà reporté du mois précédent
+                  </div>
+                  <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverCreditCents)}</div>
                 </div>
-                <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverCreditCents)}</div>
-              </div>
               <div className="mt-1 text-[11px] text-emerald-100/90">
                 Virement réduit: {formatEUR(budget.amountCents)} → {formatEUR(budget.fundingCents)}
               </div>
@@ -375,7 +375,7 @@ function BudgetCard({
                 ) : null}
                 {!budget.carryOverHandled && budget.carryOverDebtCents > 0 ? (
                   <div className="fm-reliquat-negative mt-1 flex items-center justify-between rounded-lg border px-2 py-1 text-xs">
-                    <div>Reliquat dette appliqué</div>
+                    <div>Dette entrante (sur reste)</div>
                     <div className="tabular-nums font-semibold">+{formatEUR(budget.carryOverDebtCents)}</div>
                   </div>
                 ) : null}

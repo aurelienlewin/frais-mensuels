@@ -46,6 +46,7 @@ export type BudgetResolved = {
   carryOverCreditCents: number;
   carryOverTotalCents: number;
   carryOverNetCents: number;
+  carryOverDebtMyShareCents: number;
   carryForwardSourceDebtCents: number;
   carryForwardSourceCreditCents: number;
   carryForwardHandled: boolean;
@@ -117,6 +118,7 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
   const candidates = rows.filter((r) => {
     const global = globalById.get(r.id);
     if (!global || !global.active) return false; // recurring charge only
+    if (global.payment !== 'auto') return false;
     if (r.scope !== 'perso') return false;
     return isAutoSavingsChargeName(r.name);
   });
@@ -127,18 +129,18 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
 
   const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
   const budgets = budgetsForMonth(state, ym);
-  const budgetsBaseCents = budgets.reduce((acc, b) => acc + b.baseMyShareCents, 0);
-  const budgetsDebtImpactCents = budgets.reduce((acc, b) => acc + Math.max(0, b.carryOverMyShareCents), 0);
-  const budgetsCreditImpactCents = budgets.reduce((acc, b) => acc + Math.max(0, -b.carryOverMyShareCents), 0);
+  const budgetsToWireCents = budgets.reduce((acc, b) => acc + b.myShareCents, 0);
+  const budgetsDebtFromResteCents = budgets.reduce((acc, b) => acc + b.carryOverDebtMyShareCents, 0);
   const otherChargesTotalCents = rows.reduce((acc, r) => {
     if (r.id === savings.id) return acc;
     return acc + (r.scope === 'commun' ? r.myShareCents : r.amountCents);
   }, 0);
-  // Priority: cover base envelopes + incoming debt first, then apply positive carry-over,
-  // and route only the remaining amount to the recurring Epargne charge.
-  const availableForSavingsCents =
-    salaryCents - otherChargesTotalCents - budgetsBaseCents - budgetsDebtImpactCents + budgetsCreditImpactCents;
-  const nextSavingsAmountCents = Math.max(0, availableForSavingsCents);
+  const savingsFloorCents = Math.max(0, savings.amountCents);
+  // Rule: wire envelopes with positive reliquat applied; incoming debt is paid from monthly "reste"
+  // before allocating extra to Epargne (floor kept).
+  const remainingAboveFloorCents = salaryCents - otherChargesTotalCents - budgetsToWireCents - budgetsDebtFromResteCents - savingsFloorCents;
+  const extraSavingsCents = Math.max(0, remainingAboveFloorCents);
+  const nextSavingsAmountCents = savingsFloorCents + extraSavingsCents;
 
   if (savings.amountCents === nextSavingsAmountCents) return rows;
   return rows.map((r) => {
@@ -378,7 +380,8 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     const carryOverNetCents = carryOverCreditCents - carryOverDebtCents;
 
     const spentCents = expenses.reduce((acc, e) => acc + e.amountCents, 0);
-    const adjustedAmountCents = snap.amountCents - carryOverNetCents;
+    // Incoming debt is not added to the envelope transfer; only positive reliquat can reduce it.
+    const adjustedAmountCents = snap.amountCents - carryOverCreditCents;
     const fundingCents = Math.max(0, adjustedAmountCents);
     // UX-facing monthly remainder on the monthly target itself (excluding debt catch-up transfer).
     const remainingToFundCents = snap.amountCents - spentCents;
@@ -400,8 +403,10 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
         : 100;
     const baseMyShareCents = scope === 'commun' ? Math.round((snap.amountCents * splitPercent) / 100) : snap.amountCents;
     const myShareCents = scope === 'commun' ? Math.round((fundingCents * splitPercent) / 100) : fundingCents;
+    const carryOverDebtMyShareCents =
+      scope === 'commun' ? Math.round((carryOverDebtCents * splitPercent) / 100) : carryOverDebtCents;
     // Signed reliquat impact on my transfer share:
-    // positive => increases transfer (incoming debt), negative => reduces transfer (incoming credit).
+    // negative => reduces transfer (incoming positive reliquat).
     const carryOverMyShareCents = myShareCents - baseMyShareCents;
     const row = {
       id: budgetId,
@@ -418,6 +423,7 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       carryOverCreditCents,
       carryOverTotalCents,
       carryOverNetCents,
+      carryOverDebtMyShareCents,
       carryForwardSourceDebtCents,
       carryForwardSourceCreditCents,
       carryForwardHandled,
