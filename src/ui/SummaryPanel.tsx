@@ -100,7 +100,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-sm text-slate-300">Résumé</div>
-          <h2 className="mt-1 text-xl font-semibold tracking-tight">Totaux</h2>
+          <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Totaux</h2>
         </div>
         <div className="flex items-center gap-2">
           <div
@@ -271,7 +271,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         </div>
 
         <div className="mt-8 max-[360px]:mt-6">
-          <div className="text-sm font-medium text-slate-200">Par compte (montant à approvisionner)</div>
+          <div className="text-sm font-medium text-slate-200 text-shadow-2xs">Par compte (montant à approvisionner)</div>
           <div className="mt-3 space-y-2">
             {byAccount.map((a) => {
               const meta = chargesByAccount.get(a.accountId) ?? null;
@@ -304,7 +304,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_132px] sm:items-center">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="min-w-0 break-words text-sm font-semibold leading-tight text-slate-100">
+                        <div className="min-w-0 wrap-break-word text-sm font-semibold leading-tight text-slate-100">
                           {a.accountName}
                         </div>
                         <span
@@ -323,29 +323,34 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                       </div>
 
                       {a.accountName !== a.accountId ? (
-                        <div className="mt-1 break-all font-mono text-[11px] text-slate-400">{a.accountId}</div>
+                        <div className="mt-1 wrap-anywhere font-mono text-[11px] text-slate-400">{a.accountId}</div>
                       ) : null}
 
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        <span className="fm-chip-pill px-2 py-0.5 text-[11px]">
-                          Charges: <span className="tabular-nums text-slate-100">{formatEUR(a.chargesTotalCents)}</span>
+                        <span className="fm-chip-pill-readable gap-1.5 px-2 py-0.5 text-[11px]">
+                          <span className="text-slate-300">Charges:</span>
+                          <span className="tabular-nums text-slate-100">{formatEUR(a.chargesTotalCents)}</span>
                         </span>
-                        <span className="fm-chip-pill px-2 py-0.5 text-[11px]">
-                          Cochées: <span className="tabular-nums text-slate-100">{formatEUR(a.chargesPaidCents)}</span>
+                        <span className="fm-chip-pill-readable gap-1.5 px-2 py-0.5 text-[11px]">
+                          <span className="text-slate-300">Cochées:</span>
+                          <span className="tabular-nums text-slate-100">{formatEUR(a.chargesPaidCents)}</span>
                         </span>
                         {hasBudgets ? (
-                          <span className="fm-chip-pill px-2 py-0.5 text-[11px]">
-                            Env. à virer: <span className="tabular-nums text-slate-100">{formatEUR(a.budgetsCents)}</span>
+                          <span className="fm-chip-pill-readable gap-1.5 px-2 py-0.5 text-[11px]">
+                            <span className="text-slate-300">Env. à virer:</span>
+                            <span className="tabular-nums text-slate-100">{formatEUR(a.budgetsCents)}</span>
                           </span>
                         ) : null}
                         {hasBudgets ? (
-                          <span className="fm-chip-pill px-2 py-0.5 text-[11px]">
-                            Cible: <span className="tabular-nums text-slate-100">{formatEUR(a.budgetsBaseCents)}</span>
+                          <span className="fm-chip-pill-readable gap-1.5 px-2 py-0.5 text-[11px]">
+                            <span className="text-slate-300">Cible:</span>
+                            <span className="tabular-nums text-slate-100">{formatEUR(a.budgetsBaseCents)}</span>
                           </span>
                         ) : null}
                         {a.budgetsCarryOverCents > 0 ? (
-                          <span className="fm-chip-pill border-rose-200/25 bg-rose-500/12 px-2 py-0.5 text-[11px] text-rose-100">
-                            Reliquat: <span className="tabular-nums">-{formatEUR(a.budgetsCarryOverCents)}</span>
+                          <span className="fm-chip-pill-readable gap-1.5 border-rose-200/25 bg-rose-500/12 px-2 py-0.5 text-[11px] text-rose-100">
+                            <span>Reliquat:</span>
+                            <span className="tabular-nums">-{formatEUR(a.budgetsCarryOverCents)}</span>
                           </span>
                         ) : null}
                       </div>

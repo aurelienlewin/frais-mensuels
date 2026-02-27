@@ -209,7 +209,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm text-slate-300">Charges</h2>
-                <div className="mt-1 text-xl font-semibold tracking-tight">
+                <div className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">
                   {visibleRows.length} lignes
                   {isFiltering ? <span className="ml-2 text-sm font-medium text-slate-400">/ {rows.length}</span> : null}
                 </div>
@@ -648,7 +648,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 		                            </select>
 		                          ) : (
 		                            <span
-		                              className="fm-chip-field min-w-0 truncate px-2 py-1 text-[11px] font-medium"
+		                              className="fm-chip-field min-w-0 wrap-break-word px-2 py-1 text-[11px] font-medium"
 		                              title={r.accountName}
 		                            >
 		                              {r.accountName}
@@ -729,7 +729,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
 	                            )
 	                          ) : r.destinationLabel ? (
 	                            <span
-	                              className="fm-chip-field min-w-0 truncate px-2 py-1 text-[11px] font-medium"
+	                              className="fm-chip-field min-w-0 wrap-break-word px-2 py-1 text-[11px] font-medium"
 	                              title={r.destinationLabel}
 	                            >
 	                              {r.destinationLabel}
@@ -1053,7 +1053,7 @@ function MobileCard({
             <span className={cx(chipBase, typeChip)}>{r.scope === 'commun' ? 'Commun' : 'Perso'}</span>
             <span className={cx(chipBase, paymentChip)}>{r.payment === 'auto' ? 'Auto' : 'Manuel'}</span>
             {r.destinationLabel ? (
-              <span title={r.destinationLabel} className={cx(chipBase, 'max-w-[160px] truncate text-slate-300')}>
+              <span title={r.destinationLabel} className={cx(chipBase, 'max-w-[220px] wrap-break-word text-slate-300')}>
                 → {r.destinationLabel}
               </span>
             ) : null}

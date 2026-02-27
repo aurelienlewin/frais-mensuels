@@ -11,6 +11,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat inclus), total à provisionner, reste à vivre.
 - Vue par compte orientée action: montant à approvisionner en début de mois.
+- UI mobile/lecture: boutons de sections renforcés et pills plus lisibles via utilitaires Tailwind v4 récents (`pointer-coarse`, `text-shadow-*`, `wrap-break-word` / `wrap-anywhere`).
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
 - Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
 - Auth simple: login/register, cookie HTTP-only, reset via recovery code.
@@ -20,11 +21,12 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 
 - React 19 + React DOM 19
 - Vite 7 + `@vitejs/plugin-react` 5
-- Tailwind CSS 4 (PostCSS via `@tailwindcss/postcss`)
+- Tailwind CSS 4.2.1 (PostCSS via `@tailwindcss/postcss`)
 - TypeScript 5.9
 
 Migration notable appliquée: passage Tailwind v4 CSS-first (`@import "tailwindcss"`, `@source`, `@theme` dans `src/styles.css`, sans `tailwind.config` JS).
 Conventions UI: composants utilitaires Tailwind v4 dans `@layer components` (`fm-panel`, `fm-card`, `fm-input`, `fm-btn-*`, `fm-stat-*`) pour harmoniser Résumé, Enveloppes et formulaires.
+Pass Tailwind v4 récent: adoption d'utilitaires/variants `pointer-coarse:*`, `text-shadow-*`, `wrap-break-word` et `wrap-anywhere` pour améliorer l'ergonomie tactile et la lisibilité des contenus longs.
 
 ## Démarrer
 

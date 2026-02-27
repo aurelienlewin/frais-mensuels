@@ -33,7 +33,7 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-sm text-slate-300">Enveloppes</div>
-            <h2 className="mt-1 text-xl font-semibold tracking-tight">Budgets & dépenses</h2>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Budgets & dépenses</h2>
           </div>
           <div className="flex items-center gap-2">
             <button
