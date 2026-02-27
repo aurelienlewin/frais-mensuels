@@ -676,17 +676,25 @@ export function AppView({
 
                       lines.push('Synthèse');
                       lines.push(csvLine(['Champ', 'Montant (€)']));
-                      lines.push(csvLine(['Charges (pour moi)', toEuroCsv(reportTotals.totalPourMoiCents)]));
+                      lines.push(csvLine(['Charges à provisionner (pour moi)', toEuroCsv(reportTotals.totalPourMoiCents)]));
                       lines.push(csvLine(['Enveloppes cibles (ma part)', toEuroCsv(reportTotals.totalBudgetsBaseCents)]));
-                      lines.push(csvLine(['Reliquat reporté', `-${toEuroCsv(reportTotals.totalBudgetsCarryOverCents)}`]));
+                      lines.push(csvLine(['Reliquat reporté (déjà déduit)', `-${toEuroCsv(reportTotals.totalBudgetsCarryOverCents)}`]));
                       lines.push(csvLine(['Enveloppes à virer (ma part)', toEuroCsv(reportTotals.totalBudgetsCents)]));
-                      lines.push(csvLine(['Total (charges + enveloppes)', toEuroCsv(reportTotals.totalPourMoiAvecEnveloppesCents)]));
+                      lines.push(csvLine(['Total à provisionner ce mois', toEuroCsv(reportTotals.totalProvisionCents)]));
                       lines.push(csvLine(['Reste à vivre (après enveloppes)', toEuroCsv(reportTotals.resteAVivreApresEnveloppesCents)]));
                       lines.push('');
 
                       lines.push('Enveloppes');
                       lines.push(
-                        csvLine(['Enveloppe', 'Montant cible (€)', 'Reliquat reporté (€)', 'Budget ajusté (€)', 'À virer (€)', 'Dépensé (€)', 'Reste (€)']),
+                        csvLine([
+                          'Enveloppe',
+                          'Montant cible (€)',
+                          'Reliquat entrant (€)',
+                          'À virer (€)',
+                          'Dépensé (€)',
+                          'Reste du mois (€)',
+                          'Dette reportée fin mois (€)',
+                        ]),
                       );
                       for (const b of reportBudgets) {
                         lines.push(
@@ -694,17 +702,26 @@ export function AppView({
                             b.name,
                             toEuroCsv(b.amountCents),
                             toEuroCsv(-b.carryOverDebtCents),
-                            toEuroCsv(b.adjustedAmountCents),
                             toEuroCsv(b.fundingCents),
                             toEuroCsv(b.spentCents),
-                            toEuroCsv(b.remainingCents),
+                            toEuroCsv(b.remainingToFundCents),
+                            toEuroCsv(b.carryForwardDebtCents),
                           ]),
                         );
                       }
                       lines.push('');
 
                       lines.push('Par compte');
-                      lines.push(csvLine(['Compte', 'Charges (€)', 'Enveloppes cibles (€)', 'Reliquat reporté (€)', 'Enveloppes à virer (€)', 'Total (€)']));
+                      lines.push(
+                        csvLine([
+                          'Compte',
+                          'Charges à provisionner (€)',
+                          'Enveloppes cibles (€)',
+                          'Reliquat déduit (€)',
+                          'Enveloppes à virer (€)',
+                          'Total à approvisionner (€)',
+                        ]),
+                      );
                       for (const a of reportByAccount) {
                         lines.push(
                           csvLine([

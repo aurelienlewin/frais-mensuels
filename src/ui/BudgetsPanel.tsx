@@ -26,7 +26,7 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   return (
     <section
       data-tour="budgets"
-      className="motion-hover motion-pop overflow-hidden rounded-3xl border border-white/15 bg-ink-950/60 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
+      className="fm-panel motion-hover motion-pop overflow-hidden"
     >
       <div className="border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
         <div className="text-sm text-slate-300">Enveloppes</div>
@@ -68,7 +68,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
   })();
 
   return (
-    <div className={cx('rounded-3xl border border-white/15 bg-ink-950/45 p-5', disabled && 'opacity-70')}>
+    <div className={cx('fm-card p-5', disabled && 'opacity-70')}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-xs text-slate-400">Nouvelle enveloppe</div>
@@ -78,7 +78,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
 
       <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_140px]">
         <input
-          className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
+          className="fm-input h-10 rounded-2xl px-4 text-sm"
           placeholder="ex: Budget perso"
           value={name}
           disabled={disabled}
@@ -87,7 +87,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
         />
         <div className="relative">
           <input
-            className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 pr-10 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45 sm:text-sm"
+            className="fm-input h-10 rounded-2xl px-4 pr-10 text-base sm:text-sm"
             placeholder="0"
             inputMode="decimal"
             type="text"
@@ -102,7 +102,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
 
       <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_140px_140px]">
         <select
-          className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none focus:border-white/25"
+          className="fm-input-select h-10 rounded-2xl px-4 text-sm"
           value={accountId}
           disabled={disabled || activeAccounts.length === 0}
           onChange={(e) => setAccountId(e.target.value)}
@@ -116,7 +116,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
         </select>
 
         <select
-          className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-sm text-slate-100 outline-none focus:border-white/25"
+          className="fm-input-select h-10 rounded-2xl px-4 text-sm"
           value={scope}
           disabled={disabled}
           onChange={(e) => setScope(e.target.value === 'commun' ? 'commun' : 'perso')}
@@ -129,7 +129,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
         <button
           type="button"
           className={cx(
-            'h-10 rounded-2xl border border-slate-200/25 bg-slate-400/12 px-4 text-sm font-semibold text-slate-100 transition-colors hover:bg-slate-400/18',
+            'fm-btn-soft h-10 rounded-2xl px-4 text-sm',
             !canSubmit && 'opacity-50 hover:bg-slate-400/12',
           )}
           disabled={!canSubmit}
@@ -184,17 +184,16 @@ function BudgetCard({
   const canEdit = !archived && Boolean(model);
   const canDelete = !archived && Boolean(model?.active);
   const [expensesOpen, setExpensesOpen] = useState(true);
-  const footerSelectBase =
-    'h-9 rounded-xl border border-white/12 bg-ink-950/35 px-2.5 text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45 sm:h-8 sm:px-3';
+  const footerSelectBase = 'fm-input-select h-9 px-2.5 text-slate-100 shadow-inner shadow-black/20 sm:h-8 sm:px-3';
   const footerSelectAccount = `${footerSelectBase} text-[12px] font-medium`;
   const footerSelectType = `${footerSelectBase} text-[11px] font-semibold uppercase tracking-wide`;
   const ratio =
     budget.fundingCents > 0
       ? Math.min(1, Math.max(0, budget.spentCents / budget.fundingCents))
-      : budget.spentCents > 0 || budget.carryOverDebtCents > 0
+      : budget.spentCents > 0
         ? 1
         : 0;
-  const over = budget.remainingCents < 0;
+  const over = budget.remainingToFundCents < 0;
 
   const hasAccountId = typeof budget.accountId === 'string' && budget.accountId.length > 0;
   const accountInActiveList = hasAccountId ? activeAccounts.some((a) => a.id === budget.accountId) : false;
@@ -209,7 +208,7 @@ function BudgetCard({
   const maxDate = `${ym}-${pad2(daysInMonth(ym))}`;
 
   return (
-      <div className="motion-hover rounded-3xl border border-white/15 bg-ink-950/45 p-5 max-[360px]:p-4">
+      <div className="fm-card motion-hover p-5 max-[360px]:p-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-[220px] flex-1">
           <div className="truncate text-xs text-slate-400">Enveloppe</div>
@@ -221,7 +220,7 @@ function BudgetCard({
           />
 	          <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-400">
 	            <div className={cx('tabular-nums whitespace-nowrap', over ? 'text-rose-200' : 'text-slate-300')}>
-	              {formatEUR(budget.spentCents)} / {formatEUR(budget.adjustedAmountCents)}
+	              {formatEUR(budget.spentCents)} / {formatEUR(budget.fundingCents)}
 	            </div>
 	          </div>
           <div
@@ -239,7 +238,7 @@ function BudgetCard({
           </div>
         </div>
 
-        <div className="w-full max-w-[260px]">
+        <div className="w-full max-w-[280px] space-y-2">
           <div className="text-xs text-slate-400">Montant réservé</div>
 	          <InlineNumberInput
 	            ariaLabel="Montant du budget (euros)"
@@ -250,30 +249,32 @@ function BudgetCard({
 	            disabled={!canEdit}
 	            onCommit={(euros) => dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { amountCents: eurosToCents(euros) } })}
 	          />
-          <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-            <div>Montant cible</div>
-            <div className="tabular-nums text-slate-200">{formatEUR(budget.amountCents)}</div>
+          <div className="fm-stat-row">
+            <div className="fm-stat-label text-xs">Montant cible</div>
+            <div className="fm-stat-value text-slate-200">{formatEUR(budget.amountCents)}</div>
           </div>
-	          <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-	            <div>À virer ce mois</div>
-	            <div className="tabular-nums font-semibold text-sky-200">{formatEUR(budget.fundingCents)}</div>
+	          <div className="fm-stat-row">
+	            <div className="fm-stat-label text-xs">À virer ce mois</div>
+	            <div className="fm-stat-value font-semibold text-sky-200">{formatEUR(budget.fundingCents)}</div>
 	          </div>
 	          {budget.carryOverDebtCents > 0 ? (
-	            <div className="mt-2 flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
+	            <div className="flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
 	              <div>Reliquat (mois précédent)</div>
 	              <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverDebtCents)}</div>
 	            </div>
 	          ) : null}
-          <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-            <div>Budget ajusté</div>
-            <div className={cx('tabular-nums', budget.adjustedAmountCents < 0 ? 'text-rose-200' : 'text-slate-100')}>
-              {formatEUR(budget.adjustedAmountCents)}
+	          <div className="fm-stat-row">
+	            <div className="fm-stat-label text-xs">Reste du mois</div>
+	            <div className={cx('fm-stat-value', over ? 'text-rose-200' : 'text-emerald-200')}>
+                {formatEUR(budget.remainingToFundCents)}
+              </div>
+          </div>
+          {budget.carryForwardDebtCents > 0 ? (
+            <div className="flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
+              <div>Dette à reporter</div>
+              <div className="tabular-nums font-semibold">{formatEUR(budget.carryForwardDebtCents)}</div>
             </div>
-          </div>
-	          <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-	            <div>Reste</div>
-	            <div className={cx('tabular-nums', over ? 'text-rose-200' : 'text-emerald-200')}>{formatEUR(budget.remainingCents)}</div>
-          </div>
+          ) : null}
         </div>
       </div>
 
@@ -282,7 +283,7 @@ function BudgetCard({
           <div className="text-sm font-medium text-slate-200">Dépenses</div>
           <button
             type="button"
-            className="flex h-8 w-10 items-center justify-center rounded-xl border border-white/12 bg-white/5 text-xs font-medium text-slate-200 transition-colors hover:bg-white/10"
+            className="fm-btn-ghost flex h-8 w-10 items-center justify-center text-xs font-medium text-slate-200"
             onClick={() => setExpensesOpen((v) => !v)}
             aria-expanded={expensesOpen}
             aria-label={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
@@ -295,10 +296,10 @@ function BudgetCard({
         </div>
 
         {expensesOpen ? (
-          <div className="mt-3 grid gap-2 rounded-2xl border border-white/15 bg-ink-950/45 p-3">
+          <div className="fm-card-soft mt-3 grid gap-2 p-3">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
             <input
-              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
+              className="fm-input h-9 px-3 text-sm"
               type="date"
               value={date}
               min={minDate}
@@ -308,7 +309,7 @@ function BudgetCard({
               aria-label="Date"
             />
             <input
-              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
+              className="fm-input h-9 px-3 text-sm"
               placeholder={defaultLabelPlaceholder}
               value={label}
               disabled={!canEdit}
@@ -316,7 +317,7 @@ function BudgetCard({
               aria-label="Libellé"
             />
             <input
-              className="h-9 rounded-xl border border-white/15 bg-ink-950/35 px-3 text-sm text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
+              className="fm-input h-9 px-3 text-sm"
               placeholder="10"
               inputMode="decimal"
               type="text"
@@ -327,7 +328,7 @@ function BudgetCard({
             />
 	            <button
 	              className={cx(
-	                'h-9 rounded-xl border border-white/15 bg-white/7 px-3 text-sm transition-colors duration-150 hover:bg-white/10',
+	                'fm-btn-ghost h-9 px-3 text-sm',
 	                !canEdit && 'opacity-50',
 	              )}
 	              disabled={!canEdit}
@@ -357,7 +358,7 @@ function BudgetCard({
         {expensesOpen ? (
         <div className="mt-3 space-y-2 sm:hidden">
           {sortedExpenses.map((e) => (
-            <div key={e.id} className="rounded-2xl border border-white/15 bg-ink-950/35 p-3">
+            <div key={e.id} className="fm-card-soft p-3">
               <div className="flex items-center gap-2">
                 {canEdit ? (
                   <InlineTextInput
@@ -379,7 +380,7 @@ function BudgetCard({
 
                 {canEdit ? (
                   <button
-                    className="flex h-8 w-8 flex-none items-center justify-center rounded-xl border border-white/15 bg-white/7 text-xs transition-colors duration-150 hover:bg-white/10"
+                    className="fm-btn-ghost flex h-8 w-8 flex-none items-center justify-center text-xs"
                     disabled={!canEdit}
                     onClick={() => dispatch({ type: 'REMOVE_BUDGET_EXPENSE', ym, budgetId: budget.id, expenseId: e.id })}
                     aria-label={`Supprimer dépense ${e.label}`}
@@ -444,7 +445,7 @@ function BudgetCard({
         ) : null}
 
         {expensesOpen ? (
-        <div className="mt-3 hidden overflow-hidden rounded-2xl border border-white/15 sm:block">
+        <div className="fm-card mt-3 hidden overflow-hidden sm:block">
           <table className="min-w-full">
             <thead className="bg-ink-950/50 text-left text-xs text-slate-400">
               <tr>
@@ -523,7 +524,7 @@ function BudgetCard({
                   <td className="px-3 py-2 text-right">
                     <button
                       className={cx(
-                        'rounded-xl border border-white/15 bg-white/7 px-2 py-1 text-xs transition-colors duration-150 hover:bg-white/10',
+                        'fm-btn-ghost px-2 py-1 text-xs',
                         !canEdit && 'opacity-40',
                       )}
                       disabled={!canEdit}
@@ -620,7 +621,7 @@ function BudgetCard({
         {canDelete ? (
           <button
             type="button"
-            className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-xs font-semibold text-rose-100 transition-colors hover:bg-rose-400/15 sm:ml-auto sm:h-9 sm:w-auto"
+            className="fm-btn-ghost h-10 w-full rounded-2xl px-4 text-xs font-semibold text-rose-100 hover:bg-rose-400/15 sm:ml-auto sm:h-9 sm:w-auto"
             onClick={() => {
               if (!model) return;
               const ok = window.confirm(

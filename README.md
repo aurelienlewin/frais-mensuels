@@ -5,8 +5,10 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 ## Résumé rapide
 
 - Charges mensuelles avec part %, comptes, auto/manuel, et statut OK.
-- Enveloppes (budgets) + dépenses + reste / dépassement.
+- Enveloppes (budgets) + dépenses + reste du mois + dette reportée.
 - Reliquat d’enveloppe: un dépassement d’un mois est reporté sur le mois suivant pour la même enveloppe et réduit le montant à virer.
+- Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat inclus), total à provisionner, reste à vivre.
+- Vue par compte orientée action: montant à approvisionner en début de mois.
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
 - Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
 - Auth simple: login/register, cookie HTTP-only, reset via recovery code.
@@ -19,6 +21,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - TypeScript 5.9
 
 Migration notable appliquée: passage Tailwind v4 CSS-first (`@import "tailwindcss"`, `@source`, `@theme` dans `src/styles.css`, sans `tailwind.config` JS).
+Conventions UI: composants utilitaires Tailwind v4 dans `@layer components` (`fm-panel`, `fm-card`, `fm-input`, `fm-btn-*`, `fm-stat-*`) pour harmoniser Résumé, Enveloppes et formulaires.
 
 ## Démarrer
 
@@ -82,6 +85,10 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Budgets par enveloppe + dépenses par mois.
 - Reliquat d’enveloppe: si le reste d’un mois est négatif, la dette est reportée sur le mois suivant de la même enveloppe.
 - Montant d’enveloppe à virer: `max(0, montant enveloppe - reliquat du mois précédent)`.
+- Reste du mois (enveloppe): `à virer ce mois - dépensé`.
+- Dette reportée fin de mois: `max(0, dépensé - (montant enveloppe - reliquat précédent))`.
+- Total à provisionner du mois: `charges (pour moi) + enveloppes à virer`.
+- Par compte: `charges à provisionner + enveloppes à virer` (reliquat déjà déduit dans "enveloppes à virer").
 - Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
 
 </details>

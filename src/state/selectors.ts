@@ -38,6 +38,8 @@ export type BudgetResolved = {
   adjustedAmountCents: number;
   fundingCents: number;
   carryOverDebtCents: number;
+  carryForwardDebtCents: number;
+  remainingToFundCents: number;
   baseMyShareCents: number;
   carryOverMyShareCents: number;
   accountId: AccountId;
@@ -236,13 +238,17 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     const prevYm = ymAdd(targetYm, -1);
     if (state.months[prevYm]) {
       const prev = resolveBudgetRow(prevYm, budgetId);
-      carryOverDebtCents = prev && prev.remainingCents < 0 ? -prev.remainingCents : 0;
+      carryOverDebtCents = prev?.carryForwardDebtCents ?? 0;
     }
 
     const spentCents = expenses.reduce((acc, e) => acc + e.amountCents, 0);
     const adjustedAmountCents = snap.amountCents - carryOverDebtCents;
     const fundingCents = Math.max(0, adjustedAmountCents);
+    // Keep this as the canonical carry-over basis (includes past debt impact).
     const remainingCents = adjustedAmountCents - spentCents;
+    // UX-facing monthly remainder on the amount actually funded this month.
+    const remainingToFundCents = fundingCents - spentCents;
+    const carryForwardDebtCents = Math.max(0, -remainingCents);
     const accName = accounts.get(snap.accountId)?.name ?? snap.accountId;
     const scope: ChargeScope = snap.scope === 'commun' ? 'commun' : 'perso';
     const splitPercent =
@@ -261,6 +267,8 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       adjustedAmountCents,
       fundingCents,
       carryOverDebtCents,
+      carryForwardDebtCents,
+      remainingToFundCents,
       baseMyShareCents,
       carryOverMyShareCents,
       accountId: snap.accountId,
@@ -326,6 +334,7 @@ export function totalsForMonth(state: AppState, ym: YM) {
     totalBudgetsCents,
     totalBudgetSpentCents,
     totalPourMoiAvecEnveloppesCents,
+    totalProvisionCents: totalPourMoiAvecEnveloppesCents,
     resteAVivreCents: salaryCents - totalPourMoiCents,
     resteAVivreApresEnveloppesCents: salaryCents - totalPourMoiAvecEnveloppesCents,
     pendingCount,
@@ -394,5 +403,5 @@ export function totalsByAccount(state: AppState, ym: YM) {
         totalCents: t.chargesTotalCents + t.budgetsCents,
       };
     })
-    .filter((x) => x.totalCents !== 0);
+    .filter((x) => x.chargesTotalCents !== 0 || x.budgetsBaseCents !== 0 || x.budgetsCarryOverCents !== 0 || x.budgetsCents !== 0);
 }

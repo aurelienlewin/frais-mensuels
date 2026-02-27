@@ -91,7 +91,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   return (
     <section
       data-tour="summary"
-      className="motion-hover motion-pop rounded-3xl border border-white/15 bg-ink-950/60 p-4 shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)] max-[360px]:p-3 sm:p-6 lg:sticky lg:top-32 lg:max-h-[calc(100dvh_-_8rem)] lg:overflow-auto"
+      className="fm-panel motion-hover motion-pop p-4 max-[360px]:p-3 sm:p-6 lg:sticky lg:top-32 lg:max-h-[calc(100dvh_-_8rem)] lg:overflow-auto"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -109,7 +109,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           </div>
           <button
             type="button"
-            className="flex h-8 w-10 items-center justify-center rounded-xl border border-white/12 bg-white/5 text-xs font-medium text-slate-200 transition-colors hover:bg-white/10 sm:hidden"
+            className="fm-btn-ghost flex h-8 w-10 items-center justify-center text-xs font-medium text-slate-200 sm:hidden"
             onClick={() => setSummaryOpen((v) => !v)}
             aria-expanded={summaryOpen}
             aria-label={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
@@ -123,12 +123,12 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       </div>
 
       <div className={cx(!summaryOpen && 'hidden sm:block')}>
-        <div className="mt-6 grid gap-3 max-[360px]:mt-4 max-[360px]:gap-2">
+        <div className="mt-6 space-y-3 max-[360px]:mt-4">
           <label className="grid gap-1">
             <div className="text-xs text-slate-400">Salaire</div>
             <div className="relative">
               <input
-                className="h-10 w-full rounded-2xl border border-white/15 bg-ink-950/35 px-4 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45 sm:text-sm"
+                className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm"
                 type="text"
                 inputMode="decimal"
                 value={salaryDraft}
@@ -160,22 +160,26 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             </div>
           </label>
 
-          <div className="mt-2 grid gap-2">
-            <Row label="Charges communes (total)" value={formatEUR(totals.totalCommunCents)} />
-            <Row label="Ma part (commun)" value={formatEUR(totals.totalCommunPartCents)} />
-            <Row label="Charges perso" value={formatEUR(totals.totalPersoCents)} />
-            <div className="my-2 h-px bg-white/10" />
-            <Row label="Total charges (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
+          <div className="fm-card-soft px-4 py-3">
+            <div className="text-xs uppercase tracking-wide text-slate-400">Total à provisionner ce mois</div>
+            <div className="mt-1 text-2xl font-semibold tabular-nums text-slate-50">{formatEUR(totals.totalProvisionCents)}</div>
+            <div className="mt-1 text-xs text-slate-400">
+              {formatEUR(totals.totalPourMoiCents)} charges + {formatEUR(totals.totalBudgetsCents)} enveloppes à virer
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Row label="Charges à provisionner (pour moi)" value={formatEUR(totals.totalPourMoiCents)} strong />
             <Row label="Enveloppes cibles (ma part)" value={formatEUR(totals.totalBudgetsBaseCents)} />
             {totals.totalBudgetsCarryOverCents > 0 ? (
               <Row
-                label="Reliquat reporté"
+                label="Reliquat reporté (déjà déduit)"
                 value={`-${formatEUR(totals.totalBudgetsCarryOverCents)}`}
                 valueClassName="text-rose-200"
               />
             ) : null}
             <Row label="Enveloppes à virer (ma part)" value={formatEUR(totals.totalBudgetsCents)} strong />
-            <Row label="Total (charges + enveloppes)" value={formatEUR(totals.totalPourMoiAvecEnveloppesCents)} strong />
+            <Row label="Total à provisionner ce mois" value={formatEUR(totals.totalProvisionCents)} strong />
             <Row
               label="Reste à vivre (après enveloppes)"
               value={formatEUR(totals.resteAVivreApresEnveloppesCents)}
@@ -184,7 +188,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             />
           </div>
 
-          <div className="mt-4">
+          <div className="fm-card-soft px-4 py-3">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <div>Charges + enveloppes / salaire</div>
               <div>{Math.round(ratio * 100)}%</div>
@@ -197,12 +201,15 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               aria-valuemax={100}
               aria-valuenow={Math.round(ratio * 100)}
             >
-              <div className="h-full rounded-full bg-emerald-400/70" style={{ width: `${Math.round(ratio * 100)}%` }} />
+              <div
+                className="h-full rounded-full bg-emerald-400/70 transition-[width] duration-300"
+                style={{ width: `${Math.round(ratio * 100)}%` }}
+              />
             </div>
           </div>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-3xl border border-white/15 bg-white/7 p-4 max-[360px]:mt-4 max-[360px]:p-3">
+        <div className="fm-card mt-6 overflow-hidden p-4 max-[360px]:mt-4 max-[360px]:p-3">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="text-sm font-medium text-slate-200">Répartition</div>
@@ -247,7 +254,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         </div>
 
         <div className="mt-8 max-[360px]:mt-6">
-          <div className="text-sm font-medium text-slate-200">Par compte (charges + enveloppes à virer)</div>
+          <div className="text-sm font-medium text-slate-200">Par compte (montant à approvisionner)</div>
           <div className="mt-3 space-y-2">
             {byAccount.map((a) => {
               const meta = chargesByAccount.get(a.accountId) ?? null;
@@ -264,7 +271,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   key={a.accountId}
                   type="button"
                   className={cx(
-                    'grid min-w-0 grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-2xl border border-white/15 bg-white/7 px-4 py-3 text-left transition-colors sm:grid-cols-[minmax(0,1fr)_120px]',
+                    'fm-card grid min-w-0 grid-cols-[minmax(0,1fr)_120px] items-center gap-3 px-4 py-3 text-left transition-colors',
                     canMarkAll ? 'hover:bg-white/10' : 'opacity-75',
                     allPaid && 'opacity-60',
                   )}
@@ -288,18 +295,18 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                       ) : null}
                     </div>
                     <div className="mt-0.5 truncate text-xs text-slate-400">
-                      {formatEUR(a.chargesPaidCents)} / {formatEUR(a.chargesTotalCents)} charges cochées
-                      {a.budgetsCents || a.budgetsCarryOverCents
-                        ? ` · enveloppes à virer ${formatEUR(a.budgetsCents)}${
-                            a.budgetsCarryOverCents ? ` (reliquat -${formatEUR(a.budgetsCarryOverCents)})` : ''
-                          }`
+                      Charges: {formatEUR(a.chargesTotalCents)} ({formatEUR(a.chargesPaidCents)} cochées)
+                      {a.budgetsBaseCents || a.budgetsCents || a.budgetsCarryOverCents
+                        ? ` · Enveloppes à virer: ${formatEUR(a.budgetsCents)} (cible ${formatEUR(a.budgetsBaseCents)}${
+                            a.budgetsCarryOverCents ? `, reliquat -${formatEUR(a.budgetsCarryOverCents)}` : ''
+                          })`
                         : ''}
                     </div>
                   </div>
                   <div
                     className={cx(
-                      'text-right text-sm font-medium tabular-nums',
-                      a.kind === 'commun' ? 'text-sky-200' : 'text-emerald-200',
+                      'rounded-xl px-2 py-1 text-right text-sm font-semibold tabular-nums',
+                      a.kind === 'commun' ? 'bg-sky-400/10 text-sky-200' : 'bg-emerald-400/10 text-emerald-200',
                     )}
                   >
                     {formatEUR(a.totalCents)}
@@ -311,7 +318,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           </div>
         </div>
 
-        <details className="mt-6 rounded-3xl border border-white/15 bg-white/7 p-4 max-[360px]:mt-4 max-[360px]:p-3">
+        <details className="fm-card mt-6 p-4 max-[360px]:mt-4 max-[360px]:p-3">
           <summary className="cursor-pointer select-none text-sm font-medium text-slate-200">Comptes</summary>
           <div className="mt-3 space-y-2">
             <AccountsEditor />
@@ -332,8 +339,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     });
 	  const [removeDraft, setRemoveDraft] = useState<{ accountId: Account['id']; moveToAccountId: Account['id'] } | null>(null);
 
-  const baseSelect =
-    'h-8 rounded-xl border border-white/15 bg-ink-950/35 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-100 shadow-inner shadow-black/20 outline-none transition-colors duration-150 focus:border-white/25 focus:bg-ink-950/45';
+  const baseSelect = 'fm-input-select h-8 px-2 text-[11px] font-semibold uppercase tracking-wide shadow-inner shadow-black/20';
   const addId = addDraft.rawId
     .trim()
     .replace(/\s+/g, '_')
@@ -342,11 +348,11 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 
   return (
     <div className="space-y-2">
-      <div className="rounded-2xl border border-white/10 bg-ink-950/35 p-3">
+      <div className="fm-card-soft p-3">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ajouter un compte</div>
         <div className="mt-2 grid gap-2">
 	          <input
-            className="h-8 w-full rounded-xl border border-white/15 bg-ink-950/35 px-3 text-[13px] font-semibold text-slate-100 outline-none placeholder:text-slate-400 focus:border-slate-200/40 focus:bg-ink-950/45"
+            className="fm-input h-8 px-3 text-[13px] font-semibold"
             placeholder="ex: BOURSO_PERSO"
             value={addDraft.rawId}
             onChange={(e) => setAddDraft((s) => ({ ...s, rawId: e.target.value }))}
@@ -365,7 +371,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             <button
               type="button"
               className={cx(
-                'h-8 w-full rounded-xl border border-slate-200/25 bg-slate-400/12 px-3 text-[11px] font-semibold text-slate-100 transition-colors hover:bg-slate-400/18',
+                'fm-btn-soft h-8 w-full px-3 text-[11px]',
                 !addId && 'opacity-50 hover:bg-slate-400/12',
               )}
               disabled={!addId}
@@ -389,14 +395,14 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 	        const activeRemove = removing ? removeDraft : null;
 
 	        return (
-	          <div key={a.id} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+	          <div key={a.id} className="fm-card-soft px-3 py-2">
 	            <div className="grid gap-3 sm:flex sm:items-center sm:gap-3">
 	              <div className="min-w-0 flex-1">
                   <InlineTextInput
                     ariaLabel={`Nom du compte: ${a.id}`}
                     value={a.name}
                     disabled={false}
-	                    className="h-8 w-full rounded-xl border border-white/10 bg-ink-950/35 px-3 text-[13px] font-semibold text-slate-100 outline-none ring-0 placeholder:text-slate-400 focus:border-white/15 focus:bg-ink-950/45"
+	                    className="fm-input h-8 px-3 text-[13px] font-semibold ring-0"
                     onCommit={(name) => {
                       const nextName = name.trim() || a.id;
                       if (nextName === a.name) return;
@@ -422,7 +428,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   <button
                     type="button"
                     className={cx(
-                      'h-9 w-full rounded-xl border border-white/15 bg-white/7 px-3 text-[11px] font-semibold text-rose-100 transition-colors hover:bg-rose-400/15 sm:h-8 sm:w-auto',
+                      'fm-btn-ghost h-9 w-full px-3 text-[11px] font-semibold text-rose-100 sm:h-8 sm:w-auto',
                       !canRemove && 'opacity-40 hover:bg-white/7',
                     )}
                     disabled={!canRemove}
@@ -439,7 +445,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
             </div>
 
 	            {removing && activeRemove ? (
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-ink-950/35 p-3">
+              <div className="fm-card-soft mt-3 flex flex-wrap items-center justify-between gap-2 p-3">
                 <div className="text-xs text-slate-300">Déplacer charges/budgets vers</div>
                 <div className="flex flex-wrap items-center gap-2">
 	                  <select
@@ -458,7 +464,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 	                  </select>
                   <button
                     type="button"
-                    className="h-9 rounded-2xl border border-slate-200/25 bg-slate-400/12 px-4 text-sm font-semibold text-slate-100 transition-colors hover:bg-slate-400/18"
+                    className="fm-btn-soft h-9 rounded-2xl px-4 text-sm"
                     onClick={() => {
                       dispatch({ type: 'REMOVE_ACCOUNT', accountId: a.id, moveToAccountId: activeRemove.moveToAccountId });
                       setRemoveDraft(null);
@@ -468,7 +474,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   </button>
                   <button
                     type="button"
-                    className="h-9 rounded-2xl border border-white/15 bg-white/7 px-4 text-sm text-slate-200 transition-colors hover:bg-white/10"
+                    className="fm-btn-ghost h-9 rounded-2xl px-4 text-sm text-slate-200"
                     onClick={() => setRemoveDraft(null)}
                   >
                     Annuler
@@ -481,11 +487,11 @@ export function SummaryPanel({ ym }: { ym: YM }) {
       })}
 
 	      {inactiveAccounts.length ? (
-	        <details className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+	        <details className="fm-card mt-3 px-3 py-2">
 	          <summary className="cursor-pointer select-none text-sm font-medium text-slate-300">Comptes supprimés</summary>
 	          <div className="mt-3 space-y-2">
 	            {inactiveAccounts.map((a) => (
-	              <div key={a.id} className="grid gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 sm:flex sm:items-center sm:gap-3">
+	              <div key={a.id} className="fm-card-soft grid gap-2 px-3 py-2 sm:flex sm:items-center sm:gap-3">
 	                <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold text-slate-200">{a.name || a.id}</div>
                     {a.name && a.name !== a.id ? (
@@ -494,7 +500,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 	                </div>
 	                <button
 	                  type="button"
-	                  className="h-9 w-full rounded-xl border border-white/15 bg-white/7 px-3 text-[11px] font-semibold text-slate-100 transition-colors hover:bg-white/10 sm:h-8 sm:w-auto"
+	                  className="fm-btn-ghost h-9 w-full px-3 text-[11px] font-semibold sm:h-8 sm:w-auto"
 	                  onClick={() => dispatch({ type: 'UPDATE_ACCOUNT', accountId: a.id, patch: { active: true } })}
 	                  aria-label={`Restaurer le compte: ${a.id}`}
 	                >
@@ -533,7 +539,7 @@ function LegendRow({
       type="button"
       className={cx(
         'flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-left transition-colors',
-        active ? 'border-white/25 bg-white/10' : 'border-white/10 bg-white/5 hover:bg-white/7',
+        active ? 'border-white/25 bg-white/10' : 'border-white/10 bg-ink-950/20 hover:bg-white/7',
       )}
       aria-pressed={active}
       aria-label={`${label}: ${pct}% (${formatEUR(valueCents)})`}
@@ -570,13 +576,13 @@ function Row({
   valueClassName?: string;
 }) {
   return (
-    <div className="flex min-w-0 items-baseline justify-between gap-3">
-      <div className={cx('min-w-0 flex-1 text-sm leading-tight max-[360px]:text-xs', strong ? 'text-slate-200' : 'text-slate-400')}>
+    <div className="fm-stat-row">
+      <div className={cx('fm-stat-label', strong ? 'text-slate-200' : 'text-slate-400')}>
         {label}
       </div>
       <div
         className={cx(
-          'flex-none whitespace-nowrap text-sm tabular-nums max-[360px]:text-xs',
+          'fm-stat-value',
           strong ? 'font-semibold text-slate-100' : 'text-slate-200',
           valueClassName,
         )}
