@@ -40,6 +40,8 @@ export type BudgetResolved = {
   carryOverSourceDebtCents: number;
   carryOverHandled: boolean;
   carryOverDebtCents: number;
+  carryForwardSourceDebtCents: number;
+  carryForwardHandled: boolean;
   carryForwardDebtCents: number;
   remainingToFundCents: number;
   baseMyShareCents: number;
@@ -211,17 +213,19 @@ function resolveBudgetSnapshot(
   month: MonthData | undefined,
   budgets: Map<string, AppState['budgets'][number]>,
   budgetId: string,
-): { expenses: BudgetExpense[]; carryOverHandled: boolean; snap: MonthBudgetSnapshot | null } {
+): { expenses: BudgetExpense[]; carryOverHandled: boolean; carryForwardHandled: boolean; snap: MonthBudgetSnapshot | null } {
   const monthState = month?.budgets[budgetId];
   const expenses = monthState?.expenses ?? [];
   const carryOverHandled = monthState?.carryOverHandled === true;
-  if (month?.archived && monthState?.snapshot) return { expenses, carryOverHandled, snap: monthState.snapshot };
+  const carryForwardHandled = monthState?.carryForwardHandled === true;
+  if (month?.archived && monthState?.snapshot) return { expenses, carryOverHandled, carryForwardHandled, snap: monthState.snapshot };
 
   const b = budgets.get(budgetId);
-  if (!b) return { expenses, carryOverHandled, snap: null };
+  if (!b) return { expenses, carryOverHandled, carryForwardHandled, snap: null };
   return {
     expenses,
     carryOverHandled,
+    carryForwardHandled,
     snap: { name: b.name, amountCents: b.amountCents, accountId: b.accountId, scope: b.scope, splitPercent: b.splitPercent },
   };
 }
@@ -271,7 +275,7 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     if (cached !== undefined) return cached;
 
     const targetMonth = state.months[targetYm];
-    const { expenses, carryOverHandled, snap } = resolveBudgetSnapshot(targetMonth, budgets, budgetId);
+    const { expenses, carryOverHandled, carryForwardHandled, snap } = resolveBudgetSnapshot(targetMonth, budgets, budgetId);
     if (!snap) {
       rowCache.set(key, null);
       return null;
@@ -292,7 +296,8 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     const remainingCents = adjustedAmountCents - spentCents;
     // UX-facing monthly remainder on the amount actually funded this month.
     const remainingToFundCents = fundingCents - spentCents;
-    const carryForwardDebtCents = Math.max(0, -remainingCents);
+    const carryForwardSourceDebtCents = Math.max(0, -remainingCents);
+    const carryForwardDebtCents = carryForwardHandled ? 0 : carryForwardSourceDebtCents;
     const accName = accounts.get(snap.accountId)?.name ?? snap.accountId;
     const scope: ChargeScope = snap.scope === 'commun' ? 'commun' : 'perso';
     const splitPercent =
@@ -313,6 +318,8 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       carryOverSourceDebtCents,
       carryOverHandled,
       carryOverDebtCents,
+      carryForwardSourceDebtCents,
+      carryForwardHandled,
       carryForwardDebtCents,
       remainingToFundCents,
       baseMyShareCents,

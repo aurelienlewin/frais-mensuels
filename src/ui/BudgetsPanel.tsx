@@ -227,6 +227,7 @@ function BudgetCard({
         : 0;
   const over = budget.remainingToFundCents < 0;
   const canToggleCarryHandling = budget.carryOverSourceDebtCents > 0 || budget.carryOverHandled;
+  const canToggleCurrentDebtHandling = budget.carryForwardSourceDebtCents > 0 || budget.carryForwardHandled;
 
   const hasAccountId = typeof budget.accountId === 'string' && budget.accountId.length > 0;
   const accountInActiveList = hasAccountId ? activeAccounts.some((a) => a.id === budget.accountId) : false;
@@ -290,37 +291,76 @@ function BudgetCard({
 	            <div className="fm-stat-label text-xs">À virer ce mois</div>
 	            <div className="fm-stat-value font-semibold text-sky-200">{formatEUR(budget.fundingCents)}</div>
 	          </div>
-	          {budget.carryOverHandled && budget.carryOverSourceDebtCents > 0 ? (
-              <div className="flex items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-100">
-                <div>Reliquat traité</div>
-                <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverSourceDebtCents)}</div>
+            {canToggleCarryHandling ? (
+              <div className="rounded-lg border border-white/10 bg-white/5 p-2">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Entrant (mois précédent)</div>
+	              {budget.carryOverHandled && budget.carryOverSourceDebtCents > 0 ? (
+                  <div className="mt-1 flex items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-100">
+                    <div>Reliquat entrant traité</div>
+                    <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverSourceDebtCents)}</div>
+                  </div>
+                ) : null}
+	              {!budget.carryOverHandled && budget.carryOverDebtCents > 0 ? (
+	                <div className="mt-1 flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
+	                  <div>Reliquat entrant appliqué</div>
+	                  <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverDebtCents)}</div>
+	                </div>
+	              ) : null}
+                <label className="mt-1.5 flex items-center gap-2 text-xs text-slate-200">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-emerald-400"
+                    checked={budget.carryOverHandled}
+                    disabled={!canEdit}
+                    onChange={(e) =>
+                      dispatch({
+                        type: 'SET_BUDGET_CARRY_HANDLED',
+                        ym,
+                        budgetId: budget.id,
+                        handled: e.currentTarget.checked,
+                      })
+                    }
+                    aria-label={`Traiter le reliquat entrant du mois précédent pour ${budget.name}`}
+                  />
+                  <span>Traiter le reliquat entrant (mois précédent)</span>
+                </label>
               </div>
             ) : null}
-	          {!budget.carryOverHandled && budget.carryOverDebtCents > 0 ? (
-	            <div className="flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
-	              <div>Reliquat (mois précédent)</div>
-	              <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverDebtCents)}</div>
-	            </div>
-	          ) : null}
-            {canToggleCarryHandling ? (
-              <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-200">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-emerald-400"
-                  checked={budget.carryOverHandled}
-                  disabled={!canEdit}
-                  onChange={(e) =>
-                    dispatch({
-                      type: 'SET_BUDGET_CARRY_HANDLED',
-                      ym,
-                      budgetId: budget.id,
-                      handled: e.currentTarget.checked,
-                    })
-                  }
-                  aria-label={`Marquer le reliquat comme traité pour ${budget.name}`}
-                />
-                <span>Reliquat traité manuellement</span>
-              </label>
+
+            {canToggleCurrentDebtHandling ? (
+              <div className="rounded-lg border border-white/10 bg-white/5 p-2">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sortant (mois en cours)</div>
+                {budget.carryForwardHandled && budget.carryForwardSourceDebtCents > 0 ? (
+                  <div className="mt-1 flex items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-100">
+                    <div>Dette du mois traitée</div>
+                    <div className="tabular-nums font-semibold">{formatEUR(budget.carryForwardSourceDebtCents)}</div>
+                  </div>
+                ) : null}
+                {!budget.carryForwardHandled && budget.carryForwardDebtCents > 0 ? (
+                  <div className="mt-1 flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
+                    <div>Dette du mois à reporter</div>
+                    <div className="tabular-nums font-semibold">{formatEUR(budget.carryForwardDebtCents)}</div>
+                  </div>
+                ) : null}
+                <label className="mt-1.5 flex items-center gap-2 text-xs text-slate-200">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-emerald-400"
+                    checked={budget.carryForwardHandled}
+                    disabled={!canEdit}
+                    onChange={(e) =>
+                      dispatch({
+                        type: 'SET_BUDGET_CARRY_FORWARD_HANDLED',
+                        ym,
+                        budgetId: budget.id,
+                        handled: e.currentTarget.checked,
+                      })
+                    }
+                    aria-label={`Traiter la dette du mois en cours pour ${budget.name}`}
+                  />
+                  <span>Traiter la dette du mois (ne pas reporter)</span>
+                </label>
+              </div>
             ) : null}
 	          <div className="fm-stat-row">
 	            <div className="fm-stat-label text-xs">Reste du mois</div>
@@ -328,7 +368,7 @@ function BudgetCard({
                 {formatEUR(budget.remainingToFundCents)}
               </div>
           </div>
-          {budget.carryForwardDebtCents > 0 ? (
+          {!canToggleCurrentDebtHandling && budget.carryForwardDebtCents > 0 ? (
             <div className="flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
               <div>Dette à reporter</div>
               <div className="tabular-nums font-semibold">{formatEUR(budget.carryForwardDebtCents)}</div>

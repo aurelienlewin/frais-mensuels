@@ -19,6 +19,7 @@ export type Action =
   | { type: 'ARCHIVE_MONTH'; ym: MonthData['ym'] }
   | { type: 'UNARCHIVE_MONTH'; ym: MonthData['ym'] }
   | { type: 'SET_BUDGET_CARRY_HANDLED'; ym: MonthData['ym']; budgetId: string; handled: boolean }
+  | { type: 'SET_BUDGET_CARRY_FORWARD_HANDLED'; ym: MonthData['ym']; budgetId: string; handled: boolean }
   | { type: 'ADD_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expense: Omit<BudgetExpense, 'id'> }
   | { type: 'UPDATE_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expenseId: string; patch: Partial<Omit<BudgetExpense, 'id'>> }
   | { type: 'REMOVE_BUDGET_EXPENSE'; ym: MonthData['ym']; budgetId: string; expenseId: string }
@@ -312,6 +313,7 @@ export function reducer(state: AppState, action: Action): AppState {
 	            budgetsWithSnapshots[b.id] = {
 	              expenses: current?.expenses ?? [],
                 carryOverHandled: current?.carryOverHandled,
+                carryForwardHandled: current?.carryForwardHandled,
 	              snapshot: {
 	                name: b.name,
 	                amountCents: b.amountCents,
@@ -332,7 +334,7 @@ export function reducer(state: AppState, action: Action): AppState {
           if (existing?.carryOverHandled === action.handled) return m;
 
           // Keep the month budget state if it contains data (expenses/snapshot), otherwise clean it up.
-          if (!action.handled && existing && (existing.expenses?.length ?? 0) === 0 && !existing.snapshot) {
+          if (!action.handled && existing && (existing.expenses?.length ?? 0) === 0 && !existing.snapshot && !existing.carryForwardHandled) {
             const nextBudgets = { ...m.budgets };
             delete nextBudgets[action.budgetId];
             return { ...m, budgets: nextBudgets };
@@ -346,6 +348,33 @@ export function reducer(state: AppState, action: Action): AppState {
                 expenses: existing?.expenses ?? [],
                 snapshot: existing?.snapshot,
                 carryOverHandled: action.handled,
+                carryForwardHandled: existing?.carryForwardHandled,
+              },
+            },
+          };
+        });
+      case 'SET_BUDGET_CARRY_FORWARD_HANDLED':
+        return withMonth(state, action.ym, (m) => {
+          if (m.archived) return m;
+          const existing = m.budgets[action.budgetId];
+          if (existing?.carryForwardHandled === action.handled) return m;
+
+          // Keep the month budget state if it contains data (expenses/snapshot), otherwise clean it up.
+          if (!action.handled && existing && (existing.expenses?.length ?? 0) === 0 && !existing.snapshot && !existing.carryOverHandled) {
+            const nextBudgets = { ...m.budgets };
+            delete nextBudgets[action.budgetId];
+            return { ...m, budgets: nextBudgets };
+          }
+
+          return {
+            ...m,
+            budgets: {
+              ...m.budgets,
+              [action.budgetId]: {
+                expenses: existing?.expenses ?? [],
+                snapshot: existing?.snapshot,
+                carryOverHandled: existing?.carryOverHandled,
+                carryForwardHandled: action.handled,
               },
             },
           };
@@ -363,6 +392,7 @@ export function reducer(state: AppState, action: Action): AppState {
                 expenses: [next, ...prev],
                 snapshot: existing?.snapshot,
                 carryOverHandled: existing?.carryOverHandled,
+                carryForwardHandled: existing?.carryForwardHandled,
               },
             },
           };
@@ -395,6 +425,7 @@ export function reducer(state: AppState, action: Action): AppState {
                 expenses: nextExpenses,
                 snapshot: existing.snapshot,
                 carryOverHandled: existing.carryOverHandled,
+                carryForwardHandled: existing.carryForwardHandled,
               },
             },
           };
@@ -411,6 +442,7 @@ export function reducer(state: AppState, action: Action): AppState {
                 expenses: prev.filter((e) => e.id !== action.expenseId),
                 snapshot: existing?.snapshot,
                 carryOverHandled: existing?.carryOverHandled,
+                carryForwardHandled: existing?.carryForwardHandled,
               },
             },
           };

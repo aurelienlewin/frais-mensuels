@@ -69,6 +69,7 @@ export type MonthBudgetState = {
   expenses: BudgetExpense[];
   snapshot?: MonthBudgetSnapshot;
   carryOverHandled?: boolean;
+  carryForwardHandled?: boolean;
 };
 
 export type MonthData = {

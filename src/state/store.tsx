@@ -73,6 +73,8 @@ function actionSummary(action: Action): string | null {
       return 'Enveloppe supprimée';
     case 'SET_BUDGET_CARRY_HANDLED':
       return action.handled ? 'Reliquat traité' : 'Reliquat réactivé';
+    case 'SET_BUDGET_CARRY_FORWARD_HANDLED':
+      return action.handled ? 'Dette du mois traitée' : 'Dette du mois réactivée';
     case 'ADD_BUDGET_EXPENSE':
       return 'Dépense ajoutée';
     case 'UPDATE_BUDGET_EXPENSE': {
