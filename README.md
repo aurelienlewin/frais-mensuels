@@ -11,6 +11,15 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
 - Auth simple: login/register, cookie HTTP-only, reset via recovery code.
 
+## Stack (2026-02-27)
+
+- React 19 + React DOM 19
+- Vite 7 + `@vitejs/plugin-react` 5
+- Tailwind CSS 4 (PostCSS via `@tailwindcss/postcss`)
+- TypeScript 5.9
+
+Migration notable appliquée: passage Tailwind v4 (`@import "tailwindcss"` dans `src/styles.css` et plugin PostCSS dédié).
+
 ## Démarrer
 
 1) Installer
