@@ -6,7 +6,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 
 - Charges mensuelles avec part %, comptes, auto/manuel, et statut OK.
 - Enveloppes (budgets) + dépenses + reste du mois + dette reportée.
-- Reliquat d’enveloppe: un dépassement non traité est reporté cumulativement sur les mois suivants pour la même enveloppe (même si des mois intermédiaires n'ont pas été ouverts) et réduit le montant à virer.
+- Reliquat d’enveloppe: un dépassement non traité ou un reste positif non consommé est reporté cumulativement sur les mois suivants pour la même enveloppe (même si des mois intermédiaires n'ont pas été ouverts) et réduit le montant à virer.
 - Reliquat traité: une case à cocher par enveloppe permet de marquer le reliquat entrant comme géré manuellement (il n'est alors plus déduit du mois).
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat inclus), total à provisionner, reste à vivre.
@@ -99,14 +99,15 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 
 - Charges globales (mensuelles) + charges ponctuelles par mois.
 - Budgets par enveloppe + dépenses par mois.
-- Reliquat d’enveloppe: si le reste d’un mois est négatif, la dette est reportée sur le mois suivant de la même enveloppe.
+- Reliquat d’enveloppe: le reste d’un mois (positif ou négatif) est reporté sur le mois suivant de la même enveloppe. Un reliquat positif réduit le virement du mois suivant; un reliquat négatif alimente la dette reportée.
 - Reliquat traité (optionnel): si activé sur un mois/enveloppe, le reliquat entrant est conservé comme information mais n’est plus appliqué dans le calcul du montant à virer pour ce mois.
 - Dette du mois traitée (optionnel): si activé sur un mois/enveloppe, la dette générée ce mois est conservée comme information mais n’est plus reportée au mois suivant.
-- Montant d’enveloppe à virer: `max(0, montant enveloppe - reliquat du mois précédent)`.
+- Montant d’enveloppe à virer: `max(0, montant enveloppe - reliquat entrant appliqué du mois précédent)`.
 - Reste du mois (enveloppe): `à virer ce mois - dépensé`.
-- Dette reportée fin de mois: `max(0, dépensé - (montant enveloppe - reliquat précédent))`.
+- Dette reportée fin de mois: `max(0, dépensé - (montant enveloppe - reliquat entrant appliqué précédent))`.
+- Exemple enveloppe récurrente: cible `100`, dépensé `80` sur le mois N -> reliquat positif `20` reporté -> mois N+1: `à virer = 80`.
 - Total à provisionner du mois: `charges (pour moi) + enveloppes à virer`.
-- Par compte: `charges à provisionner + enveloppes à virer` (reliquat déjà déduit dans "enveloppes à virer").
+- Par compte: `charges à provisionner + enveloppes à virer` (reliquat déjà déduit dans "enveloppes à virer", qu'il s'agisse d'une dette ou d'un reliquat positif).
 - Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
 
 </details>

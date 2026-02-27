@@ -693,7 +693,7 @@ export function AppView({
                         csvLine([
                           'Enveloppe',
                           'Montant cible (€)',
-                          'Reliquat entrant (€)',
+                          'Reliquat entrant appliqué (€)',
                           'À virer (€)',
                           'Dépensé (€)',
                           'Reste du mois (€)',
@@ -705,7 +705,7 @@ export function AppView({
                           csvLine([
                             b.name,
                             toEuroCsv(b.amountCents),
-                            toEuroCsv(-b.carryOverDebtCents),
+                            toEuroCsv(-b.carryOverTotalCents),
                             toEuroCsv(b.fundingCents),
                             toEuroCsv(b.spentCents),
                             toEuroCsv(b.remainingToFundCents),

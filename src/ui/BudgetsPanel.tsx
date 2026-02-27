@@ -226,7 +226,7 @@ function BudgetCard({
         ? 1
         : 0;
   const over = budget.remainingToFundCents < 0;
-  const canToggleCarryHandling = budget.carryOverSourceDebtCents > 0 || budget.carryOverHandled;
+  const canToggleCarryHandling = budget.carryOverSourceTotalCents > 0 || budget.carryOverHandled;
   const canToggleCurrentDebtHandling = budget.carryForwardSourceDebtCents > 0 || budget.carryForwardHandled;
 
   const hasAccountId = typeof budget.accountId === 'string' && budget.accountId.length > 0;
@@ -288,6 +288,20 @@ function BudgetCard({
               {formatEUR(budget.spentCents)} / {formatEUR(budget.fundingCents)}
             </div>
           </div>
+          {!budget.carryOverHandled && budget.carryOverCreditCents > 0 ? (
+            <div className="mt-3 rounded-xl border border-amber-300/40 bg-amber-400/20 px-3 py-2 text-amber-50 shadow-[0_12px_28px_-18px_rgba(251,191,36,0.95)]">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-100/90">Reliquat positif reporté</div>
+              <div className="mt-1 flex items-center justify-between gap-2 text-sm">
+                <div className="leading-tight">
+                  {formatEUR(budget.carryOverCreditCents)} déjà disponible du mois précédent
+                </div>
+                <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverCreditCents)}</div>
+              </div>
+              <div className="mt-1 text-[11px] text-amber-100/85">
+                Virement réduit: {formatEUR(budget.amountCents)} → {formatEUR(budget.fundingCents)}
+              </div>
+            </div>
+          ) : null}
           <div
             className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
             role="progressbar"
@@ -327,10 +341,22 @@ function BudgetCard({
                     <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverSourceDebtCents)}</div>
                   </div>
                 ) : null}
+                {budget.carryOverHandled && budget.carryOverSourceCreditCents > 0 ? (
+                  <div className="mt-1 flex items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-100">
+                    <div>Reliquat positif traité</div>
+                    <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverSourceCreditCents)}</div>
+                  </div>
+                ) : null}
                 {!budget.carryOverHandled && budget.carryOverDebtCents > 0 ? (
                   <div className="mt-1 flex items-center justify-between rounded-lg border border-rose-300/20 bg-rose-500/10 px-2 py-1 text-xs text-rose-100">
-                    <div>Reliquat entrant appliqué</div>
+                    <div>Reliquat dette appliqué</div>
                     <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverDebtCents)}</div>
+                  </div>
+                ) : null}
+                {!budget.carryOverHandled && budget.carryOverCreditCents > 0 ? (
+                  <div className="mt-1 flex items-center justify-between rounded-lg border border-amber-300/25 bg-amber-500/12 px-2 py-1 text-xs text-amber-100">
+                    <div>Reliquat positif appliqué</div>
+                    <div className="tabular-nums font-semibold">-{formatEUR(budget.carryOverCreditCents)}</div>
                   </div>
                 ) : null}
                 <label className="mt-1.5 flex items-center gap-2 text-xs text-slate-200">

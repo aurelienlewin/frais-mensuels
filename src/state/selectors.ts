@@ -38,11 +38,17 @@ export type BudgetResolved = {
   adjustedAmountCents: number;
   fundingCents: number;
   carryOverSourceDebtCents: number;
+  carryOverSourceCreditCents: number;
+  carryOverSourceTotalCents: number;
   carryOverHandled: boolean;
   carryOverDebtCents: number;
+  carryOverCreditCents: number;
+  carryOverTotalCents: number;
   carryForwardSourceDebtCents: number;
+  carryForwardSourceCreditCents: number;
   carryForwardHandled: boolean;
   carryForwardDebtCents: number;
+  carryForwardCreditCents: number;
   remainingToFundCents: number;
   baseMyShareCents: number;
   carryOverMyShareCents: number;
@@ -299,23 +305,30 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     }
 
     let carryOverSourceDebtCents = 0;
+    let carryOverSourceCreditCents = 0;
     const prevYm = ymAdd(targetYm, -1);
     const firstCarryYm = firstCarryMonthByBudgetId.get(budgetId) ?? targetYm;
     if (prevYm >= firstCarryYm) {
       const prev = resolveBudgetRow(prevYm, budgetId);
       carryOverSourceDebtCents = prev?.carryForwardDebtCents ?? 0;
+      carryOverSourceCreditCents = prev?.carryForwardCreditCents ?? 0;
     }
+    const carryOverSourceTotalCents = carryOverSourceDebtCents + carryOverSourceCreditCents;
     const carryOverDebtCents = carryOverHandled ? 0 : carryOverSourceDebtCents;
+    const carryOverCreditCents = carryOverHandled ? 0 : carryOverSourceCreditCents;
+    const carryOverTotalCents = carryOverDebtCents + carryOverCreditCents;
 
     const spentCents = expenses.reduce((acc, e) => acc + e.amountCents, 0);
-    const adjustedAmountCents = snap.amountCents - carryOverDebtCents;
+    const adjustedAmountCents = snap.amountCents - carryOverTotalCents;
     const fundingCents = Math.max(0, adjustedAmountCents);
     // Keep this as the canonical carry-over basis (includes past debt impact).
     const remainingCents = adjustedAmountCents - spentCents;
     // UX-facing monthly remainder on the amount actually funded this month.
     const remainingToFundCents = fundingCents - spentCents;
     const carryForwardSourceDebtCents = Math.max(0, -remainingCents);
+    const carryForwardSourceCreditCents = Math.max(0, remainingToFundCents);
     const carryForwardDebtCents = carryForwardHandled ? 0 : carryForwardSourceDebtCents;
+    const carryForwardCreditCents = carryForwardSourceCreditCents;
     const accName = accounts.get(snap.accountId)?.name ?? snap.accountId;
     const scope: ChargeScope = snap.scope === 'commun' ? 'commun' : 'perso';
     const splitPercent =
@@ -334,11 +347,17 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
       adjustedAmountCents,
       fundingCents,
       carryOverSourceDebtCents,
+      carryOverSourceCreditCents,
+      carryOverSourceTotalCents,
       carryOverHandled,
       carryOverDebtCents,
+      carryOverCreditCents,
+      carryOverTotalCents,
       carryForwardSourceDebtCents,
+      carryForwardSourceCreditCents,
       carryForwardHandled,
       carryForwardDebtCents,
+      carryForwardCreditCents,
       remainingToFundCents,
       baseMyShareCents,
       carryOverMyShareCents,
