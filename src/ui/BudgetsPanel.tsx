@@ -310,9 +310,12 @@ function BudgetCard({
   const canEdit = !archived && Boolean(model);
   const canDelete = !archived && Boolean(model?.active);
   const [expensesOpen, setExpensesOpen] = useState(false);
-  const footerSelectBase = 'fm-input-select h-9 px-2.5 text-slate-100 shadow-inner shadow-black/20 sm:h-8 sm:px-3';
-  const footerSelectAccount = `${footerSelectBase} text-[12px] font-medium`;
-  const footerSelectType = `${footerSelectBase} text-[11px] font-semibold uppercase tracking-wide`;
+  const footerSelectBase =
+    'fm-input-select h-8 rounded-lg border-white/15 bg-ink-950/35 px-2 text-[11px] text-slate-100 shadow-inner shadow-black/20';
+  const footerSelectAccount = `${footerSelectBase} font-medium`;
+  const footerSelectType = `${footerSelectBase} font-semibold uppercase tracking-wide`;
+  const footerReadonlyBase =
+    'inline-flex h-8 w-full items-center rounded-lg border border-white/10 bg-ink-950/20 px-2 text-[11px] text-slate-200 shadow-inner shadow-black/10';
   const ratio =
     budget.fundingCents > 0
       ? Math.min(1, Math.max(0, budget.spentCents / budget.fundingCents))
@@ -816,88 +819,86 @@ function BudgetCard({
 
       <div className="mt-6 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-3">
         <div className="min-w-0">
-          <div className="grid gap-2">
-            <div className="min-w-0">
-              <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Compte</div>
-              {canEdit ? (
-                <select
-                  className={cx('w-full min-w-0 truncate', footerSelectAccount)}
-                  value={accountValue}
-                  disabled={!canEdit || activeAccounts.length === 0}
-                  onChange={(e) => {
-                    const next = e.target.value;
-                    if (!next || next === '__UNAVAILABLE__') return;
-                    dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { accountId: next } });
-                  }}
-                  aria-label="Compte du budget"
-                >
-                  {accountValue === '__UNAVAILABLE__' ? (
-                    <option value="__UNAVAILABLE__" disabled>
-                      Compte indisponible ({budget.accountId})
-                    </option>
-                  ) : null}
-                  {activeAccounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="block h-9 w-full min-w-0 truncate rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[12px] font-medium leading-9 text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:px-3 sm:leading-8">
-                  {budget.accountName}
-                </span>
-              )}
-            </div>
+          <div className="rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]">
+            <div className="grid gap-1 sm:grid-cols-[minmax(0,1.35fr)_minmax(0,0.8fr)_minmax(0,0.95fr)]">
+              <div className="min-w-0 rounded-xl border border-white/10 bg-ink-950/25 px-2 py-1">
+                <div className="truncate text-[10px] font-medium uppercase tracking-wide text-slate-400">Compte</div>
+                {canEdit ? (
+                  <select
+                    className={cx('mt-1 w-full min-w-0 truncate', footerSelectAccount)}
+                    value={accountValue}
+                    disabled={!canEdit || activeAccounts.length === 0}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      if (!next || next === '__UNAVAILABLE__') return;
+                      dispatch({ type: 'UPDATE_BUDGET', budgetId: budget.id, patch: { accountId: next } });
+                    }}
+                    aria-label="Compte du budget"
+                  >
+                    {accountValue === '__UNAVAILABLE__' ? (
+                      <option value="__UNAVAILABLE__" disabled>
+                        Compte indisponible ({budget.accountId})
+                      </option>
+                    ) : null}
+                    {activeAccounts.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name && a.name !== a.id ? `${a.name} (${a.id})` : a.id}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className={cx(footerReadonlyBase, 'mt-1 min-w-0 truncate font-medium')}>{budget.accountName}</span>
+                )}
+              </div>
 
-            <div className="min-w-0">
-              <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Type</div>
-              {canEdit ? (
-                <select
-                  className={cx('w-full', footerSelectType)}
-                  value={budget.scope}
-                  onChange={(e) =>
-                    dispatch({
-                      type: 'UPDATE_BUDGET',
-                      budgetId: budget.id,
-                      patch: { scope: e.target.value as 'perso' | 'commun' },
-                    })
-                  }
-                  aria-label="Type enveloppe"
-                >
-                  <option value="perso">Perso</option>
-                  <option value="commun">Commun</option>
-                </select>
-              ) : (
-                <span className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:px-3">
-                  {budget.scope === 'commun' ? 'commun' : 'perso'}
-                </span>
-              )}
-            </div>
+              <div className="min-w-0 rounded-xl border border-white/10 bg-ink-950/25 px-2 py-1">
+                <div className="truncate text-[10px] font-medium uppercase tracking-wide text-slate-400">Type</div>
+                {canEdit ? (
+                  <select
+                    className={cx('mt-1 w-full', footerSelectType)}
+                    value={budget.scope}
+                    onChange={(e) =>
+                      dispatch({
+                        type: 'UPDATE_BUDGET',
+                        budgetId: budget.id,
+                        patch: { scope: e.target.value as 'perso' | 'commun' },
+                      })
+                    }
+                    aria-label="Type enveloppe"
+                  >
+                    <option value="perso">Perso</option>
+                    <option value="commun">Commun</option>
+                  </select>
+                ) : (
+                  <span className={cx(footerReadonlyBase, 'mt-1 justify-center')}>{budget.scope === 'commun' ? 'commun' : 'perso'}</span>
+                )}
+              </div>
 
-            <div className="min-w-0">
-              <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Rythme</div>
-              {canEdit ? (
-                <select
-                  className={cx('w-full', footerSelectType)}
-                  value={recurrence}
-                  onChange={(e) => {
-                    const next = e.target.value === 'ponctuelle' ? 'ponctuelle' : 'recurrente';
-                    dispatch({
-                      type: 'UPDATE_BUDGET',
-                      budgetId: budget.id,
-                      patch: { recurrence: next, oneOffYm: next === 'ponctuelle' ? ym : undefined },
-                    });
-                  }}
-                  aria-label="Rythme enveloppe"
-                >
-                  <option value="recurrente">Récurrente</option>
-                  <option value="ponctuelle">Ponctuelle</option>
-                </select>
-              ) : (
-                <span className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:px-3">
-                  {recurrence === 'ponctuelle' ? 'ponctuelle' : 'récurrente'}
-                </span>
-              )}
+              <div className="min-w-0 rounded-xl border border-white/10 bg-ink-950/25 px-2 py-1">
+                <div className="truncate text-[10px] font-medium uppercase tracking-wide text-slate-400">Rythme</div>
+                {canEdit ? (
+                  <select
+                    className={cx('mt-1 w-full', footerSelectType)}
+                    value={recurrence}
+                    onChange={(e) => {
+                      const next = e.target.value === 'ponctuelle' ? 'ponctuelle' : 'recurrente';
+                      dispatch({
+                        type: 'UPDATE_BUDGET',
+                        budgetId: budget.id,
+                        patch: { recurrence: next, oneOffYm: next === 'ponctuelle' ? ym : undefined },
+                      });
+                    }}
+                    aria-label="Rythme enveloppe"
+                  >
+                    <option value="recurrente">Récurrente</option>
+                    <option value="ponctuelle">Ponctuelle</option>
+                  </select>
+                ) : (
+                  <span className={cx(footerReadonlyBase, 'mt-1 justify-center')}>
+                    {recurrence === 'ponctuelle' ? 'ponctuelle' : 'récurrente'}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
