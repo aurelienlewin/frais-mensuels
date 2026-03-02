@@ -343,7 +343,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
             </caption>
                   <thead className="bg-ink-950/95">
               <tr className="text-left text-xs text-slate-400">
-                <Th className="w-[76px] sm:w-[88px]">OK</Th>
+                <Th className="w-[76px] sm:w-[88px]">Viré</Th>
                 <Th>Libellé</Th>
                 <Th className="hidden w-[120px] text-right sm:table-cell">Montant</Th>
                 <Th className="hidden w-[120px] text-right sm:table-cell">Ma part</Th>
@@ -481,7 +481,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                         checked={r.paid}
                         disabled={!canEdit}
                         onChange={(e) => dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: r.id, paid: e.target.checked })}
-                        aria-label={`Prélevé: ${r.name}`}
+                              aria-label={`Virement fait: ${r.name}`}
                         className={cx(
                           'h-4 w-4 rounded border-white/20 bg-white/5',
                           r.scope === 'commun' ? 'text-sky-400' : 'text-emerald-400',
@@ -839,7 +839,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
       : null}
 
       <div className="border-t border-white/15 px-4 py-4 text-xs text-slate-400 max-[360px]:px-3 max-[360px]:py-3 sm:px-6">
-        <span className="sm:hidden">Astuce: ↑/↓ pour réordonner, coche OK quand c’est prélevé.</span>
+        <span className="sm:hidden">Astuce: ↑/↓ pour réordonner, coche Viré quand le virement d&apos;approvisionnement est fait.</span>
         <span className="hidden sm:inline">
           Astuce: Entrée pour valider + descendre (Shift+Entrée remonte), Échap pour annuler, glisser ⋮⋮ pour réordonner.
         </span>

@@ -398,7 +398,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   </div>
                   <div className="mt-1 text-[11px] text-emerald-100/90">
                     Épargne: {formatEUR(autoSavingsBreakdown.floorCents)} → {formatEUR(autoSavingsBreakdown.currentCents)}
-                    {autoSavingsBreakdown.locked ? ' (figée: charge cochée)' : ''}
+                    {autoSavingsBreakdown.locked ? ' (figée: virement marqué fait)' : ''}
                   </div>
                 </div>
               ) : null}
@@ -470,7 +470,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   <div className="mt-0.5 text-xs text-slate-400">
                     {activeChartId === 'savings'
                       ? savingsRepartition?.locked
-                        ? 'Montant figé (charge cochée)'
+                        ? 'Montant figé (virement marqué fait)'
                         : savingsRepartition?.bonusCreditSurplusCents
                           ? 'Base + surplus structurel + bonus reliquat'
                           : 'Base + surplus automatique'
@@ -622,7 +622,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   totals.pendingCount ? 'bg-amber-400/10 text-amber-200' : 'bg-emerald-400/10 text-emerald-200',
                 )}
               >
-                {totals.pendingCount ? `${totals.pendingCount} à cocher` : 'Tout coché'}
+                {totals.pendingCount ? `${totals.pendingCount} à virer` : 'Tout viré'}
               </div>
               <button
                 type="button"
@@ -672,9 +672,9 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   const hasBudgets = a.budgetsBaseCents !== 0 || a.budgetsCarryOverCents !== 0 || a.budgetsCents !== 0;
                   const bulkLabel = (() => {
                     if (archived) return 'Mois archivé';
-                    if (!meta || meta.ids.length === 0) return 'Aucune charge à cocher';
-                    if (meta.unpaidCount === 0) return 'Tout est déjà coché';
-                    return `Cocher toutes les charges liées à ${a.accountName}`;
+                    if (!meta || meta.ids.length === 0) return 'Aucune charge à marquer virée';
+                    if (meta.unpaidCount === 0) return 'Tout est déjà marqué viré';
+                    return `Marquer virées toutes les charges liées à ${a.accountName}`;
                   })();
                   return (
                     <button
@@ -709,7 +709,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                             </span>
                             {allPaid ? (
                               <span className="fm-chip-pill border-emerald-200/25 bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
-                                OK ✓
+                                Viré ✓
                               </span>
                             ) : null}
                             {!a.isKnownAccount ? (
@@ -726,11 +726,11 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {unpaidCount > 0 ? (
                               <span className="fm-chip-pill border-amber-200/30 bg-amber-400/12 px-2 py-0.5 text-[10px] font-semibold text-amber-100">
-                                {unpaidCount} à cocher
+                                {unpaidCount} à virer
                               </span>
                             ) : null}
                             {canMarkAll ? (
-                              <span className="fm-chip-pill px-2 py-0.5 text-[10px] text-slate-300">Appui pour tout cocher</span>
+                              <span className="fm-chip-pill px-2 py-0.5 text-[10px] text-slate-300">Appui pour tout marquer viré</span>
                             ) : null}
                           </div>
                         </div>
@@ -749,7 +749,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
 
                       <div className="mt-3 space-y-1.5">
                         <AccountMetric label="Charges à provisionner" value={formatEUR(a.chargesTotalCents)} />
-                        <AccountMetric label="Charges cochées" value={formatEUR(a.chargesPaidCents)} />
+                        <AccountMetric label="Charges virées" value={formatEUR(a.chargesPaidCents)} />
                         {hasBudgets ? <AccountMetric label="Enveloppes à virer" value={formatEUR(a.budgetsCents)} /> : null}
                         {hasBudgets ? <AccountMetric label="Enveloppes cibles" value={formatEUR(a.budgetsBaseCents)} /> : null}
                         {a.budgetsCarryOverCents !== 0 ? (

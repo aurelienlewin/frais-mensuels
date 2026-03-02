@@ -4,7 +4,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 
 ## Résumé rapide
 
-- Charges mensuelles avec part %, comptes, auto/manuel, et statut OK.
+- Charges mensuelles avec part %, comptes, auto/manuel, et statut `Viré` (virement d’approvisionnement fait).
 - Enveloppes (budgets) + dépenses + reste du mois + dette reportée.
 - Création d’enveloppe via modale `Nouvelle enveloppe` (ouverte par bouton dans l’en-tête Enveloppes, panneau d’ajout fermé par défaut).
 - Rythme d’enveloppe: `récurrente` (par défaut) ou `ponctuelle` (visible uniquement sur un mois cible).
@@ -13,10 +13,10 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
 - Dépenses d’enveloppe Essence: le libellé est forcé à `Essence` (saisie enveloppe + ajout rapide), sans saisie manuelle requise.
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat positif inclus), total à provisionner, reste à vivre.
-- Épargne auto (option par convention): la charge Épargne est gérée dans un panneau dédié (collapsible) entre `Charges` et `Enveloppes` plutôt que dans la liste de charges standard. On y règle le plancher, on coche l’état du mois, et on choisit compte source/cible. Son montant du mois correspond au reste après charges + enveloppes: il peut monter au-dessus du montant configuré, ou descendre en dessous (jusqu'à `0`) si les enveloppes augmentent. Dans ce second cas, une modale d'alerte explique l'ajustement. Cet ajustement s'applique tant que la charge Épargne du mois n'est pas cochée. Toute modification de montant d'enveloppe recalcule immédiatement cette épargne (avant cochage). Le total du mois peut aussi être forcé manuellement (override local au mois) jusqu'à cochage.
+- Épargne auto (option par convention): la charge Épargne est gérée dans un panneau dédié (collapsible) entre `Charges` et `Enveloppes` plutôt que dans la liste de charges standard. On y règle le plancher, on marque l’état du mois (`Virée`), et on choisit compte source/cible. Son montant du mois correspond au reste après charges + enveloppes: il peut monter au-dessus du montant configuré, ou descendre en dessous (jusqu'à `0`) si les enveloppes augmentent. Dans ce second cas, une modale d'alerte explique l'ajustement. Cet ajustement s'applique tant que la charge Épargne du mois n'est pas marquée `Virée`. Toute modification de montant d'enveloppe recalcule immédiatement cette épargne (avant marquage). Le total du mois peut aussi être forcé manuellement (override local au mois) jusqu'au marquage.
 - Vue par compte orientée action: montant à approvisionner en début de mois, avec contrôle d’intégrité (somme des comptes = total à provisionner).
 - Règle de calcul "Par compte": pour les lignes `commun`, le montant à approvisionner additionne uniquement `ma part` (et non le montant total de la ligne).
-- Cartes "Par compte" optimisées lecture rapide: total mis en avant + lignes métriques alignées (charges, cochées, enveloppes, impact reliquat).
+- Cartes "Par compte" optimisées lecture rapide: total mis en avant + lignes métriques alignées (charges, virées, enveloppes, impact reliquat).
 - Transparence calculs: bloc repliable "Détails du calcul" dans Totaux et info-bulle sur "Reste du mois" des enveloppes.
 - UI mobile/lecture: boutons de sections renforcés et pills plus lisibles via utilitaires Tailwind v4 récents (`pointer-coarse`, `text-shadow-*`, `wrap-break-word` / `wrap-anywhere`).
 - Ajout rapide mobile (iOS Safari): la modale se repositionne au-dessus du clavier (Visual Viewport) pour rester visible pendant la saisie.
@@ -128,9 +128,9 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Par compte: `charges à provisionner + enveloppes à virer` (la dette entrante et le reliquat positif sont intégrés au montant d’enveloppes à virer). Si des lignes référencent un compte non configuré, elles restent visibles et incluses dans les totaux.
 - Pour une charge `commun`, la contribution en `Par compte` utilise toujours `ma part` (split%) de la ligne.
 - Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
-- Épargne auto: l'ajustement ne s'applique plus dès que la charge Épargne est cochée pour le mois en cours. Avant cochage, le calcul peut réduire l'épargne sous son plancher configuré (jusqu'à `0`) et l'UI affiche une alerte explicative.
+- Épargne auto: l'ajustement ne s'applique plus dès que la charge Épargne est marquée `Virée` pour le mois en cours. Avant marquage, le calcul peut réduire l'épargne sous son plancher configuré (jusqu'à `0`) et l'UI affiche une alerte explicative.
 - Épargne auto (forçage manuel): le "Total épargne du mois" peut être surchargé manuellement pour le mois courant sans modifier le plancher global; un bouton permet de revenir au recalcul automatique.
-- Épargne auto (verrou): au moment du cochage, le montant du mois est figé pour ce mois.
+- Épargne auto (verrou): au moment du marquage `Virée`, le montant du mois est figé pour ce mois.
 - Épargne dans l'UI: la ligne Épargne n'est plus affichée dans le tableau `Charges`; elle reste pleinement incluse dans les totaux globaux et les calculs `Par compte` (approvisionnement par compte inchangé).
 
 </details>

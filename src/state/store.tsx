@@ -18,9 +18,9 @@ function actionSummary(action: Action): string | null {
     case 'UNARCHIVE_MONTH':
       return 'Mois désarchivé';
     case 'TOGGLE_CHARGE_PAID':
-      return 'OK mis à jour';
+      return 'Statut de virement mis à jour';
     case 'SET_CHARGES_PAID':
-      return 'OK mis à jour';
+      return 'Statut de virement mis à jour';
     case 'SET_MONTH_CHARGE_AMOUNT_OVERRIDE':
       return 'Montant du mois mis à jour';
     case 'HIDE_CHARGE_FOR_MONTH':

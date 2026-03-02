@@ -116,10 +116,10 @@ export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
                       lockedAmountCents: e.target.checked ? totalCents : undefined,
                     });
                   }}
-                  aria-label="Épargne réglée"
+                  aria-label="Virement épargne fait"
                   className="h-4 w-4 rounded border-white/20 bg-white/5 text-emerald-400"
                 />
-                Réglée
+                Virée
               </label>
             ) : null}
             <button
@@ -278,7 +278,7 @@ export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
                 />
                 <div className="text-[11px] text-slate-400">
                   {savings?.row.paid
-                    ? 'Montant figé (épargne réglée).'
+                    ? 'Montant figé (virement épargne marqué fait).'
                     : hasManualTotalOverride
                       ? 'Montant forcé pour ce mois.'
                       : 'Laisser vide via "Recalcul auto" pour reprendre le calcul automatique.'}

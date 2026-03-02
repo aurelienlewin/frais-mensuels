@@ -236,7 +236,7 @@ function ChargeMobileCard({
             checked={row.paid}
             disabled={!canEdit}
             onChange={(e) => onTogglePaid(e.target.checked)}
-            aria-label={`Prélevé: ${row.name}`}
+            aria-label={`Virement fait: ${row.name}`}
             className={cx(
               'h-4 w-4 rounded border-white/20 bg-white/5',
               row.scope === 'commun' ? 'text-sky-400' : 'text-emerald-400',

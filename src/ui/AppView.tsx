@@ -70,7 +70,7 @@ export function AppView({
             <p>
               Cette app fonctionne comme un mini-tableur pour suivre tes charges mensuelles (perso + commun) et tes enveloppes.
             </p>
-            <Example>Loyer · 1200€ · J05 · Commun · Auto · OK se coche après échéance</Example>
+            <Example>Loyer · 1200€ · J05 · Commun · Auto · Viré (virement d&apos;approvisionnement fait)</Example>
             <p className="text-xs text-slate-400">
               Le guide ne s’affiche qu’une fois (tu peux le relancer via le menu <span className="font-mono">⋯</span>).
             </p>
@@ -101,8 +101,8 @@ export function AppView({
             </p>
             <Example>Internet · 35.99€ · J12 · Commun (50/50) · Auto · JOINT_MAIN</Example>
             <p className="text-xs text-slate-400">
-              Tip: coche <span className="font-mono">OK</span> quand c’est prélevé (auto se coche par défaut si la date est
-              passée).
+              Tip: coche <span className="font-mono">Viré</span> quand le virement d&apos;approvisionnement est fait (auto se
+              marque par défaut si la date est passée).
             </p>
           </>
         ),
