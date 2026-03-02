@@ -295,6 +295,20 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   }, [activeChartId, chartSlides]);
   const activeSlideIndex = Math.max(0, chartSlides.indexOf(activeChartId));
   const canCycleCharts = chartSlides.length > 1;
+  const byAccountOrdered = useMemo(
+    () =>
+      byAccount
+        .map((a, index) => {
+          const meta = chargesByAccount.get(a.accountId) ?? null;
+          const allPaid = Boolean(meta && meta.ids.length > 0 && meta.unpaidCount === 0);
+          return { a, meta, allPaid, index };
+        })
+        .sort((left, right) => {
+          if (left.allPaid === right.allPaid) return left.index - right.index;
+          return left.allPaid ? 1 : -1;
+        }),
+    [byAccount, chargesByAccount],
+  );
 
   return (
     <>
@@ -652,9 +666,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                 </div>
               ) : null}
               <div className="mt-3 space-y-2">
-                {byAccount.map((a) => {
-                  const meta = chargesByAccount.get(a.accountId) ?? null;
-                  const allPaid = Boolean(meta && meta.ids.length > 0 && meta.unpaidCount === 0);
+                {byAccountOrdered.map(({ a, meta, allPaid }) => {
                   const unpaidCount = meta?.unpaidCount ?? 0;
                   const canMarkAll = !archived && Boolean(meta && meta.unpaidCount > 0);
                   const hasBudgets = a.budgetsBaseCents !== 0 || a.budgetsCarryOverCents !== 0 || a.budgetsCents !== 0;
@@ -671,7 +683,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                       className={cx(
                         'fm-account-summary-card text-left',
                         canMarkAll ? 'fm-account-summary-card-clickable' : 'opacity-85',
-                        allPaid && 'opacity-75',
+                        allPaid && 'opacity-60 saturate-50',
                       )}
                       disabled={!canMarkAll}
                       title={bulkLabel}
@@ -751,7 +763,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                     </button>
                   );
                 })}
-                {byAccount.length === 0 ? <div className="text-sm text-slate-400">Aucune charge ce mois-ci.</div> : null}
+                {byAccountOrdered.length === 0 ? <div className="text-sm text-slate-400">Aucune charge ce mois-ci.</div> : null}
               </div>
             </div>
 
