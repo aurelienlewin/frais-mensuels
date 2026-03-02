@@ -10,6 +10,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Rythme d’enveloppe: `récurrente` (par défaut) ou `ponctuelle` (visible uniquement sur un mois cible).
 - Cartes Enveloppes: les sélecteurs `Compte` / `Type` / `Rythme` sont regroupés dans une barre arrondie segmentée (style navigation), responsive et sans chevauchement.
 - Cartes Enveloppes: le bouton `Supprimer l’enveloppe` est placé sous cette barre segmentée, en pleine largeur.
+- Cartes Enveloppes: la section `Dépenses` utilise un en-tête pleine largeur (barre segmentée/collapsible) pour rendre l’ouverture/fermeture explicite.
 - Reliquat d’enveloppe: un dépassement non traité ou un reste positif non consommé est reporté cumulativement sur les mois suivants pour la même enveloppe (même si des mois intermédiaires n'ont pas été ouverts) et réduit le montant à virer.
 - Reliquat traité: une case à cocher par enveloppe permet de marquer le reliquat entrant comme géré manuellement (il n'est alors plus appliqué au calcul du mois).
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).

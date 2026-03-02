@@ -530,37 +530,31 @@ function BudgetCard({
       </div>
 
       <div className="mt-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-medium text-slate-200">Dépenses</div>
-          <button
-            type="button"
-            className="fm-mobile-section-toggle sm:hidden"
-            onClick={() => setExpensesOpen((v) => !v)}
-            aria-expanded={expensesOpen}
-            aria-label={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
-            title={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
+        <button
+          type="button"
+          className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] px-3 py-2.5 text-left shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)] transition-colors hover:bg-[linear-gradient(140deg,rgba(26,26,28,0.9),rgba(48,48,52,0.68))] pointer-coarse:min-h-11 pointer-coarse:px-3.5 pointer-coarse:py-3"
+          onClick={() => setExpensesOpen((v) => !v)}
+          aria-expanded={expensesOpen}
+          aria-controls={`budget-expenses-${budget.id}`}
+          aria-label={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
+          title={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
+        >
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-slate-100 text-shadow-2xs">Dépenses</div>
+            <div className="mt-0.5 text-[11px] text-slate-300">
+              {expensesOpen ? 'Section ouverte' : 'Section masquée: toucher pour afficher le détail'}
+            </div>
+          </div>
+          <span
+            aria-hidden="true"
+            className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-full border border-white/20 bg-white/8 text-base text-slate-100 transition-colors group-hover:bg-white/14"
           >
-            <span>{expensesOpen ? 'Masquer' : 'Voir'} détail</span>
-            <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-              {expensesOpen ? '▴' : '▾'}
-            </span>
-          </button>
-          <button
-            type="button"
-            className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
-            onClick={() => setExpensesOpen((v) => !v)}
-            aria-expanded={expensesOpen}
-            aria-label={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
-            title={expensesOpen ? 'Masquer les dépenses' : 'Afficher les dépenses'}
-          >
-            <span aria-hidden="true" className="text-[22px] font-semibold leading-none">
-              {expensesOpen ? '▴' : '▾'}
-            </span>
-          </button>
-        </div>
+            {expensesOpen ? '▴' : '▾'}
+          </span>
+        </button>
 
         {expensesOpen ? (
-          <div className="fm-card-soft mt-3 grid gap-2 p-3">
+          <div id={`budget-expenses-${budget.id}`} className="fm-card-soft mt-3 grid gap-2 p-3">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
             <input
               className="fm-input h-9 px-3 text-sm"
