@@ -21,6 +21,8 @@ function actionSummary(action: Action): string | null {
       return 'OK mis à jour';
     case 'SET_CHARGES_PAID':
       return 'OK mis à jour';
+    case 'SET_MONTH_CHARGE_AMOUNT_OVERRIDE':
+      return 'Montant du mois mis à jour';
     case 'HIDE_CHARGE_FOR_MONTH':
       return 'Charge masquée ce mois';
     case 'ADD_CHARGE':

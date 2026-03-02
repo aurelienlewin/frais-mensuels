@@ -10,8 +10,9 @@ export type Action =
   | { type: 'UPDATE_ACCOUNT'; accountId: Account['id']; patch: Partial<Omit<Account, 'id'>> }
   | { type: 'REMOVE_ACCOUNT'; accountId: Account['id']; moveToAccountId: Account['id'] }
   | { type: 'ENSURE_MONTH'; ym: MonthData['ym'] }
-  | { type: 'TOGGLE_CHARGE_PAID'; ym: MonthData['ym']; chargeId: string; paid: boolean }
+  | { type: 'TOGGLE_CHARGE_PAID'; ym: MonthData['ym']; chargeId: string; paid: boolean; lockedAmountCents?: number }
   | { type: 'SET_CHARGES_PAID'; ym: MonthData['ym']; chargeIds: string[]; paid: boolean }
+  | { type: 'SET_MONTH_CHARGE_AMOUNT_OVERRIDE'; ym: MonthData['ym']; chargeId: string; amountCents: number | null }
   | { type: 'HIDE_CHARGE_FOR_MONTH'; ym: MonthData['ym']; chargeId: string }
   | { type: 'ADD_MONTH_CHARGE'; ym: MonthData['ym']; charge: Omit<Charge, 'id' | 'sortOrder' | 'active'> }
   | { type: 'UPDATE_MONTH_CHARGE'; ym: MonthData['ym']; chargeId: string; patch: Partial<Omit<Charge, 'id' | 'active'>> }
@@ -197,17 +198,25 @@ export function reducer(state: AppState, action: Action): AppState {
         return { ...state, months: { ...state.months, [action.ym]: month } };
       }
       case 'TOGGLE_CHARGE_PAID':
-        return withMonth(state, action.ym, (m) => ({
-          ...m,
-          charges: {
-            ...m.charges,
-            [action.chargeId]: {
-              paid: action.paid,
-              snapshot: m.charges[action.chargeId]?.snapshot,
-              removed: m.charges[action.chargeId]?.removed,
+        return withMonth(state, action.ym, (m) => {
+          const prev = m.charges[action.chargeId];
+          const lockedAmountCents =
+            action.paid && typeof action.lockedAmountCents === 'number' && Number.isFinite(action.lockedAmountCents)
+              ? Math.max(0, Math.round(action.lockedAmountCents))
+              : prev?.amountOverrideCents;
+          return {
+            ...m,
+            charges: {
+              ...m.charges,
+              [action.chargeId]: {
+                paid: action.paid,
+                snapshot: prev?.snapshot,
+                removed: prev?.removed,
+                amountOverrideCents: lockedAmountCents,
+              },
             },
-          },
-        }));
+          };
+        });
       case 'SET_CHARGES_PAID':
         return withMonth(state, action.ym, (m) => {
           if (m.archived) return m;
@@ -217,11 +226,47 @@ export function reducer(state: AppState, action: Action): AppState {
             const prev = m.charges[chargeId];
             const prevPaid = prev?.paid ?? false;
             if (prevPaid === action.paid) continue;
-            nextCharges[chargeId] = { paid: action.paid, snapshot: prev?.snapshot, removed: prev?.removed };
+            nextCharges[chargeId] = {
+              paid: action.paid,
+              snapshot: prev?.snapshot,
+              removed: prev?.removed,
+              amountOverrideCents: prev?.amountOverrideCents,
+            };
             changed = true;
           }
           if (!changed) return m;
           return { ...m, charges: nextCharges };
+        });
+      case 'SET_MONTH_CHARGE_AMOUNT_OVERRIDE':
+        return withMonth(state, action.ym, (m) => {
+          if (m.archived) return m;
+          const prev = m.charges[action.chargeId];
+          const nextOverride =
+            typeof action.amountCents === 'number' && Number.isFinite(action.amountCents)
+              ? Math.max(0, Math.round(action.amountCents))
+              : undefined;
+          if ((prev?.amountOverrideCents ?? undefined) === nextOverride) return m;
+
+          if (!prev && nextOverride === undefined) return m;
+
+          if (prev && nextOverride === undefined && !prev.snapshot && !prev.removed && !prev.paid) {
+            const nextCharges = { ...m.charges };
+            delete nextCharges[action.chargeId];
+            return { ...m, charges: nextCharges };
+          }
+
+          return {
+            ...m,
+            charges: {
+              ...m.charges,
+              [action.chargeId]: {
+                paid: prev?.paid ?? false,
+                snapshot: prev?.snapshot,
+                removed: prev?.removed,
+                amountOverrideCents: nextOverride,
+              },
+            },
+          };
         });
       case 'HIDE_CHARGE_FOR_MONTH':
         return withMonth(state, action.ym, (m) => {
@@ -236,6 +281,7 @@ export function reducer(state: AppState, action: Action): AppState {
                 paid: existing?.paid ?? false,
                 snapshot: existing?.snapshot,
                 removed: true,
+                amountOverrideCents: existing?.amountOverrideCents,
               },
             },
           };
@@ -311,11 +357,15 @@ export function reducer(state: AppState, action: Action): AppState {
               if (chargesWithSnapshots[ch.id]?.removed) continue;
               const current = chargesWithSnapshots[ch.id];
               if (current?.snapshot) continue;
+              const overriddenAmountCents =
+                typeof current?.amountOverrideCents === 'number' && Number.isFinite(current.amountOverrideCents)
+                  ? Math.max(0, Math.round(current.amountOverrideCents))
+                  : ch.amountCents;
               chargesWithSnapshots[ch.id] = {
                 paid: current?.paid ?? (ch.payment === 'auto' && dueDateIso(action.ym, ch.dayOfMonth) <= today),
                 snapshot: {
                   name: ch.name,
-                  amountCents: ch.amountCents,
+                  amountCents: overriddenAmountCents,
                   sortOrder: ch.sortOrder,
                   dayOfMonth: ch.dayOfMonth,
                   accountId: ch.accountId,

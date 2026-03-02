@@ -165,6 +165,22 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
   const savingsLockedForMonth = savingsMonthState?.paid === true;
   if (savingsLockedForMonth) return rows;
 
+  const forcedSavingsAmountCents =
+    typeof savingsMonthState?.amountOverrideCents === 'number' && Number.isFinite(savingsMonthState.amountOverrideCents)
+      ? Math.max(0, Math.round(savingsMonthState.amountOverrideCents))
+      : null;
+  if (forcedSavingsAmountCents !== null) {
+    if (savings.amountCents === forcedSavingsAmountCents) return rows;
+    return rows.map((r) => {
+      if (r.id !== savings.id) return r;
+      return {
+        ...r,
+        amountCents: forcedSavingsAmountCents,
+        myShareCents: forcedSavingsAmountCents,
+      };
+    });
+  }
+
   const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
   const budgets = budgetsForMonth(state, ym);
   const budgetsToWireCents = budgets.reduce((acc, b) => acc + b.myShareCents, 0);
@@ -208,11 +224,15 @@ function resolveSnapshot(
     dueDateIso(ym, ch?.dayOfMonth ?? 1) <= todayIso;
   const paid = monthState?.paid ?? defaultPaid ?? false;
   if (!ch) return { paid, snap: null };
+  const amountOverrideCents =
+    typeof monthState?.amountOverrideCents === 'number' && Number.isFinite(monthState.amountOverrideCents)
+      ? Math.max(0, Math.round(monthState.amountOverrideCents))
+      : null;
   return {
     paid,
     snap: {
       name: ch.name,
-      amountCents: ch.amountCents,
+      amountCents: amountOverrideCents ?? ch.amountCents,
       sortOrder: ch.sortOrder,
       dayOfMonth: ch.dayOfMonth,
       accountId: ch.accountId,

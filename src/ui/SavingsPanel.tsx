@@ -36,6 +36,8 @@ export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
   const activePersoAccounts = useMemo(() => activeAccounts.filter((a) => a.kind === 'perso'), [activeAccounts]);
   const accountsById = useMemo(() => new Map(state.accounts.map((a) => [a.id, a])), [state.accounts]);
+  const savingsMonthState = savings ? state.months[ym]?.charges[savings.row.id] : null;
+  const hasManualTotalOverride = typeof savingsMonthState?.amountOverrideCents === 'number';
 
   const createSavings = () => {
     if (!canEdit) return;
@@ -106,7 +108,13 @@ export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
                   disabled={!canEdit}
                   onChange={(e) => {
                     if (!savings) return;
-                    dispatch({ type: 'TOGGLE_CHARGE_PAID', ym, chargeId: savings.row.id, paid: e.target.checked });
+                    dispatch({
+                      type: 'TOGGLE_CHARGE_PAID',
+                      ym,
+                      chargeId: savings.row.id,
+                      paid: e.target.checked,
+                      lockedAmountCents: e.target.checked ? totalCents : undefined,
+                    });
                   }}
                   aria-label="Épargne réglée"
                   className="h-4 w-4 rounded border-white/20 bg-white/5 text-emerald-400"
@@ -233,6 +241,49 @@ export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
                   </select>
                 </label>
               </div>
+
+              <label className="grid gap-1">
+                <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
+                  <span>Total épargne du mois (forçage)</span>
+                  {hasManualTotalOverride ? (
+                    <button
+                      type="button"
+                      className={cx('fm-btn-ghost h-7 px-2 text-[11px]', (!canEdit || Boolean(savings?.row.paid)) && 'opacity-50')}
+                      disabled={!canEdit || Boolean(savings?.row.paid)}
+                      onClick={() => {
+                        if (!savings) return;
+                        dispatch({ type: 'SET_MONTH_CHARGE_AMOUNT_OVERRIDE', ym, chargeId: savings.row.id, amountCents: null });
+                      }}
+                    >
+                      Recalcul auto
+                    </button>
+                  ) : null}
+                </div>
+                <InlineNumberInput
+                  ariaLabel="Total épargne du mois"
+                  value={centsToEuros(totalCents)}
+                  step={0.01}
+                  min={0}
+                  suffix="€"
+                  disabled={!canEdit || Boolean(savings?.row.paid)}
+                  onCommit={(euros) => {
+                    if (!savings) return;
+                    dispatch({
+                      type: 'SET_MONTH_CHARGE_AMOUNT_OVERRIDE',
+                      ym,
+                      chargeId: savings.row.id,
+                      amountCents: eurosToCents(euros),
+                    });
+                  }}
+                />
+                <div className="text-[11px] text-slate-400">
+                  {savings?.row.paid
+                    ? 'Montant figé (épargne réglée).'
+                    : hasManualTotalOverride
+                      ? 'Montant forcé pour ce mois.'
+                      : 'Laisser vide via "Recalcul auto" pour reprendre le calcul automatique.'}
+                </div>
+              </label>
 
               <label className="grid gap-1">
                 <div className="text-xs text-slate-400">Compte cible</div>

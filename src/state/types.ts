@@ -54,6 +54,7 @@ export type MonthChargeState = {
   paid: boolean;
   snapshot?: MonthChargeSnapshot;
   removed?: boolean;
+  amountOverrideCents?: number;
 };
 
 export type MonthBudgetSnapshot = Pick<Budget, 'name' | 'amountCents' | 'accountId' | 'scope' | 'splitPercent'>;
