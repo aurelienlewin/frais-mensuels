@@ -323,14 +323,6 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Totaux</h2>
             </div>
             <div className="flex items-center gap-2">
-              <div
-                className={cx(
-                  'rounded-full px-3 py-1 text-xs',
-                  totals.pendingCount ? 'bg-amber-400/10 text-amber-200' : 'bg-emerald-400/10 text-emerald-200',
-                )}
-              >
-                {totals.pendingCount ? `${totals.pendingCount} à cocher` : 'Tout coché'}
-              </div>
               <button
                 type="button"
                 className="fm-mobile-section-toggle sm:hidden"
@@ -624,6 +616,14 @@ export function SummaryPanel({ ym }: { ym: YM }) {
               <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Par compte</h2>
             </div>
             <div className="flex items-center gap-2">
+              <div
+                className={cx(
+                  'rounded-full px-3 py-1 text-xs',
+                  totals.pendingCount ? 'bg-amber-400/10 text-amber-200' : 'bg-emerald-400/10 text-emerald-200',
+                )}
+              >
+                {totals.pendingCount ? `${totals.pendingCount} à cocher` : 'Tout coché'}
+              </div>
               <button
                 type="button"
                 className="fm-mobile-section-toggle sm:hidden"
