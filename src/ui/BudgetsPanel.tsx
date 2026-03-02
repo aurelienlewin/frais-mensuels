@@ -814,14 +814,14 @@ function BudgetCard({
         ) : null}
       </div>
 
-      <div className="mt-6 grid gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-2">
+      <div className="mt-6 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-3">
         <div className="min-w-0">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="grid gap-2">
             <div className="min-w-0">
               <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Compte</div>
               {canEdit ? (
                 <select
-                  className={cx('w-full min-w-0 truncate sm:w-44', footerSelectAccount)}
+                  className={cx('w-full min-w-0 truncate', footerSelectAccount)}
                   value={accountValue}
                   disabled={!canEdit || activeAccounts.length === 0}
                   onChange={(e) => {
@@ -843,7 +843,7 @@ function BudgetCard({
                   ))}
                 </select>
               ) : (
-                <span className="block h-9 w-full min-w-0 truncate rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[12px] font-medium leading-9 text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:w-44 sm:px-3 sm:leading-8">
+                <span className="block h-9 w-full min-w-0 truncate rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[12px] font-medium leading-9 text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:px-3 sm:leading-8">
                   {budget.accountName}
                 </span>
               )}
@@ -853,7 +853,7 @@ function BudgetCard({
               <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Type</div>
               {canEdit ? (
                 <select
-                  className={cx('w-full sm:w-28', footerSelectType)}
+                  className={cx('w-full', footerSelectType)}
                   value={budget.scope}
                   onChange={(e) =>
                     dispatch({
@@ -868,7 +868,7 @@ function BudgetCard({
                   <option value="commun">Commun</option>
                 </select>
               ) : (
-                <span className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:w-28 sm:px-3">
+                <span className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:px-3">
                   {budget.scope === 'commun' ? 'commun' : 'perso'}
                 </span>
               )}
@@ -878,7 +878,7 @@ function BudgetCard({
               <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Rythme</div>
               {canEdit ? (
                 <select
-                  className={cx('w-full sm:w-28', footerSelectType)}
+                  className={cx('w-full', footerSelectType)}
                   value={recurrence}
                   onChange={(e) => {
                     const next = e.target.value === 'ponctuelle' ? 'ponctuelle' : 'recurrente';
@@ -894,7 +894,7 @@ function BudgetCard({
                   <option value="ponctuelle">Ponctuelle</option>
                 </select>
               ) : (
-                <span className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:w-28 sm:px-3">
+                <span className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:px-3">
                   {recurrence === 'ponctuelle' ? 'ponctuelle' : 'récurrente'}
                 </span>
               )}
