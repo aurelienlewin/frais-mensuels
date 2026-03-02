@@ -817,7 +817,7 @@ function BudgetCard({
         ) : null}
       </div>
 
-      <div className="mt-6 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-3">
+      <div className="mt-6">
         <div className="min-w-0">
           <div className="rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]">
             <div className="grid gap-1 sm:grid-cols-[minmax(0,1.35fr)_minmax(0,0.8fr)_minmax(0,0.95fr)]">
@@ -912,7 +912,7 @@ function BudgetCard({
         {canDelete ? (
           <button
             type="button"
-            className="fm-btn-ghost h-10 w-full rounded-2xl px-4 text-xs font-semibold text-rose-100 hover:bg-rose-400/15 sm:ml-auto sm:h-9 sm:w-auto"
+            className="fm-btn-ghost mt-2 h-10 w-full rounded-2xl px-4 text-xs font-semibold text-rose-100 hover:bg-rose-400/15 sm:h-9"
             onClick={() => {
               if (!model) return;
               const ok = window.confirm(
