@@ -170,7 +170,7 @@ function applyAutoSavingsForMonth(state: AppState, ym: YM, rows: ChargeResolved[
   const budgetsToWireCents = budgets.reduce((acc, b) => acc + b.myShareCents, 0);
   const otherChargesTotalCents = rows.reduce((acc, r) => {
     if (r.id === savings.id) return acc;
-    return acc + (r.scope === 'commun' ? r.myShareCents : r.amountCents);
+    return acc + r.myShareCents;
   }, 0);
   // Rule: wire charges and envelopes first, then allocate the remaining amount to Epargne.
   // This can go below the configured Epargne floor (down to 0) when envelopes increase.
@@ -509,7 +509,7 @@ export function totalsForMonth(state: AppState, ym: YM, precomputed?: MonthCompu
     } else {
       totalPersoCents += r.amountCents;
     }
-    totalPourMoiCents += r.scope === 'commun' ? r.myShareCents : r.amountCents;
+    totalPourMoiCents += r.myShareCents;
   }
 
   const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
@@ -556,7 +556,7 @@ export function totalsByAccount(state: AppState, ym: YM, precomputed?: MonthComp
       budgetsBaseCents: 0,
       budgetsCarryOverCents: 0,
     };
-    const mineCents = r.scope === 'commun' ? r.myShareCents : r.amountCents;
+    const mineCents = r.myShareCents;
     prev.chargesTotalCents += mineCents;
     if (r.paid) prev.chargesPaidCents += mineCents;
     byAccount.set(key, prev);

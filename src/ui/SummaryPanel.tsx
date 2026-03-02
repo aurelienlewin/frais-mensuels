@@ -113,7 +113,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
     const salaryCents = state.months[ym]?.salaryCents ?? state.salaryCents;
     const otherChargesTotalCents = charges.reduce((acc, r) => {
       if (r.id === selected.row.id) return acc;
-      return acc + (r.scope === 'commun' ? r.myShareCents : r.amountCents);
+      return acc + r.myShareCents;
     }, 0);
     const requiredWithoutSavingsCents = otherChargesTotalCents + totals.totalBudgetsCents;
     const floorCents = Math.max(0, selected.global.amountCents);

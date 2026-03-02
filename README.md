@@ -13,6 +13,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Résumé orienté virement/provisionnement: total charges (pour moi), enveloppes à virer (reliquat positif inclus), total à provisionner, reste à vivre.
 - Épargne auto (option par convention): la charge Épargne est gérée dans un panneau dédié (collapsible) entre `Charges` et `Enveloppes` plutôt que dans la liste de charges standard. On y règle le plancher, on coche l’état du mois, et on choisit compte source/cible. Son montant du mois correspond au reste après charges + enveloppes: il peut monter au-dessus du montant configuré, ou descendre en dessous (jusqu'à `0`) si les enveloppes augmentent. Dans ce second cas, une modale d'alerte explique l'ajustement. Cet ajustement s'applique tant que la charge Épargne du mois n'est pas cochée. Toute modification de montant d'enveloppe recalcule immédiatement cette épargne (avant cochage).
 - Vue par compte orientée action: montant à approvisionner en début de mois, avec contrôle d’intégrité (somme des comptes = total à provisionner).
+- Règle de calcul "Par compte": pour les lignes `commun`, le montant à approvisionner additionne uniquement `ma part` (et non le montant total de la ligne).
 - Cartes "Par compte" optimisées lecture rapide: total mis en avant + lignes métriques alignées (charges, cochées, enveloppes, impact reliquat).
 - Transparence calculs: bloc repliable "Détails du calcul" dans Totaux et info-bulle sur "Reste du mois" des enveloppes.
 - UI mobile/lecture: boutons de sections renforcés et pills plus lisibles via utilitaires Tailwind v4 récents (`pointer-coarse`, `text-shadow-*`, `wrap-break-word` / `wrap-anywhere`).
@@ -104,6 +105,8 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 <summary>Modèle de données (résumé)</summary>
 
 - Charges globales (mensuelles) + charges ponctuelles par mois.
+- Édition des charges globales: une modification s'applique au mois courant et aux mois suivants non archivés.
+- Exceptions d'édition: une charge ponctuelle reste locale à son mois, et un mois archivé conserve son snapshot (gelé).
 - Budgets par enveloppe + dépenses par mois.
 - Reliquat d’enveloppe: le reste d’un mois (positif ou négatif) est reporté sur le mois suivant de la même enveloppe. Un reliquat positif réduit le virement du mois suivant; un reliquat négatif alimente la dette reportée.
 - Reliquat traité (optionnel): si activé sur un mois/enveloppe, le reliquat entrant est conservé comme information mais n’est plus appliqué dans le calcul du montant à virer pour ce mois.
@@ -119,6 +122,7 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Total à provisionner du mois: `charges (pour moi) + enveloppes à virer`.
 - Dans le panneau Totaux, l’impact reliquat distingue: dette entrante ajoutée au virement d’enveloppe (rouge) et reliquat positif à déduire sur l’enveloppe à virer (vert).
 - Par compte: `charges à provisionner + enveloppes à virer` (la dette entrante et le reliquat positif sont intégrés au montant d’enveloppes à virer). Si des lignes référencent un compte non configuré, elles restent visibles et incluses dans les totaux.
+- Pour une charge `commun`, la contribution en `Par compte` utilise toujours `ma part` (split%) de la ligne.
 - Totaux: commun, ma part, perso, reste à vivre, reste après enveloppes.
 - Épargne auto: l'ajustement ne s'applique plus dès que la charge Épargne est cochée pour le mois en cours. Avant cochage, le calcul peut réduire l'épargne sous son plancher configuré (jusqu'à `0`) et l'UI affiche une alerte explicative.
 - Épargne dans l'UI: la ligne Épargne n'est plus affichée dans le tableau `Charges`; elle reste pleinement incluse dans les totaux globaux et les calculs `Par compte` (approvisionnement par compte inchangé).
