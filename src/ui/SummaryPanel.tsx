@@ -317,7 +317,7 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         className="space-y-4 lg:sticky lg:top-32 lg:max-h-[calc(100dvh_-_8rem)] lg:overflow-auto"
       >
         <section className="fm-panel motion-hover motion-pop p-4 max-[360px]:p-3 sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-sm text-slate-300">Résumé</div>
               <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Totaux</h2>
@@ -610,20 +610,12 @@ export function SummaryPanel({ ym }: { ym: YM }) {
         </section>
 
         <section className="fm-panel motion-hover motion-pop p-4 max-[360px]:p-3 sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-sm text-slate-300">Résumé</div>
               <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Par compte</h2>
             </div>
             <div className="flex items-center gap-2">
-              <div
-                className={cx(
-                  'rounded-full px-3 py-1 text-xs',
-                  totals.pendingCount ? 'bg-amber-400/10 text-amber-200' : 'bg-emerald-400/10 text-emerald-200',
-                )}
-              >
-                {totals.pendingCount ? `${totals.pendingCount} à virer` : 'Tout viré'}
-              </div>
               <button
                 type="button"
                 className="fm-mobile-section-toggle sm:hidden"
@@ -649,6 +641,16 @@ export function SummaryPanel({ ym }: { ym: YM }) {
                   {accountSummaryOpen ? '▴' : '▾'}
                 </span>
               </button>
+            </div>
+          </div>
+          <div className="mt-3">
+            <div
+              className={cx(
+                'w-fit rounded-full px-3 py-1 text-xs',
+                totals.pendingCount ? 'bg-amber-400/10 text-amber-200' : 'bg-emerald-400/10 text-emerald-200',
+              )}
+            >
+              {totals.pendingCount ? `${totals.pendingCount} à virer` : 'Tout viré'}
             </div>
           </div>
 

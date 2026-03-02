@@ -83,7 +83,7 @@ export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   return (
     <section className="fm-panel motion-hover motion-pop overflow-hidden">
       <div className="relative border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm text-slate-300">Épargne</h2>
             <div className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">
@@ -99,32 +99,23 @@ export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
               <div className="mt-1 text-xs text-slate-400">Crée une charge "Virement épargne" pour activer ce panneau.</div>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {hasSavings ? (
-              <label className={cx('fm-chip-pill inline-flex items-center gap-2 px-2.5 py-1 text-xs', !canEdit && 'opacity-70')}>
-                <input
-                  type="checkbox"
-                  checked={Boolean(savings?.row.paid)}
-                  disabled={!canEdit}
-                  onChange={(e) => {
-                    if (!savings) return;
-                    dispatch({
-                      type: 'TOGGLE_CHARGE_PAID',
-                      ym,
-                      chargeId: savings.row.id,
-                      paid: e.target.checked,
-                      lockedAmountCents: e.target.checked ? totalCents : undefined,
-                    });
-                  }}
-                  aria-label="Virement épargne fait"
-                  className="h-4 w-4 rounded border-white/20 bg-white/5 text-emerald-400"
-                />
-                Virée
-              </label>
-            ) : null}
+          <button
+            type="button"
+            className="fm-mobile-section-toggle sm:hidden"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-label={open ? "Masquer le panneau Épargne" : "Afficher le panneau Épargne"}
+            title={open ? "Masquer le panneau Épargne" : "Afficher le panneau Épargne"}
+          >
+            <span>{open ? 'Replier' : 'Voir'} épargne</span>
+            <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
+              {open ? '▴' : '▾'}
+            </span>
+          </button>
+          <div className="hidden items-center gap-2 sm:flex">
             <button
               type="button"
-              className="fm-btn-ghost order-last hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
+              className="fm-btn-ghost h-10 w-10 items-center justify-center text-sm text-slate-200"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
               aria-label={open ? "Masquer le panneau Épargne" : "Afficher le panneau Épargne"}
@@ -134,21 +125,32 @@ export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
                 {open ? '▴' : '▾'}
               </span>
             </button>
-            <button
-              type="button"
-              className="fm-mobile-section-toggle order-last sm:hidden"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              aria-label={open ? "Masquer le panneau Épargne" : "Afficher le panneau Épargne"}
-              title={open ? "Masquer le panneau Épargne" : "Afficher le panneau Épargne"}
-            >
-              <span>{open ? 'Replier' : 'Voir'} épargne</span>
-              <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-                {open ? '▴' : '▾'}
-              </span>
-            </button>
           </div>
         </div>
+        {hasSavings ? (
+          <div className="mt-3">
+            <label className={cx('fm-chip-pill inline-flex items-center gap-2 px-2.5 py-1 text-xs', !canEdit && 'opacity-70')}>
+              <input
+                type="checkbox"
+                checked={Boolean(savings?.row.paid)}
+                disabled={!canEdit}
+                onChange={(e) => {
+                  if (!savings) return;
+                  dispatch({
+                    type: 'TOGGLE_CHARGE_PAID',
+                    ym,
+                    chargeId: savings.row.id,
+                    paid: e.target.checked,
+                    lockedAmountCents: e.target.checked ? totalCents : undefined,
+                  });
+                }}
+                aria-label="Virement épargne fait"
+                className="h-4 w-4 rounded border-white/20 bg-white/5 text-emerald-400"
+              />
+              Virée
+            </label>
+          </div>
+        ) : null}
       </div>
 
       {open ? (

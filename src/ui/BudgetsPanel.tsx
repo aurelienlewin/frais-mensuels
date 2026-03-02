@@ -50,12 +50,25 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
       className="fm-panel motion-hover motion-pop overflow-hidden"
     >
       <div className="border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm text-slate-300">Enveloppes</div>
             <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Budgets & dépenses</h2>
           </div>
-          <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="fm-mobile-section-toggle sm:hidden"
+            onClick={() => setBudgetsOpen((v) => !v)}
+            aria-expanded={budgetsOpen}
+            aria-label={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
+            title={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
+          >
+            <span>{budgetsOpen ? 'Replier' : 'Voir'} enveloppes</span>
+            <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
+              {budgetsOpen ? '▴' : '▾'}
+            </span>
+          </button>
+          <div className="hidden items-center gap-2 sm:flex">
             <button
               type="button"
               className={cx('fm-btn-soft h-9 rounded-xl px-3 text-xs', archived && 'opacity-50')}
@@ -66,20 +79,7 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
             </button>
             <button
               type="button"
-              className="fm-mobile-section-toggle sm:hidden"
-              onClick={() => setBudgetsOpen((v) => !v)}
-              aria-expanded={budgetsOpen}
-              aria-label={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
-              title={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
-            >
-              <span>{budgetsOpen ? 'Replier' : 'Voir'} enveloppes</span>
-              <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-                {budgetsOpen ? '▴' : '▾'}
-              </span>
-            </button>
-            <button
-              type="button"
-              className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
+              className="fm-btn-ghost h-10 w-10 items-center justify-center text-sm text-slate-200"
               onClick={() => setBudgetsOpen((v) => !v)}
               aria-expanded={budgetsOpen}
               aria-label={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
@@ -90,6 +90,16 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
               </span>
             </button>
           </div>
+        </div>
+        <div className="mt-3 sm:hidden">
+          <button
+            type="button"
+            className={cx('fm-btn-soft min-h-10 w-full rounded-xl px-3 text-xs pointer-coarse:min-h-11', archived && 'opacity-50')}
+            onClick={() => setAddBudgetOpen(true)}
+            disabled={archived}
+          >
+            Nouvelle enveloppe
+          </button>
         </div>
       </div>
 

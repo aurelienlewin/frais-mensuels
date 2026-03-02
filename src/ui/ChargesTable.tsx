@@ -185,6 +185,42 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
     dispatch({ type: 'REORDER_CHARGES', scope, orderedIds: next });
   };
 
+  const addCharge = () => {
+    const defaultAccount = activeAccounts[0]?.id ?? state.accounts[0]?.id ?? 'PERSONAL_MAIN';
+    pendingFocusColRef.current = '1';
+    dispatch({
+      type: 'ADD_CHARGE',
+      charge: {
+        name: 'Nouvelle charge',
+        amountCents: 0,
+        dayOfMonth: 1,
+        accountId: defaultAccount,
+        scope: 'perso',
+        splitPercent: 50,
+        payment: 'manuel',
+        active: true,
+      },
+    });
+  };
+
+  const addMonthCharge = () => {
+    const defaultAccount = activeAccounts[0]?.id ?? state.accounts[0]?.id ?? 'PERSONAL_MAIN';
+    pendingFocusColRef.current = '1';
+    dispatch({
+      type: 'ADD_MONTH_CHARGE',
+      ym,
+      charge: {
+        name: 'Dépense ponctuelle',
+        amountCents: 0,
+        dayOfMonth: 1,
+        accountId: defaultAccount,
+        scope: 'perso',
+        payment: 'manuel',
+        destination: null,
+      },
+    });
+  };
+
   const visibleRows = useMemo(() => {
     if (!filterNorm) return rows;
     return rows.filter((r) => {
@@ -207,7 +243,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
       className="fm-panel motion-hover motion-pop overflow-hidden"
     >
           <div className="relative border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-sm text-slate-300">Charges</h2>
                 <div className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">
@@ -215,8 +251,21 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                   {isFiltering ? <span className="ml-2 text-sm font-medium text-slate-400">/ {rows.length}</span> : null}
                 </div>
               </div>
+              <button
+                type="button"
+                className="fm-mobile-section-toggle sm:hidden"
+                onClick={() => setChargesOpen((v) => !v)}
+                aria-expanded={chargesOpen}
+                aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+                title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
+              >
+                <span>{chargesOpen ? 'Replier' : 'Voir'} charges</span>
+                <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
+                  {chargesOpen ? '▴' : '▾'}
+                </span>
+              </button>
 
-              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:w-full max-[360px]:gap-1.5">
+              <div className="hidden min-w-0 items-center justify-end gap-2 sm:flex">
                 <button
                   data-tour="add-charge"
                   className={cx(
@@ -224,23 +273,7 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                     !canEdit && 'opacity-50',
                   )}
                   disabled={!canEdit}
-                  onClick={() => {
-                    const defaultAccount = activeAccounts[0]?.id ?? state.accounts[0]?.id ?? 'PERSONAL_MAIN';
-                    pendingFocusColRef.current = '1';
-                    dispatch({
-                      type: 'ADD_CHARGE',
-                      charge: {
-                        name: 'Nouvelle charge',
-                        amountCents: 0,
-                        dayOfMonth: 1,
-                        accountId: defaultAccount,
-                        scope: 'perso',
-                        splitPercent: 50,
-                        payment: 'manuel',
-                        active: true,
-                      },
-                    });
-                  }}
+                  onClick={addCharge}
                 >
                   + Ajouter
                 </button>
@@ -251,42 +284,13 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                   )}
                   disabled={!canEdit}
                   title="Ajoute une charge uniquement pour ce mois (ponctuelle)"
-                  onClick={() => {
-                    const defaultAccount = activeAccounts[0]?.id ?? state.accounts[0]?.id ?? 'PERSONAL_MAIN';
-                    pendingFocusColRef.current = '1';
-                    dispatch({
-                      type: 'ADD_MONTH_CHARGE',
-                      ym,
-                      charge: {
-                        name: 'Dépense ponctuelle',
-                        amountCents: 0,
-                        dayOfMonth: 1,
-                        accountId: defaultAccount,
-                        scope: 'perso',
-                        payment: 'manuel',
-                        destination: null,
-                      },
-                    });
-                  }}
+                  onClick={addMonthCharge}
                 >
                   + Ponctuelle
                 </button>
                 <button
                   type="button"
-                  className="fm-mobile-section-toggle order-last sm:hidden"
-                  onClick={() => setChargesOpen((v) => !v)}
-                  aria-expanded={chargesOpen}
-                  aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
-                  title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
-                >
-                  <span>{chargesOpen ? 'Replier' : 'Voir'} charges</span>
-                  <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-                    {chargesOpen ? '▴' : '▾'}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="fm-btn-ghost order-last hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
+                  className="fm-btn-ghost h-10 w-10 items-center justify-center text-sm text-slate-200"
                   onClick={() => setChargesOpen((v) => !v)}
                   aria-expanded={chargesOpen}
                   aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
@@ -297,6 +301,63 @@ export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
                   </span>
                 </button>
               </div>
+            </div>
+
+            <div className="mt-3 sm:hidden">
+              {chargesOpen ? (
+                <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:gap-1.5">
+                  <button
+                    data-tour="add-charge"
+                    className={cx(
+                      'fm-btn-ghost rounded-2xl px-4 py-2 text-sm max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
+                      !canEdit && 'opacity-50',
+                    )}
+                    disabled={!canEdit}
+                    onClick={addCharge}
+                  >
+                    + Ajouter
+                  </button>
+                  <button
+                    className={cx(
+                      'fm-btn-ghost rounded-2xl px-4 py-2 text-sm max-[360px]:px-3 max-[360px]:py-1.5 max-[360px]:text-xs',
+                      !canEdit && 'opacity-50',
+                    )}
+                    disabled={!canEdit}
+                    title="Ajoute une charge uniquement pour ce mois (ponctuelle)"
+                    onClick={addMonthCharge}
+                  >
+                    + Ponctuelle
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]">
+                  <button
+                    data-tour="add-charge"
+                    className={cx(
+                      'min-h-10 flex-1 rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/12 pointer-coarse:min-h-11 pointer-coarse:px-3.5 pointer-coarse:py-2.5',
+                      !canEdit && 'opacity-50 hover:bg-transparent',
+                    )}
+                    disabled={!canEdit}
+                    onClick={addCharge}
+                    type="button"
+                  >
+                    + Ajouter
+                  </button>
+                  <span className="h-6 w-px bg-white/12" aria-hidden="true" />
+                  <button
+                    className={cx(
+                      'min-h-10 flex-1 rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/12 pointer-coarse:min-h-11 pointer-coarse:px-3.5 pointer-coarse:py-2.5',
+                      !canEdit && 'opacity-50 hover:bg-transparent',
+                    )}
+                    disabled={!canEdit}
+                    title="Ajoute une charge uniquement pour ce mois (ponctuelle)"
+                    onClick={addMonthCharge}
+                    type="button"
+                  >
+                    + Ponctuelle
+                  </button>
+                </div>
+              )}
             </div>
 
             {chargesOpen ? (

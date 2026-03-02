@@ -23,6 +23,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Cartes "Par compte" optimisées lecture rapide: total mis en avant + lignes métriques alignées (charges, virées, enveloppes, impact reliquat).
 - Transparence calculs: bloc repliable "Détails du calcul" dans Totaux et info-bulle sur "Reste du mois" des enveloppes.
 - UI mobile/lecture: boutons de sections renforcés et pills plus lisibles via utilitaires Tailwind v4 récents (`pointer-coarse`, `text-shadow-*`, `wrap-break-word` / `wrap-anywhere`).
+- UI mobile/collapsible: les boutons `Voir/Replier` des panneaux (Résumé, Charges, Épargne, Enveloppes) sont alignés au même emplacement (en-tête, côté droit). Exception volontaire: `Charges` affiche `+ Ajouter / + Ponctuelle` en barre segmentée quand le panneau est replié.
 - Ajout rapide mobile (iOS Safari): la modale se repositionne au-dessus du clavier (Visual Viewport) pour rester visible pendant la saisie.
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
 - Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
