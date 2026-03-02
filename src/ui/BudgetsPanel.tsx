@@ -37,6 +37,7 @@ function FormulaHint({ label, text }: { label: string; text: string }) {
 export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state } = useStoreState();
   const [budgetsOpen, setBudgetsOpen] = useState(false);
+  const [addBudgetOpen, setAddBudgetOpen] = useState(false);
   const budgets = useMemo(
     () => budgetsForMonth(state, ym),
     [state.accounts, state.budgets, state.months, ym],
@@ -55,6 +56,14 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
             <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Budgets & dépenses</h2>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={cx('fm-btn-soft h-9 rounded-xl px-3 text-xs', archived && 'opacity-50')}
+              onClick={() => setAddBudgetOpen(true)}
+              disabled={archived}
+            >
+              Nouvelle enveloppe
+            </button>
             <button
               type="button"
               className="fm-mobile-section-toggle sm:hidden"
@@ -85,17 +94,63 @@ export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
       </div>
 
       <div className={cx('space-y-6 p-4 max-[360px]:space-y-4 max-[360px]:p-3 sm:p-6', !budgetsOpen && 'hidden')}>
-        <AddBudgetCard disabled={archived} />
         {budgets.map((b) => (
           <BudgetCard key={b.id} ym={ym} budget={b} model={modelById.get(b.id) ?? null} archived={archived} />
         ))}
         {budgets.length === 0 ? <div className="text-sm text-slate-400">Aucun budget actif.</div> : null}
       </div>
+      <AddBudgetModal
+        open={addBudgetOpen}
+        onClose={() => setAddBudgetOpen(false)}
+        ym={ym}
+        disabled={archived}
+      />
     </section>
   );
 }
 
-function AddBudgetCard({ disabled }: { disabled: boolean }) {
+function AddBudgetModal({
+  open,
+  onClose,
+  ym,
+  disabled,
+}: {
+  open: boolean;
+  onClose: () => void;
+  ym: YM;
+  disabled: boolean;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-ink-950/80 backdrop-blur-sm"
+        aria-label="Fermer la modale nouvelle enveloppe"
+        onClick={onClose}
+      />
+      <div className="relative z-10 w-full max-w-xl rounded-2xl border border-white/15 bg-ink-900/95 p-4 shadow-[0_28px_70px_-36px_rgba(0,0,0,0.9)] sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-base font-semibold text-slate-100">Nouvelle enveloppe</div>
+          <button
+            type="button"
+            className="fm-btn-ghost h-8 w-8 flex-none rounded-lg text-slate-200"
+            onClick={onClose}
+            aria-label="Fermer"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="mt-3">
+          <AddBudgetForm ym={ym} disabled={disabled} onCreated={onClose} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddBudgetForm({ ym, disabled, onCreated }: { ym: YM; disabled: boolean; onCreated: () => void }) {
   const { state, dispatch } = useStoreState();
   const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
   const defaultAccountId = activeAccounts.find((a) => a.kind === 'perso')?.id ?? activeAccounts[0]?.id ?? '';
@@ -104,6 +159,7 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
   const [amount, setAmount] = useState('');
   const [accountId, setAccountId] = useState(defaultAccountId);
   const [scope, setScope] = useState<'perso' | 'commun'>('perso');
+  const [recurrence, setRecurrence] = useState<'recurrente' | 'ponctuelle'>('recurrente');
 
   useEffect(() => {
     setAccountId((cur) => cur || defaultAccountId);
@@ -119,15 +175,8 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
   })();
 
   return (
-    <div className={cx('fm-card p-5', disabled && 'opacity-70')}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="text-xs text-slate-400">Nouvelle enveloppe</div>
-          <div className="mt-1 text-sm font-semibold text-slate-100">Ajouter un budget</div>
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_140px]">
+    <div className={cx(disabled && 'opacity-70')}>
+      <div className="grid gap-2 sm:grid-cols-[1fr_140px]">
         <input
           className="fm-input h-10 rounded-2xl px-4 text-sm"
           placeholder="ex: Budget perso"
@@ -177,6 +226,26 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
           <option value="commun">Commun</option>
         </select>
 
+        <select
+          className="fm-input-select h-10 rounded-2xl px-4 text-sm"
+          value={recurrence}
+          disabled={disabled}
+          onChange={(e) => setRecurrence(e.target.value === 'ponctuelle' ? 'ponctuelle' : 'recurrente')}
+          aria-label="Récurrence enveloppe"
+        >
+          <option value="recurrente">Récurrente</option>
+          <option value="ponctuelle">Ponctuelle</option>
+        </select>
+      </div>
+
+      <div className="mt-2 text-xs text-slate-400">
+        {recurrence === 'ponctuelle' ? `Enveloppe visible uniquement sur ${ym}.` : null}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="text-xs text-slate-400">
+        Astuce: pour l’ajout rapide, utilise un nom contenant <span className="font-mono">perso</span> ou <span className="font-mono">essence</span>.
+        </div>
         <button
           type="button"
           className={cx(
@@ -191,18 +260,24 @@ function AddBudgetCard({ disabled }: { disabled: boolean }) {
             if (!cleanName || euros === null || euros < 0) return;
             dispatch({
               type: 'ADD_BUDGET',
-              budget: { name: cleanName, amountCents: eurosToCents(euros), accountId, scope, active: true },
+              budget: {
+                name: cleanName,
+                amountCents: eurosToCents(euros),
+                accountId,
+                scope,
+                recurrence,
+                oneOffYm: recurrence === 'ponctuelle' ? ym : undefined,
+                active: true,
+              },
             });
             setName('');
             setAmount('');
+            setRecurrence('recurrente');
+            onCreated();
           }}
         >
           Ajouter
         </button>
-      </div>
-
-      <div className="mt-2 text-xs text-slate-400">
-        Astuce: pour l’ajout rapide, utilise un nom contenant <span className="font-mono">perso</span> ou <span className="font-mono">essence</span>.
       </div>
     </div>
   );
@@ -251,6 +326,7 @@ function BudgetCard({
   const hasAccountId = typeof budget.accountId === 'string' && budget.accountId.length > 0;
   const accountInActiveList = hasAccountId ? activeAccounts.some((a) => a.id === budget.accountId) : false;
   const accountValue = accountInActiveList ? budget.accountId : hasAccountId ? '__UNAVAILABLE__' : '';
+  const recurrence = model?.recurrence === 'ponctuelle' ? 'ponctuelle' : 'recurrente';
 
   const sortedExpenses = useMemo(
     () => [...budget.expenses].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
@@ -740,7 +816,7 @@ function BudgetCard({
 
       <div className="mt-6 grid gap-2 sm:flex sm:flex-wrap sm:items-end sm:gap-2">
         <div className="min-w-0">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div className="min-w-0">
               <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Compte</div>
               {canEdit ? (
@@ -794,6 +870,32 @@ function BudgetCard({
               ) : (
                 <span className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:w-28 sm:px-3">
                   {budget.scope === 'commun' ? 'commun' : 'perso'}
+                </span>
+              )}
+            </div>
+
+            <div className="min-w-0">
+              <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Rythme</div>
+              {canEdit ? (
+                <select
+                  className={cx('w-full sm:w-28', footerSelectType)}
+                  value={recurrence}
+                  onChange={(e) => {
+                    const next = e.target.value === 'ponctuelle' ? 'ponctuelle' : 'recurrente';
+                    dispatch({
+                      type: 'UPDATE_BUDGET',
+                      budgetId: budget.id,
+                      patch: { recurrence: next, oneOffYm: next === 'ponctuelle' ? ym : undefined },
+                    });
+                  }}
+                  aria-label="Rythme enveloppe"
+                >
+                  <option value="recurrente">Récurrente</option>
+                  <option value="ponctuelle">Ponctuelle</option>
+                </select>
+              ) : (
+                <span className="inline-flex h-9 w-full items-center justify-center rounded-xl border border-white/10 bg-ink-950/20 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-200 shadow-inner shadow-black/10 sm:h-8 sm:w-28 sm:px-3">
+                  {recurrence === 'ponctuelle' ? 'ponctuelle' : 'récurrente'}
                 </span>
               )}
             </div>

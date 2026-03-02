@@ -383,6 +383,11 @@ export function budgetsForMonth(state: AppState, ym: YM): BudgetResolved[] {
     }
   } else {
     const enabledForMonth = (b: Budget) => {
+      const recurrence: NonNullable<Budget['recurrence']> = b.recurrence === 'ponctuelle' ? 'ponctuelle' : 'recurrente';
+      if (recurrence === 'ponctuelle') {
+        const oneOffYm = typeof b.oneOffYm === 'string' ? b.oneOffYm : null;
+        return b.active && oneOffYm === ym;
+      }
       if (b.active) return true;
       const inactiveFromYm = b.inactiveFromYm;
       return typeof inactiveFromYm === 'string' ? ym < inactiveFromYm : false;

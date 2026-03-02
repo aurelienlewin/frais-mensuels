@@ -528,11 +528,16 @@ export function reducer(state: AppState, action: Action): AppState {
         case 'ADD_BUDGET':
           return (() => {
             const scope: Budget['scope'] = action.budget.scope === 'commun' ? 'commun' : 'perso';
+            const recurrence: NonNullable<Budget['recurrence']> =
+              action.budget.recurrence === 'ponctuelle' ? 'ponctuelle' : 'recurrente';
+            const oneOffYm = recurrence === 'ponctuelle' && typeof action.budget.oneOffYm === 'string' ? action.budget.oneOffYm : undefined;
             const next: Budget = {
               ...action.budget,
               id: uid('bud'),
               scope,
               splitPercent: scope === 'commun' ? (action.budget.splitPercent ?? 50) : undefined,
+              recurrence,
+              oneOffYm,
             };
             return { ...state, budgets: [...state.budgets, next] };
           })();
@@ -549,7 +554,14 @@ export function reducer(state: AppState, action: Action): AppState {
                     ? Math.max(0, Math.min(100, Math.round(merged.splitPercent)))
                     : 50
                   : undefined;
-              return { ...merged, scope, splitPercent };
+              const recurrence: NonNullable<Budget['recurrence']> = merged.recurrence === 'ponctuelle' ? 'ponctuelle' : 'recurrente';
+              const oneOffYm =
+                recurrence === 'ponctuelle'
+                  ? typeof merged.oneOffYm === 'string'
+                    ? merged.oneOffYm
+                    : b.oneOffYm
+                  : undefined;
+              return { ...merged, scope, splitPercent, recurrence, oneOffYm };
             }),
           };
       case 'REMOVE_BUDGET':

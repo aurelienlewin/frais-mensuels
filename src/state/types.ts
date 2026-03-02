@@ -41,6 +41,8 @@ export type Budget = {
   accountId: AccountId;
   scope: ChargeScope;
   splitPercent?: number; // commun only (default 50)
+  recurrence?: 'recurrente' | 'ponctuelle';
+  oneOffYm?: YM; // ponctuelle only
   inactiveFromYm?: YM;
   active: boolean;
 };

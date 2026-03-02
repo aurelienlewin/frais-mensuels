@@ -75,23 +75,33 @@ export function normalizeState(state: AppState): AppState {
       })()
     : state.charges;
 
-  // Budgets: ensure scope exists (older saves won't have it)
-  const budgetsNeedScope = state.budgets.some((b) => typeof (b as Budget).scope !== 'string');
-  const budgets = budgetsNeedScope
-    ? (() => {
-        changed = true;
-        return state.budgets.map((b) => {
-          const scope: Budget['scope'] = (b as Budget).scope === 'commun' ? 'commun' : 'perso';
-          const splitPercent =
-            scope === 'commun'
-              ? typeof (b as Budget).splitPercent === 'number' && Number.isFinite((b as Budget).splitPercent)
-                ? Math.max(0, Math.min(100, Math.round((b as Budget).splitPercent as number)))
-                : 50
-              : undefined;
-          return { ...b, scope, splitPercent };
-        });
-      })()
-    : state.budgets;
+  // Budgets: ensure scope/recurrence are normalized.
+  const budgets = (() => {
+    let budgetsChanged = false;
+    const nextBudgets = state.budgets.map((b) => {
+      const scope: Budget['scope'] = (b as Budget).scope === 'commun' ? 'commun' : 'perso';
+      const splitPercent =
+        scope === 'commun'
+          ? typeof (b as Budget).splitPercent === 'number' && Number.isFinite((b as Budget).splitPercent)
+            ? Math.max(0, Math.min(100, Math.round((b as Budget).splitPercent as number)))
+            : 50
+          : undefined;
+      const recurrence: NonNullable<Budget['recurrence']> = b.recurrence === 'ponctuelle' ? 'ponctuelle' : 'recurrente';
+      const oneOffYm = recurrence === 'ponctuelle' && typeof b.oneOffYm === 'string' ? b.oneOffYm : undefined;
+      const normalized = { ...b, scope, splitPercent, recurrence, oneOffYm };
+      if (
+        normalized.scope !== b.scope ||
+        normalized.splitPercent !== b.splitPercent ||
+        normalized.recurrence !== b.recurrence ||
+        normalized.oneOffYm !== b.oneOffYm
+      ) {
+        budgetsChanged = true;
+      }
+      return normalized;
+    });
+    if (budgetsChanged) changed = true;
+    return budgetsChanged ? nextBudgets : state.budgets;
+  })();
 
   // Archived month snapshots: ensure snapshot.sortOrder exists for stable display.
   const chargeById = new Map<string, Charge>(charges.map((c) => [c.id, c]));
