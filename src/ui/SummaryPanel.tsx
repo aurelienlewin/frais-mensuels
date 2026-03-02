@@ -55,7 +55,8 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   }, [charges]);
   const [salaryDraft, setSalaryDraft] = useState(() => String(centsToEuros(totals.salaryCents)));
   const [salaryEditing, setSalaryEditing] = useState(false);
-  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [totalsOpen, setTotalsOpen] = useState(false);
+  const [accountSummaryOpen, setAccountSummaryOpen] = useState(false);
   const archived = state.months[ym]?.archived ?? false;
 
   useEffect(() => {
@@ -296,430 +297,472 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   const canCycleCharts = chartSlides.length > 1;
 
   return (
-    <section
-      data-tour="summary"
-      className="fm-panel motion-hover motion-pop p-4 max-[360px]:p-3 sm:p-6 lg:sticky lg:top-32 lg:max-h-[calc(100dvh_-_8rem)] lg:overflow-auto"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="text-sm text-slate-300">Résumé</div>
-          <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Totaux</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <div
-            className={cx(
-              'rounded-full px-3 py-1 text-xs',
-              totals.pendingCount ? 'bg-amber-400/10 text-amber-200' : 'bg-emerald-400/10 text-emerald-200',
-            )}
-          >
-            {totals.pendingCount ? `${totals.pendingCount} à cocher` : 'Tout coché'}
+    <>
+      <div
+        data-tour="summary"
+        className="space-y-4 lg:sticky lg:top-32 lg:max-h-[calc(100dvh_-_8rem)] lg:overflow-auto"
+      >
+        <section className="fm-panel motion-hover motion-pop p-4 max-[360px]:p-3 sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="text-sm text-slate-300">Résumé</div>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Totaux</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <div
+                className={cx(
+                  'rounded-full px-3 py-1 text-xs',
+                  totals.pendingCount ? 'bg-amber-400/10 text-amber-200' : 'bg-emerald-400/10 text-emerald-200',
+                )}
+              >
+                {totals.pendingCount ? `${totals.pendingCount} à cocher` : 'Tout coché'}
+              </div>
+              <button
+                type="button"
+                className="fm-mobile-section-toggle sm:hidden"
+                onClick={() => setTotalsOpen((v) => !v)}
+                aria-expanded={totalsOpen}
+                aria-label={totalsOpen ? 'Masquer les totaux' : 'Afficher les totaux'}
+                title={totalsOpen ? 'Masquer les totaux' : 'Afficher les totaux'}
+              >
+                <span>{totalsOpen ? 'Replier' : 'Voir'} totaux</span>
+                <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
+                  {totalsOpen ? '▴' : '▾'}
+                </span>
+              </button>
+              <button
+                type="button"
+                className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
+                onClick={() => setTotalsOpen((v) => !v)}
+                aria-expanded={totalsOpen}
+                aria-label={totalsOpen ? 'Masquer les totaux' : 'Afficher les totaux'}
+                title={totalsOpen ? 'Masquer les totaux' : 'Afficher les totaux'}
+              >
+                <span aria-hidden="true" className="text-[22px] font-semibold leading-none">
+                  {totalsOpen ? '▴' : '▾'}
+                </span>
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            className="fm-mobile-section-toggle sm:hidden"
-            onClick={() => setSummaryOpen((v) => !v)}
-            aria-expanded={summaryOpen}
-            aria-label={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
-            title={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
-          >
-            <span>{summaryOpen ? 'Replier' : 'Voir'} résumé</span>
-            <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-              {summaryOpen ? '▴' : '▾'}
-            </span>
-          </button>
-          <button
-            type="button"
-            className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
-            onClick={() => setSummaryOpen((v) => !v)}
-            aria-expanded={summaryOpen}
-            aria-label={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
-            title={summaryOpen ? 'Masquer le résumé' : 'Afficher le résumé'}
-          >
-            <span aria-hidden="true" className="text-[22px] font-semibold leading-none">
-              {summaryOpen ? '▴' : '▾'}
-            </span>
-          </button>
-        </div>
-      </div>
 
-      <div className={cx(!summaryOpen && 'hidden')}>
-        <div className="mt-6 space-y-3 max-[360px]:mt-4">
-          <label className="grid gap-1">
-            <div className="text-xs text-slate-400">Salaire</div>
-            <div className="relative">
-              <input
-                className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm"
-                type="text"
-                inputMode="decimal"
-                value={salaryDraft}
-                onChange={(e) => {
-                  setSalaryDraft(e.target.value);
-                  setSalaryEditing(true);
-                }}
-                onBlur={() => {
-                  setSalaryEditing(false);
-                  const euros = salaryDraft.trim() === '' ? 0 : parseEuroAmount(salaryDraft);
-                  if (euros === null || euros < 0) {
-                    setSalaryDraft(String(centsToEuros(totals.salaryCents)));
-                    return;
-                  }
-                  const next = eurosToCents(euros);
-                  if (next !== totals.salaryCents) dispatch({ type: 'SET_SALARY', ym, salaryCents: next });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
-                  if (e.key === 'Escape') {
-                    setSalaryDraft(String(centsToEuros(totals.salaryCents)));
-                    setSalaryEditing(false);
-                    (e.currentTarget as HTMLInputElement).blur();
-                  }
-                }}
-                aria-label="Salaire"
-              />
-              <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs text-slate-400">€</div>
-            </div>
-          </label>
-
-          {autoSavingsBreakdown && autoSavingsBreakdown.surplusCents > 0 ? (
-            <div className="rounded-2xl border border-emerald-300/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.22),rgba(6,78,59,0.2))] px-4 py-3 shadow-[0_20px_48px_-28px_rgba(16,185,129,0.95)]">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-100/90">Surplus épargne</div>
-              <div className="mt-1 flex items-end justify-between gap-3">
-                <div className="text-sm font-medium leading-tight text-emerald-100">Ajout automatique ce mois</div>
-                <div className="text-2xl font-semibold tabular-nums text-emerald-50">+{formatEUR(autoSavingsBreakdown.surplusCents)}</div>
-              </div>
-              <div className="mt-1 text-[11px] text-emerald-100/90">
-                Épargne: {formatEUR(autoSavingsBreakdown.floorCents)} → {formatEUR(autoSavingsBreakdown.currentCents)}
-                {autoSavingsBreakdown.locked ? ' (figée: charge cochée)' : ''}
-              </div>
-            </div>
-          ) : null}
-          {savingsBelowFloorWarning ? (
-            <div className="rounded-2xl border border-amber-300/35 bg-[linear-gradient(135deg,rgba(251,191,36,0.2),rgba(146,64,14,0.18))] px-4 py-3 shadow-[0_20px_48px_-28px_rgba(245,158,11,0.8)]">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-100/90">Alerte épargne</div>
-              <div className="mt-1 flex items-end justify-between gap-3">
-                <div className="text-sm font-medium leading-tight text-amber-100">Montant réduit sous le plancher</div>
-                <div className="text-2xl font-semibold tabular-nums text-amber-50">-{formatEUR(savingsBelowFloorWarning.belowFloorCents)}</div>
-              </div>
-              <div className="mt-1 text-[11px] text-amber-100/90">
-                Épargne: {formatEUR(savingsBelowFloorWarning.floorCents)} → {formatEUR(savingsBelowFloorWarning.currentCents)}
-              </div>
-              <div className="mt-2 flex justify-end">
-                <button
-                  type="button"
-                  className="rounded-xl border border-amber-100/25 bg-amber-100/15 px-3 py-1.5 text-[11px] font-semibold text-amber-50 transition-colors hover:bg-amber-100/20"
-                  onClick={() => setSavingsFloorWarningOpen(true)}
-                >
-                  Voir le détail
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="grid gap-2">
-            <Row label="Charges hors épargne" value={formatEUR(chargesWithoutSavingsCents)} strong />
-            <Row label="Enveloppes cibles" value={formatEUR(totals.totalBudgetsBaseCents)} />
-            {reliquatDebtImpactCents > 0 ? (
-              <Row
-                label="Dette entrante ajoutée (enveloppes)"
-                value={formatEUR(reliquatDebtImpactCents)}
-                rowClassName="fm-reliquat-negative"
-                tone="negative"
-              />
-            ) : null}
-            {reliquatCreditImpactCents > 0 ? (
-              <Row
-                label="Reliquat positif à déduire (enveloppes)"
-                value={formatEUR(reliquatCreditImpactCents)}
-                rowClassName="fm-reliquat-positive"
-                tone="positive"
-              />
-            ) : null}
-            <Row label="Enveloppes à virer (ma part)" value={formatEUR(totals.totalBudgetsCents)} strong />
-            {budgetsInvariantDeltaCents !== 0 ? (
-              <div className="fm-reliquat-negative rounded-xl border px-3 py-2 text-xs">
-                Incohérence enveloppes: somme cartes ({formatEUR(budgetsCardsComputedCents)}) vs total enveloppes à virer (
-                {formatEUR(totals.totalBudgetsCents)}).
-              </div>
-            ) : null}
-            {autoSavingsBreakdown ? (
-              <Row
-                label="Épargne du mois"
-                value={formatEUR(autoSavingsBreakdown.currentCents)}
-                strong
-                valueClassName="text-emerald-200"
-              />
-            ) : null}
-          </div>
-        </div>
-
-        <div className="fm-card mt-6 overflow-hidden p-4 max-[360px]:mt-4 max-[360px]:p-3">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-200">
-                {activeChartId === 'savings' ? 'Répartition épargne' : 'Répartition'}
-              </div>
-              <div className="mt-0.5 text-xs text-slate-400">
-                {activeChartId === 'savings'
-                  ? savingsRepartition?.locked
-                    ? 'Montant figé (charge cochée)'
-                    : savingsRepartition?.bonusCreditSurplusCents
-                      ? 'Base + surplus structurel + bonus reliquat'
-                      : 'Base + surplus automatique'
-                  : repartition.label}
-              </div>
-            </div>
-            <div className="grid grid-cols-[84px_64px] items-start gap-2">
-              <div className="w-[84px] text-right">
-                <div className="text-xs font-semibold tabular-nums text-slate-200">
-                  {activeChartId === 'savings' ? formatEUR(savingsRepartition?.totalCents ?? 0) : formatEUR(repartition.baseCents)}
+          <div className={cx(!totalsOpen && 'hidden')}>
+            <div className="mt-6 space-y-3 max-[360px]:mt-4">
+              <label className="grid gap-1">
+                <div className="text-xs text-slate-400">Salaire</div>
+                <div className="relative">
+                  <input
+                    className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm"
+                    type="text"
+                    inputMode="decimal"
+                    value={salaryDraft}
+                    onChange={(e) => {
+                      setSalaryDraft(e.target.value);
+                      setSalaryEditing(true);
+                    }}
+                    onBlur={() => {
+                      setSalaryEditing(false);
+                      const euros = salaryDraft.trim() === '' ? 0 : parseEuroAmount(salaryDraft);
+                      if (euros === null || euros < 0) {
+                        setSalaryDraft(String(centsToEuros(totals.salaryCents)));
+                        return;
+                      }
+                      const next = eurosToCents(euros);
+                      if (next !== totals.salaryCents) dispatch({ type: 'SET_SALARY', ym, salaryCents: next });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                      if (e.key === 'Escape') {
+                        setSalaryDraft(String(centsToEuros(totals.salaryCents)));
+                        setSalaryEditing(false);
+                        (e.currentTarget as HTMLInputElement).blur();
+                      }
+                    }}
+                    aria-label="Salaire"
+                  />
+                  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs text-slate-400">€</div>
                 </div>
-                <div className="text-[11px] text-slate-400">{activeChartId === 'savings' ? 'total épargne' : 'base'}</div>
-              </div>
-              <div className="flex h-7 items-center justify-end gap-1">
-                {canCycleCharts ? (
-                  <>
+              </label>
+
+              {autoSavingsBreakdown && autoSavingsBreakdown.surplusCents > 0 ? (
+                <div className="rounded-2xl border border-emerald-300/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.22),rgba(6,78,59,0.2))] px-4 py-3 shadow-[0_20px_48px_-28px_rgba(16,185,129,0.95)]">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-100/90">Surplus épargne</div>
+                  <div className="mt-1 flex items-end justify-between gap-3">
+                    <div className="text-sm font-medium leading-tight text-emerald-100">Ajout automatique ce mois</div>
+                    <div className="text-2xl font-semibold tabular-nums text-emerald-50">+{formatEUR(autoSavingsBreakdown.surplusCents)}</div>
+                  </div>
+                  <div className="mt-1 text-[11px] text-emerald-100/90">
+                    Épargne: {formatEUR(autoSavingsBreakdown.floorCents)} → {formatEUR(autoSavingsBreakdown.currentCents)}
+                    {autoSavingsBreakdown.locked ? ' (figée: charge cochée)' : ''}
+                  </div>
+                </div>
+              ) : null}
+              {savingsBelowFloorWarning ? (
+                <div className="rounded-2xl border border-amber-300/35 bg-[linear-gradient(135deg,rgba(251,191,36,0.2),rgba(146,64,14,0.18))] px-4 py-3 shadow-[0_20px_48px_-28px_rgba(245,158,11,0.8)]">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-100/90">Alerte épargne</div>
+                  <div className="mt-1 flex items-end justify-between gap-3">
+                    <div className="text-sm font-medium leading-tight text-amber-100">Montant réduit sous le plancher</div>
+                    <div className="text-2xl font-semibold tabular-nums text-amber-50">-{formatEUR(savingsBelowFloorWarning.belowFloorCents)}</div>
+                  </div>
+                  <div className="mt-1 text-[11px] text-amber-100/90">
+                    Épargne: {formatEUR(savingsBelowFloorWarning.floorCents)} → {formatEUR(savingsBelowFloorWarning.currentCents)}
+                  </div>
+                  <div className="mt-2 flex justify-end">
                     <button
                       type="button"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
-                      onClick={() =>
-                        setActiveChartId(chartSlides[(activeSlideIndex - 1 + chartSlides.length) % chartSlides.length])
-                      }
-                      aria-label="Graphique précédent"
-                      title="Graphique précédent"
+                      className="rounded-xl border border-amber-100/25 bg-amber-100/15 px-3 py-1.5 text-[11px] font-semibold text-amber-50 transition-colors hover:bg-amber-100/20"
+                      onClick={() => setSavingsFloorWarningOpen(true)}
                     >
-                      ‹
+                      Voir le détail
                     </button>
-                    <button
-                      type="button"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
-                      onClick={() =>
-                        setActiveChartId(chartSlides[(activeSlideIndex + 1) % chartSlides.length])
-                      }
-                      aria-label="Graphique suivant"
-                      title="Graphique suivant"
-                    >
-                      ›
-                    </button>
-                  </>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="grid gap-2">
+                <Row label="Charges hors épargne" value={formatEUR(chargesWithoutSavingsCents)} strong />
+                <Row label="Enveloppes cibles" value={formatEUR(totals.totalBudgetsBaseCents)} />
+                {reliquatDebtImpactCents > 0 ? (
+                  <Row
+                    label="Dette entrante ajoutée (enveloppes)"
+                    value={formatEUR(reliquatDebtImpactCents)}
+                    rowClassName="fm-reliquat-negative"
+                    tone="negative"
+                  />
+                ) : null}
+                {reliquatCreditImpactCents > 0 ? (
+                  <Row
+                    label="Reliquat positif à déduire (enveloppes)"
+                    value={formatEUR(reliquatCreditImpactCents)}
+                    rowClassName="fm-reliquat-positive"
+                    tone="positive"
+                  />
+                ) : null}
+                <Row label="Enveloppes à virer (ma part)" value={formatEUR(totals.totalBudgetsCents)} strong />
+                {budgetsInvariantDeltaCents !== 0 ? (
+                  <div className="fm-reliquat-negative rounded-xl border px-3 py-2 text-xs">
+                    Incohérence enveloppes: somme cartes ({formatEUR(budgetsCardsComputedCents)}) vs total enveloppes à virer (
+                    {formatEUR(totals.totalBudgetsCents)}).
+                  </div>
+                ) : null}
+                {autoSavingsBreakdown ? (
+                  <Row
+                    label="Épargne du mois"
+                    value={formatEUR(autoSavingsBreakdown.currentCents)}
+                    strong
+                    valueClassName="text-emerald-200"
+                  />
                 ) : null}
               </div>
             </div>
-          </div>
 
-          <div className="mt-4 grid gap-4">
-            {activeChartId === 'savings' && savingsRepartition ? (
-              <>
-                <DonutChart
-                  ariaLabel="Répartition de l'épargne"
-                  segments={savingsRepartition.segments}
-                  total={Math.max(savingsRepartition.totalCents, 1)}
-                  activeSegmentId={activeSavingsSegId}
-                  onActiveSegmentIdChange={setActiveSavingsSegId}
-                  className="motion-hover mx-auto"
-                  centerContainerClassName="-translate-y-4"
-                  centerTop={savingsCenterTop}
-                  centerBottom={savingsCenterBottom}
-                  centerBottomClassName={savingsCenterTone}
-                  centerHint={savingsCenterHint}
-                  centerHintClassName="max-w-[132px] tabular-nums"
-                />
-                <div className="min-w-0 space-y-2">
-                  {savingsRepartition.segments.map((s) => (
-                    <LegendRow
-                      key={s.id}
-                      label={s.label}
-                      valueCents={s.value}
-                      color={s.color}
-                      baseCents={Math.max(savingsRepartition.totalCents, 1)}
-                      active={activeSavingsSegId === s.id}
-                      onActivate={() => setActiveSavingsSegId(s.id)}
-                      onDeactivate={() => setActiveSavingsSegId(null)}
-                    />
-                  ))}
-                  {!savingsRepartition.hasSurplus ? (
-                    <div className="text-xs text-slate-400">Pas de surplus ce mois (épargne au montant de base).</div>
-                  ) : null}
-                  {savingsRepartition.debtImpactCents > 0 ? (
-                    <div className="fm-reliquat-negative rounded-lg border px-2 py-1 text-[11px]">
-                      Dette entrante absorbée avant surplus: {formatEUR(savingsRepartition.debtImpactCents)}
-                    </div>
-                  ) : null}
-                </div>
-              </>
-            ) : (
-              <>
-                <DonutChart
-                  ariaLabel="Répartition du budget"
-                  segments={repartition.segments}
-                  total={repartition.baseCents}
-                  activeSegmentId={activeSegId}
-                  onActiveSegmentIdChange={setActiveSegId}
-                  className="motion-hover mx-auto"
-                  centerContainerClassName="-translate-y-4"
-                  centerTop={centerTop}
-                  centerBottom={centerBottom}
-                  centerBottomClassName={centerTone}
-                />
-
-                <div className="min-w-0 space-y-2">
-                  {repartition.segments.map((s) => (
-                    <LegendRow
-                      key={s.id}
-                      label={s.label}
-                      valueCents={s.value}
-                      color={s.color}
-                      baseCents={repartition.baseCents}
-                      active={activeSegId === s.id}
-                      onActivate={() => setActiveSegId(s.id)}
-                      onDeactivate={() => setActiveSegId(null)}
-                    />
-                  ))}
-                  {repartition.segments.length === 0 ? <div className="text-sm text-slate-400">Aucune donnée.</div> : null}
-                </div>
-              </>
-            )}
-          </div>
-          {canCycleCharts ? (
-            <div className="mt-3 flex items-center justify-center gap-2">
-              {chartSlides.map((id, idx) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={cx(
-                    'h-1.5 rounded-full border border-white/10 transition-all',
-                    activeSlideIndex === idx ? 'w-5 bg-slate-200/80' : 'w-1.5 bg-white/20 hover:bg-white/35',
-                  )}
-                  onClick={() => setActiveChartId(id)}
-                  aria-label={`Aller au graphique ${idx + 1}`}
-                  title={`Graphique ${idx + 1}`}
-                />
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="mt-8 max-[360px]:mt-6">
-          <div className="text-sm font-medium text-slate-200 text-shadow-2xs">Par compte (montant à approvisionner)</div>
-          {accountSummaryDeltaCents !== 0 ? (
-            <div className="mt-2 rounded-lg border border-rose-300/30 bg-rose-500/12 px-3 py-2 text-xs text-rose-100">
-              Incohérence détectée: total par compte ({formatEUR(totalByAccountCents)}) vs total à provisionner ({formatEUR(totals.totalProvisionCents)}).
-            </div>
-          ) : null}
-          {hasUnknownAccountSummaryRow ? (
-            <div className="mt-2 rounded-lg border border-amber-300/30 bg-amber-500/12 px-3 py-2 text-xs text-amber-100">
-              Certains montants pointent vers un identifiant de compte non configuré. Ils restent inclus dans les totaux.
-            </div>
-          ) : null}
-          <div className="mt-3 space-y-2">
-            {byAccount.map((a) => {
-              const meta = chargesByAccount.get(a.accountId) ?? null;
-              const allPaid = Boolean(meta && meta.ids.length > 0 && meta.unpaidCount === 0);
-              const unpaidCount = meta?.unpaidCount ?? 0;
-              const canMarkAll = !archived && Boolean(meta && meta.unpaidCount > 0);
-              const hasBudgets = a.budgetsBaseCents !== 0 || a.budgetsCarryOverCents !== 0 || a.budgetsCents !== 0;
-              const bulkLabel = (() => {
-                if (archived) return 'Mois archivé';
-                if (!meta || meta.ids.length === 0) return 'Aucune charge à cocher';
-                if (meta.unpaidCount === 0) return 'Tout est déjà coché';
-                return `Cocher toutes les charges liées à ${a.accountName}`;
-              })();
-              return (
-                <button
-                  key={a.accountId}
-                  type="button"
-                  className={cx(
-                    'fm-account-summary-card text-left',
-                    canMarkAll ? 'fm-account-summary-card-clickable' : 'opacity-85',
-                    allPaid && 'opacity-75',
-                  )}
-                  disabled={!canMarkAll}
-                  title={bulkLabel}
-                  aria-label={bulkLabel}
-                  onClick={() => {
-                    if (!canMarkAll || !meta) return;
-                    dispatch({ type: 'SET_CHARGES_PAID', ym, chargeIds: meta.ids, paid: true });
-                  }}
-                >
-                  <div className="fm-account-summary-head">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <div className="min-w-0 wrap-break-word text-[15px] font-semibold leading-tight text-slate-100 text-shadow-2xs">
-                          {a.accountName}
-                        </div>
-                        <span
-                          className={cx(
-                            'fm-chip-pill px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-                            a.kind === 'commun' ? 'border-sky-200/30 bg-sky-400/15 text-sky-50' : 'border-emerald-200/30 bg-emerald-400/15 text-emerald-50',
-                          )}
-                        >
-                          {a.kind}
-                        </span>
-                        {allPaid ? (
-                          <span className="fm-chip-pill border-emerald-200/25 bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
-                            OK ✓
-                          </span>
-                        ) : null}
-                        {!a.isKnownAccount ? (
-                          <span className="fm-chip-pill border-amber-300/30 bg-amber-500/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-100">
-                            hors liste
-                          </span>
-                        ) : null}
-                      </div>
-
-                      {a.accountName !== a.accountId ? (
-                        <div className="mt-1 wrap-anywhere font-mono text-[11px] text-slate-400">{a.accountId}</div>
-                      ) : null}
-
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {unpaidCount > 0 ? (
-                          <span className="fm-chip-pill border-amber-200/30 bg-amber-400/12 px-2 py-0.5 text-[10px] font-semibold text-amber-100">
-                            {unpaidCount} à cocher
-                          </span>
-                        ) : null}
-                        {canMarkAll ? (
-                          <span className="fm-chip-pill px-2 py-0.5 text-[10px] text-slate-300">Appui pour tout cocher</span>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div
-                      className={cx(
-                        'fm-account-summary-total',
-                        a.kind === 'commun'
-                          ? 'border-sky-200/30 bg-sky-400/12 text-sky-200'
-                          : 'border-emerald-200/30 bg-emerald-400/12 text-emerald-200',
-                      )}
-                    >
-                      {formatEUR(a.totalCents)}
-                    </div>
+            <div className="fm-card mt-6 overflow-hidden p-4 max-[360px]:mt-4 max-[360px]:p-3">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-slate-200">
+                    {activeChartId === 'savings' ? 'Répartition épargne' : 'Répartition'}
                   </div>
-
-                  <div className="mt-3 space-y-1.5">
-                    <AccountMetric label="Charges à provisionner" value={formatEUR(a.chargesTotalCents)} />
-                    <AccountMetric label="Charges cochées" value={formatEUR(a.chargesPaidCents)} />
-                    {hasBudgets ? <AccountMetric label="Enveloppes à virer" value={formatEUR(a.budgetsCents)} /> : null}
-                    {hasBudgets ? <AccountMetric label="Enveloppes cibles" value={formatEUR(a.budgetsBaseCents)} /> : null}
-                    {a.budgetsCarryOverCents !== 0 ? (
-                      <AccountMetric
-                        label="Impact reliquat"
-                        value={formatSignedCents(a.budgetsCarryOverCents)}
-                        rowClassName={a.budgetsCarryOverCents > 0 ? 'fm-reliquat-negative' : 'fm-reliquat-positive'}
-                      />
+                  <div className="mt-0.5 text-xs text-slate-400">
+                    {activeChartId === 'savings'
+                      ? savingsRepartition?.locked
+                        ? 'Montant figé (charge cochée)'
+                        : savingsRepartition?.bonusCreditSurplusCents
+                          ? 'Base + surplus structurel + bonus reliquat'
+                          : 'Base + surplus automatique'
+                      : repartition.label}
+                  </div>
+                </div>
+                <div className="grid grid-cols-[84px_64px] items-start gap-2">
+                  <div className="w-[84px] text-right">
+                    <div className="text-xs font-semibold tabular-nums text-slate-200">
+                      {activeChartId === 'savings' ? formatEUR(savingsRepartition?.totalCents ?? 0) : formatEUR(repartition.baseCents)}
+                    </div>
+                    <div className="text-[11px] text-slate-400">{activeChartId === 'savings' ? 'total épargne' : 'base'}</div>
+                  </div>
+                  <div className="flex h-7 items-center justify-end gap-1">
+                    {canCycleCharts ? (
+                      <>
+                        <button
+                          type="button"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
+                          onClick={() =>
+                            setActiveChartId(chartSlides[(activeSlideIndex - 1 + chartSlides.length) % chartSlides.length])
+                          }
+                          aria-label="Graphique précédent"
+                          title="Graphique précédent"
+                        >
+                          ‹
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
+                          onClick={() =>
+                            setActiveChartId(chartSlides[(activeSlideIndex + 1) % chartSlides.length])
+                          }
+                          aria-label="Graphique suivant"
+                          title="Graphique suivant"
+                        >
+                          ›
+                        </button>
+                      </>
                     ) : null}
                   </div>
-                </button>
-              );
-            })}
-            {byAccount.length === 0 ? <div className="text-sm text-slate-400">Aucune charge ce mois-ci.</div> : null}
-          </div>
-        </div>
+                </div>
+              </div>
 
-        <details className="fm-card mt-6 p-4 max-[360px]:mt-4 max-[360px]:p-3">
-          <summary className="cursor-pointer select-none text-sm font-medium text-slate-200">Comptes</summary>
-          <div className="mt-3 space-y-2">
-            <AccountsEditor />
+              <div className="mt-4 grid gap-4">
+                {activeChartId === 'savings' && savingsRepartition ? (
+                  <>
+                    <DonutChart
+                      ariaLabel="Répartition de l'épargne"
+                      segments={savingsRepartition.segments}
+                      total={Math.max(savingsRepartition.totalCents, 1)}
+                      activeSegmentId={activeSavingsSegId}
+                      onActiveSegmentIdChange={setActiveSavingsSegId}
+                      className="motion-hover mx-auto"
+                      centerContainerClassName="-translate-y-4"
+                      centerTop={savingsCenterTop}
+                      centerBottom={savingsCenterBottom}
+                      centerBottomClassName={savingsCenterTone}
+                      centerHint={savingsCenterHint}
+                      centerHintClassName="max-w-[132px] tabular-nums"
+                    />
+                    <div className="min-w-0 space-y-2">
+                      {savingsRepartition.segments.map((s) => (
+                        <LegendRow
+                          key={s.id}
+                          label={s.label}
+                          valueCents={s.value}
+                          color={s.color}
+                          baseCents={Math.max(savingsRepartition.totalCents, 1)}
+                          active={activeSavingsSegId === s.id}
+                          onActivate={() => setActiveSavingsSegId(s.id)}
+                          onDeactivate={() => setActiveSavingsSegId(null)}
+                        />
+                      ))}
+                      {!savingsRepartition.hasSurplus ? (
+                        <div className="text-xs text-slate-400">Pas de surplus ce mois (épargne au montant de base).</div>
+                      ) : null}
+                      {savingsRepartition.debtImpactCents > 0 ? (
+                        <div className="fm-reliquat-negative rounded-lg border px-2 py-1 text-[11px]">
+                          Dette entrante absorbée avant surplus: {formatEUR(savingsRepartition.debtImpactCents)}
+                        </div>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <DonutChart
+                      ariaLabel="Répartition du budget"
+                      segments={repartition.segments}
+                      total={repartition.baseCents}
+                      activeSegmentId={activeSegId}
+                      onActiveSegmentIdChange={setActiveSegId}
+                      className="motion-hover mx-auto"
+                      centerContainerClassName="-translate-y-4"
+                      centerTop={centerTop}
+                      centerBottom={centerBottom}
+                      centerBottomClassName={centerTone}
+                    />
+
+                    <div className="min-w-0 space-y-2">
+                      {repartition.segments.map((s) => (
+                        <LegendRow
+                          key={s.id}
+                          label={s.label}
+                          valueCents={s.value}
+                          color={s.color}
+                          baseCents={repartition.baseCents}
+                          active={activeSegId === s.id}
+                          onActivate={() => setActiveSegId(s.id)}
+                          onDeactivate={() => setActiveSegId(null)}
+                        />
+                      ))}
+                      {repartition.segments.length === 0 ? <div className="text-sm text-slate-400">Aucune donnée.</div> : null}
+                    </div>
+                  </>
+                )}
+              </div>
+              {canCycleCharts ? (
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  {chartSlides.map((id, idx) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={cx(
+                        'h-1.5 rounded-full border border-white/10 transition-all',
+                        activeSlideIndex === idx ? 'w-5 bg-slate-200/80' : 'w-1.5 bg-white/20 hover:bg-white/35',
+                      )}
+                      onClick={() => setActiveChartId(id)}
+                      aria-label={`Aller au graphique ${idx + 1}`}
+                      title={`Graphique ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </div>
-        </details>
+        </section>
+
+        <section className="fm-panel motion-hover motion-pop p-4 max-[360px]:p-3 sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="text-sm text-slate-300">Résumé</div>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Par compte</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="fm-mobile-section-toggle sm:hidden"
+                onClick={() => setAccountSummaryOpen((v) => !v)}
+                aria-expanded={accountSummaryOpen}
+                aria-label={accountSummaryOpen ? 'Masquer le par compte' : 'Afficher le par compte'}
+                title={accountSummaryOpen ? 'Masquer le par compte' : 'Afficher le par compte'}
+              >
+                <span>{accountSummaryOpen ? 'Replier' : 'Voir'} par compte</span>
+                <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
+                  {accountSummaryOpen ? '▴' : '▾'}
+                </span>
+              </button>
+              <button
+                type="button"
+                className="fm-btn-ghost hidden h-10 w-10 items-center justify-center text-sm text-slate-200 sm:inline-flex"
+                onClick={() => setAccountSummaryOpen((v) => !v)}
+                aria-expanded={accountSummaryOpen}
+                aria-label={accountSummaryOpen ? 'Masquer le par compte' : 'Afficher le par compte'}
+                title={accountSummaryOpen ? 'Masquer le par compte' : 'Afficher le par compte'}
+              >
+                <span aria-hidden="true" className="text-[22px] font-semibold leading-none">
+                  {accountSummaryOpen ? '▴' : '▾'}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className={cx(!accountSummaryOpen && 'hidden')}>
+            <div className="mt-6 max-[360px]:mt-4">
+              <div className="text-sm font-medium text-slate-200 text-shadow-2xs">Par compte (montant à approvisionner)</div>
+              {accountSummaryDeltaCents !== 0 ? (
+                <div className="mt-2 rounded-lg border border-rose-300/30 bg-rose-500/12 px-3 py-2 text-xs text-rose-100">
+                  Incohérence détectée: total par compte ({formatEUR(totalByAccountCents)}) vs total à provisionner ({formatEUR(totals.totalProvisionCents)}).
+                </div>
+              ) : null}
+              {hasUnknownAccountSummaryRow ? (
+                <div className="mt-2 rounded-lg border border-amber-300/30 bg-amber-500/12 px-3 py-2 text-xs text-amber-100">
+                  Certains montants pointent vers un identifiant de compte non configuré. Ils restent inclus dans les totaux.
+                </div>
+              ) : null}
+              <div className="mt-3 space-y-2">
+                {byAccount.map((a) => {
+                  const meta = chargesByAccount.get(a.accountId) ?? null;
+                  const allPaid = Boolean(meta && meta.ids.length > 0 && meta.unpaidCount === 0);
+                  const unpaidCount = meta?.unpaidCount ?? 0;
+                  const canMarkAll = !archived && Boolean(meta && meta.unpaidCount > 0);
+                  const hasBudgets = a.budgetsBaseCents !== 0 || a.budgetsCarryOverCents !== 0 || a.budgetsCents !== 0;
+                  const bulkLabel = (() => {
+                    if (archived) return 'Mois archivé';
+                    if (!meta || meta.ids.length === 0) return 'Aucune charge à cocher';
+                    if (meta.unpaidCount === 0) return 'Tout est déjà coché';
+                    return `Cocher toutes les charges liées à ${a.accountName}`;
+                  })();
+                  return (
+                    <button
+                      key={a.accountId}
+                      type="button"
+                      className={cx(
+                        'fm-account-summary-card text-left',
+                        canMarkAll ? 'fm-account-summary-card-clickable' : 'opacity-85',
+                        allPaid && 'opacity-75',
+                      )}
+                      disabled={!canMarkAll}
+                      title={bulkLabel}
+                      aria-label={bulkLabel}
+                      onClick={() => {
+                        if (!canMarkAll || !meta) return;
+                        dispatch({ type: 'SET_CHARGES_PAID', ym, chargeIds: meta.ids, paid: true });
+                      }}
+                    >
+                      <div className="fm-account-summary-head">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <div className="min-w-0 wrap-break-word text-[15px] font-semibold leading-tight text-slate-100 text-shadow-2xs">
+                              {a.accountName}
+                            </div>
+                            <span
+                              className={cx(
+                                'fm-chip-pill px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                                a.kind === 'commun' ? 'border-sky-200/30 bg-sky-400/15 text-sky-50' : 'border-emerald-200/30 bg-emerald-400/15 text-emerald-50',
+                              )}
+                            >
+                              {a.kind}
+                            </span>
+                            {allPaid ? (
+                              <span className="fm-chip-pill border-emerald-200/25 bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
+                                OK ✓
+                              </span>
+                            ) : null}
+                            {!a.isKnownAccount ? (
+                              <span className="fm-chip-pill border-amber-300/30 bg-amber-500/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-100">
+                                hors liste
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {a.accountName !== a.accountId ? (
+                            <div className="mt-1 wrap-anywhere font-mono text-[11px] text-slate-400">{a.accountId}</div>
+                          ) : null}
+
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {unpaidCount > 0 ? (
+                              <span className="fm-chip-pill border-amber-200/30 bg-amber-400/12 px-2 py-0.5 text-[10px] font-semibold text-amber-100">
+                                {unpaidCount} à cocher
+                              </span>
+                            ) : null}
+                            {canMarkAll ? (
+                              <span className="fm-chip-pill px-2 py-0.5 text-[10px] text-slate-300">Appui pour tout cocher</span>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div
+                          className={cx(
+                            'fm-account-summary-total',
+                            a.kind === 'commun'
+                              ? 'border-sky-200/30 bg-sky-400/12 text-sky-200'
+                              : 'border-emerald-200/30 bg-emerald-400/12 text-emerald-200',
+                          )}
+                        >
+                          {formatEUR(a.totalCents)}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 space-y-1.5">
+                        <AccountMetric label="Charges à provisionner" value={formatEUR(a.chargesTotalCents)} />
+                        <AccountMetric label="Charges cochées" value={formatEUR(a.chargesPaidCents)} />
+                        {hasBudgets ? <AccountMetric label="Enveloppes à virer" value={formatEUR(a.budgetsCents)} /> : null}
+                        {hasBudgets ? <AccountMetric label="Enveloppes cibles" value={formatEUR(a.budgetsBaseCents)} /> : null}
+                        {a.budgetsCarryOverCents !== 0 ? (
+                          <AccountMetric
+                            label="Impact reliquat"
+                            value={formatSignedCents(a.budgetsCarryOverCents)}
+                            rowClassName={a.budgetsCarryOverCents > 0 ? 'fm-reliquat-negative' : 'fm-reliquat-positive'}
+                          />
+                        ) : null}
+                      </div>
+                    </button>
+                  );
+                })}
+                {byAccount.length === 0 ? <div className="text-sm text-slate-400">Aucune charge ce mois-ci.</div> : null}
+              </div>
+            </div>
+
+            <details className="fm-card mt-6 p-4 max-[360px]:mt-4 max-[360px]:p-3">
+              <summary className="cursor-pointer select-none text-sm font-medium text-slate-200">Comptes</summary>
+              <div className="mt-3 space-y-2">
+                <AccountsEditor />
+              </div>
+            </details>
+          </div>
+        </section>
       </div>
       {savingsBelowFloorWarning ? (
         <SavingsFloorWarningModal
@@ -733,8 +776,8 @@ export function SummaryPanel({ ym }: { ym: YM }) {
           shortfallAfterZeroCents={savingsBelowFloorWarning.shortfallAfterZeroCents}
         />
       ) : null}
-      </section>
-    );
+    </>
+  );
 }
 
 function SavingsFloorWarningModal({
