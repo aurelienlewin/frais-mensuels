@@ -12,6 +12,8 @@ const FALLBACK_CSS = LOCAL_FALLBACK_CSS_VARIANTS[0];
 const SAVED_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 3; // keep last good remote for 3 days
 const AUTO_ROTATE_MS = 1000 * 60;
 const AUTO_ROTATE_JITTER_MS = 1000 * 15;
+const SESSION_WARM_REFRESH_DELAY_MS = 1000;
+const SESSION_WARM_REFRESH_MIN_INTERVAL_MS = 1000 * 45;
 const CROSSFADE_MS = 520;
 const CROSSFADE_SETTLE_MS = 70;
 const PRELOAD_TIMEOUT_MS = 1000 * 12;
@@ -115,8 +117,10 @@ let activeLoadId = 0;
 let pendingLoadId: number | null = null;
 let autoRotateTimer: number | null = null;
 let retryTimer: number | null = null;
+let sessionWarmRefreshTimer: number | null = null;
 let activeAbort: AbortController | null = null;
 let consecutiveFailures = 0;
+let lastSessionWarmRefreshAt = 0;
 
 function waitMs(ms: number) {
   return new Promise<void>((resolve) => {
@@ -189,6 +193,32 @@ function scheduleRetry() {
     retryTimer = null;
     initDynamicBackground({ force: true });
   }, delay);
+}
+
+function handleLoadFailure() {
+  consecutiveFailures += 1;
+  scheduleRetry();
+  if (!currentCss) setBaseBackground(FALLBACK_CSS);
+}
+
+function scheduleSessionWarmRefresh() {
+  if (typeof window === 'undefined') return;
+  if (sessionWarmRefreshTimer) return;
+  if (shouldSkipDynamicBackground()) return;
+
+  const now = Date.now();
+  if (now - lastSessionWarmRefreshAt < SESSION_WARM_REFRESH_MIN_INTERVAL_MS) return;
+  lastSessionWarmRefreshAt = now;
+
+  sessionWarmRefreshTimer = window.setTimeout(() => {
+    sessionWarmRefreshTimer = null;
+    if (document.visibilityState === 'hidden') return;
+    if (shouldSkipDynamicBackground()) return;
+
+    const { w, h } = computeSize();
+    const sourceUrl = buildApiUrl(w, h, newSeed());
+    loadAndSwap(sourceUrl, { allowLocalFallback: false, maxCandidates: 1 }).catch(handleLoadFailure);
+  }, SESSION_WARM_REFRESH_DELAY_MS);
 }
 
 function setBaseBackground(css: string) {
@@ -443,11 +473,14 @@ export function initDynamicBackground(options?: { force?: boolean }) {
   const allowLocalFallback = !currentCss || isLocalCss(currentCss);
   const session = readSessionSaved();
   if (!options?.force && session?.url) {
-    loadAndSwap(session.url, { allowLocalFallback, maxCandidates: 2 }).catch(() => {
-      consecutiveFailures += 1;
-      scheduleRetry();
-      if (!currentCss) setBaseBackground(FALLBACK_CSS);
-    });
+    loadAndSwap(session.url, { allowLocalFallback, maxCandidates: 2 })
+      .then(() => {
+        scheduleSessionWarmRefresh();
+      })
+      .catch(() => {
+        handleLoadFailure();
+        scheduleSessionWarmRefresh();
+      });
     return;
   }
 
@@ -459,11 +492,7 @@ export function initDynamicBackground(options?: { force?: boolean }) {
 
   const { w, h } = computeSize();
   const sourceUrl = buildApiUrl(w, h, newSeed());
-  loadAndSwap(sourceUrl, { allowLocalFallback, maxCandidates: options?.force ? 1 : 2 }).catch(() => {
-    consecutiveFailures += 1;
-    scheduleRetry();
-    if (!currentCss) setBaseBackground(FALLBACK_CSS);
-  });
+  loadAndSwap(sourceUrl, { allowLocalFallback, maxCandidates: options?.force ? 1 : 2 }).catch(handleLoadFailure);
 }
 
 function scheduleAutoRotate() {
@@ -497,6 +526,10 @@ export function stopBackgroundRotation() {
   if (retryTimer) {
     window.clearTimeout(retryTimer);
     retryTimer = null;
+  }
+  if (sessionWarmRefreshTimer) {
+    window.clearTimeout(sessionWarmRefreshTimer);
+    sessionWarmRefreshTimer = null;
   }
   if (activeAbort) {
     activeAbort.abort();
