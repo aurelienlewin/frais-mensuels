@@ -6,6 +6,8 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 
 - Charges mensuelles avec part %, comptes, auto/manuel, et statut OK.
 - Enveloppes (budgets) + dépenses + reste du mois + dette reportée.
+- Création d’enveloppe via modale `Nouvelle enveloppe` (ouverte par bouton dans l’en-tête Enveloppes, panneau d’ajout fermé par défaut).
+- Rythme d’enveloppe: `récurrente` (par défaut) ou `ponctuelle` (visible uniquement sur un mois cible).
 - Reliquat d’enveloppe: un dépassement non traité ou un reste positif non consommé est reporté cumulativement sur les mois suivants pour la même enveloppe (même si des mois intermédiaires n'ont pas été ouverts) et réduit le montant à virer.
 - Reliquat traité: une case à cocher par enveloppe permet de marquer le reliquat entrant comme géré manuellement (il n'est alors plus appliqué au calcul du mois).
 - Dette du mois traitée: une case séparée permet de marquer la dette du mois courant comme couverte hors enveloppe (elle n’est alors plus reportée au mois suivant).
@@ -108,6 +110,8 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Édition des charges globales: une modification s'applique au mois courant et aux mois suivants non archivés.
 - Exceptions d'édition: une charge ponctuelle reste locale à son mois, et un mois archivé conserve son snapshot (gelé).
 - Budgets par enveloppe + dépenses par mois.
+- Budget récurrent: visible tous les mois (tant qu’actif).
+- Budget ponctuel: visible uniquement sur le mois `oneOffYm` configuré.
 - Reliquat d’enveloppe: le reste d’un mois (positif ou négatif) est reporté sur le mois suivant de la même enveloppe. Un reliquat positif réduit le virement du mois suivant; un reliquat négatif alimente la dette reportée.
 - Reliquat traité (optionnel): si activé sur un mois/enveloppe, le reliquat entrant est conservé comme information mais n’est plus appliqué dans le calcul du montant à virer pour ce mois.
 - Dette du mois traitée (optionnel): si activé sur un mois/enveloppe, la dette générée ce mois est conservée comme information mais n’est plus reportée au mois suivant.
