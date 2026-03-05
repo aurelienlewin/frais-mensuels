@@ -45,7 +45,6 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
   const [amount, setAmount] = useState('');
   const [budgetId, setBudgetId] = useState<string>('');
 
-  const amountRef = useRef<HTMLInputElement | null>(null);
   const labelRef = useRef<HTMLInputElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const prevActiveRef = useRef<HTMLElement | null>(null);
@@ -70,7 +69,6 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
     if (open === 'perso') setLabel('');
     const inferredId = inferred[open];
     setBudgetId(inferredId || activeBudgets[0]?.id || '');
-    window.requestAnimationFrame(() => amountRef.current?.focus());
 
     return () => {
       prevActiveRef.current?.focus?.();
@@ -258,15 +256,15 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
           </div>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-[120px_1fr]">
-              <div className="relative">
+            <div className="relative">
               <input
-                ref={amountRef}
                 className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm"
                 type="text"
                 inputMode="decimal"
+                autoFocus
                 placeholder="10"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') submit();
                 }}
@@ -274,7 +272,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
               />
               <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs text-slate-400">€</div>
             </div>
-  
+
             <input
               ref={labelRef}
               className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm disabled:opacity-90"
