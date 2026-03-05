@@ -551,8 +551,8 @@ function BudgetCard({
           className={cx(
             'group flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors pointer-coarse:min-h-11 pointer-coarse:px-3.5 pointer-coarse:py-3',
             expensesOpen
-              ? 'rounded-b-none border-b-0 border-sky-200/25 bg-[linear-gradient(140deg,rgba(12,30,44,0.88),rgba(20,42,58,0.68))] shadow-none'
-              : 'border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)] hover:border-sky-200/20 hover:bg-[linear-gradient(140deg,rgba(21,24,31,0.9),rgba(33,39,50,0.68))]',
+              ? 'rounded-b-none border-b-0 border-amber-200/30 bg-[linear-gradient(140deg,rgba(46,33,6,0.9),rgba(68,48,8,0.68))] shadow-none'
+              : 'border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)] hover:border-amber-200/25 hover:bg-[linear-gradient(140deg,rgba(35,30,14,0.9),rgba(50,40,16,0.68))]',
           )}
           onClick={() => setExpensesOpen((v) => !v)}
           aria-expanded={expensesOpen}
@@ -585,7 +585,7 @@ function BudgetCard({
         {expensesOpen ? (
           <div
             id={`budget-expenses-${budget.id}`}
-            className="rounded-b-2xl border border-sky-200/25 border-t-0 bg-[linear-gradient(140deg,rgba(12,30,44,0.88),rgba(20,42,58,0.68))] p-3 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]"
+            className="rounded-b-2xl border border-amber-200/30 border-t-0 bg-[linear-gradient(140deg,rgba(46,33,6,0.9),rgba(68,48,8,0.68))] p-3 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]"
           >
             <div className="fm-card-soft grid gap-2 p-3">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
