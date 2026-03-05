@@ -16,6 +16,11 @@ function isFuelBudget(name: string) {
 }
 const FUEL_EXPENSE_LABEL = 'Essence';
 
+function shouldOpenExpensesByDefault() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(max-width: 640px)').matches || window.matchMedia('(pointer: coarse)').matches;
+}
+
 function FormulaHint({ label, text }: { label: string; text: string }) {
   return (
     <span className="group relative inline-flex">
@@ -319,7 +324,7 @@ function BudgetCard({
 
   const canEdit = !archived && Boolean(model);
   const canDelete = !archived && Boolean(model?.active);
-  const [expensesOpen, setExpensesOpen] = useState(false);
+  const [expensesOpen, setExpensesOpen] = useState(() => shouldOpenExpensesByDefault());
   const footerSelectBase =
     'fm-input-select h-8 rounded-lg border-white/15 bg-ink-950/35 px-2 text-[11px] text-slate-100 shadow-inner shadow-black/20';
   const footerSelectAccount = `${footerSelectBase} font-medium`;
@@ -346,6 +351,7 @@ function BudgetCard({
     [budget.expenses],
   );
   const isFuel = isFuelBudget(budget.name);
+  const expenseCount = sortedExpenses.length;
   const defaultLabelPlaceholder = isFuel ? FUEL_EXPENSE_LABEL : 'ex: resto';
   const minDate = `${ym}-01`;
   const maxDate = `${ym}-${pad2(daysInMonth(ym))}`;
@@ -543,10 +549,10 @@ function BudgetCard({
         <button
           type="button"
           className={cx(
-            'group flex w-full items-center justify-between gap-3 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] px-3 py-2.5 text-left transition-colors hover:bg-[linear-gradient(140deg,rgba(26,26,28,0.9),rgba(48,48,52,0.68))] pointer-coarse:min-h-11 pointer-coarse:px-3.5 pointer-coarse:py-3',
+            'group flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors pointer-coarse:min-h-11 pointer-coarse:px-3.5 pointer-coarse:py-3',
             expensesOpen
-              ? 'rounded-b-none border-b-0 shadow-none'
-              : 'shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]',
+              ? 'rounded-b-none border-b-0 border-sky-200/25 bg-[linear-gradient(140deg,rgba(12,30,44,0.88),rgba(20,42,58,0.68))] shadow-none'
+              : 'border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)] hover:border-sky-200/20 hover:bg-[linear-gradient(140deg,rgba(21,24,31,0.9),rgba(33,39,50,0.68))]',
           )}
           onClick={() => setExpensesOpen((v) => !v)}
           aria-expanded={expensesOpen}
@@ -558,6 +564,14 @@ function BudgetCard({
             <div className="text-sm font-semibold text-slate-100 text-shadow-2xs">Dépenses</div>
             <div className="mt-0.5 text-[11px] text-slate-300">
               {expensesOpen ? 'Section ouverte' : 'Section masquée: toucher pour afficher le détail'}
+            </div>
+            <div
+              className={cx(
+                'mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium tabular-nums',
+                expenseCount > 0 ? 'border-rose-300/25 bg-rose-500/12 text-rose-100' : 'border-white/15 bg-white/7 text-slate-300',
+              )}
+            >
+              {expenseCount} dép. • -{formatEUR(budget.spentCents)}
             </div>
           </div>
           <span
@@ -571,7 +585,7 @@ function BudgetCard({
         {expensesOpen ? (
           <div
             id={`budget-expenses-${budget.id}`}
-            className="rounded-b-2xl border border-white/15 border-t-0 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-3 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]"
+            className="rounded-b-2xl border border-sky-200/25 border-t-0 bg-[linear-gradient(140deg,rgba(12,30,44,0.88),rgba(20,42,58,0.68))] p-3 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]"
           >
             <div className="fm-card-soft grid gap-2 p-3">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
@@ -636,7 +650,10 @@ function BudgetCard({
 
             <div className="mt-3 space-y-2 sm:hidden">
               {sortedExpenses.map((e) => (
-                <div key={e.id} className="fm-card-soft p-3">
+                <div
+                  key={e.id}
+                  className="fm-card-soft border-l-2 border-l-rose-300/55 bg-[linear-gradient(140deg,rgba(44,18,26,0.36),rgba(22,22,24,0.56))] p-3"
+                >
                   <div className="flex items-center gap-2">
                     {canEdit ? (
                       <InlineTextInput
@@ -688,7 +705,7 @@ function BudgetCard({
                       )}
                     </div>
 
-                    <div className="flex-none text-right font-medium tabular-nums text-slate-100">
+                    <div className="flex-none text-right font-semibold tabular-nums text-rose-100">
                       {canEdit ? (
                         <InlineNumberInput
                           ariaLabel="Montant de dépense (euros)"
