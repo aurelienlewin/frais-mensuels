@@ -16,11 +16,6 @@ function isFuelBudget(name: string) {
 }
 const FUEL_EXPENSE_LABEL = 'Essence';
 
-function shouldOpenExpensesByDefault() {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-  return window.matchMedia('(max-width: 640px)').matches || window.matchMedia('(pointer: coarse)').matches;
-}
-
 function FormulaHint({ label, text }: { label: string; text: string }) {
   return (
     <span className="group relative inline-flex">
@@ -324,7 +319,7 @@ function BudgetCard({
 
   const canEdit = !archived && Boolean(model);
   const canDelete = !archived && Boolean(model?.active);
-  const [expensesOpen, setExpensesOpen] = useState(() => shouldOpenExpensesByDefault());
+  const [expensesOpen, setExpensesOpen] = useState(true);
   const footerSelectBase =
     'fm-input-select h-8 rounded-lg border-white/15 bg-ink-950/35 px-2 text-[11px] text-slate-100 shadow-inner shadow-black/20';
   const footerSelectAccount = `${footerSelectBase} font-medium`;
