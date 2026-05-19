@@ -39,12 +39,14 @@ export default function App() {
         else clearCachedUser();
       } catch (e) {
         if (cancelled) return;
-        if (cached) {
+        const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+        if (cached && offline) {
           setUser(cached);
           setSessionUnverified(true);
         } else {
           const msg = e instanceof Error ? e.message : 'Erreur';
           setBootError(msg);
+          clearCachedUser();
         }
       } finally {
         if (!cancelled) setBoot('ready');

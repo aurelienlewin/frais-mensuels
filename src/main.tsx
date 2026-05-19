@@ -11,7 +11,21 @@ type DebugWindow = Window & {
 
 let swRegistration: ServiceWorkerRegistration | null = null;
 
+function shouldUseLiteEffects() {
+  try {
+    const nav = navigator as Navigator & { deviceMemory?: number };
+    const lowMemory = typeof nav.deviceMemory === 'number' && nav.deviceMemory > 0 && nav.deviceMemory <= 4;
+    const lowCpu = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 4;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+    const slowUpdate = window.matchMedia?.('(update: slow)')?.matches ?? false;
+    return lowMemory || lowCpu || reducedMotion || slowUpdate;
+  } catch {
+    return false;
+  }
+}
+
 function kickBackground(options?: { force?: boolean }) {
+  if (document.documentElement.classList.contains('fm-lite-effects')) return;
   void kickDynamicBackground(options);
 }
 
@@ -72,6 +86,9 @@ function installOverflowDebug() {
   }
 }
 
+if (shouldUseLiteEffects()) {
+  document.documentElement.classList.add('fm-lite-effects');
+}
 scheduleBackgroundWarmup();
 installOverflowDebug();
 document.addEventListener('visibilitychange', () => {

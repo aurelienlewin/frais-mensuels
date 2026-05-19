@@ -176,7 +176,6 @@ body::after {
   background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.72), rgba(10, 11, 12, 0.94)),
     var(--bg-image-next, var(--bg-image-current, url('/bg-snowy.jpg')));
   opacity: var(--bg-crossfade-opacity, 0);
-  will-change: opacity;
 }
 
 #root {
@@ -218,7 +217,6 @@ body::after {
 
   html::before {
     transition: opacity 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
-    will-change: opacity;
   }
 
   .motion-dash {
@@ -231,7 +229,6 @@ body::after {
 
   .motion-hover {
     transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
-    will-change: transform;
   }
 
   .motion-hover:hover {
@@ -252,6 +249,39 @@ body::after {
       transform: translateY(0);
     }
   }
+}
+
+.fm-lite-effects {
+  --duration-bg-crossfade: 0ms;
+}
+
+.fm-lite-effects body::before {
+  background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.82), rgba(10, 11, 12, 0.96)), url('/bg-snowy.jpg');
+}
+
+.fm-lite-effects body::after {
+  display: none;
+}
+
+.fm-lite-effects .motion-pop {
+  animation: none;
+}
+
+.fm-lite-effects .motion-hover,
+.fm-lite-effects .motion-hover:hover,
+.fm-lite-effects .motion-hover:active {
+  transform: none;
+  transition: none;
+}
+
+.fm-lite-effects .fm-panel,
+.fm-lite-effects .shadow-\[0_20px_120px_-60px_rgba\(0\,0\,0\,0\.9\)\],
+.fm-lite-effects .shadow-\[0_20px_80px_-40px_rgba\(0\,0\,0\,0\.9\)\],
+.fm-lite-effects .shadow-\[0_20px_80px_-40px_rgba\(0\,0\,0\,0\.95\)\],
+.fm-lite-effects .shadow-\[0_16px_50px_-32px_rgba\(0\,0\,0\,0\.9\)\],
+.fm-lite-effects .shadow-\[0_20px_70px_-42px_rgba\(0\,0\,0\,0\.95\)\],
+.fm-lite-effects .shadow-\[0_14px_34px_-24px_rgba\(0\,0\,0\,0\.82\)\] {
+  box-shadow: none;
 }
 
 @media (min-width: 768px) {
