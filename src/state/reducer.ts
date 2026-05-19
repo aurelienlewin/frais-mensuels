@@ -484,7 +484,7 @@ export function reducer(state: AppState, action: Action): AppState {
             if (e.id !== action.expenseId) return e;
             const patch = action.patch;
             const nextAmountCents =
-              typeof patch.amountCents === 'number' && Number.isFinite(patch.amountCents) ? Math.max(0, Math.round(patch.amountCents)) : e.amountCents;
+              typeof patch.amountCents === 'number' && Number.isFinite(patch.amountCents) ? Math.round(patch.amountCents) : e.amountCents;
             const nextLabel = typeof patch.label === 'string' ? patch.label : e.label;
             return {
               ...e,

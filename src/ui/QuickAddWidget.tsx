@@ -151,7 +151,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
     const id = budgetId || inferred[open ?? 'perso'] || '';
     if (!id) return;
     const amt = parseEuroAmount(amount);
-    if (amt === null || amt <= 0) return;
+    if (amt === null || amt === 0) return;
     const lbl = open === 'essence' ? FUEL_EXPENSE_LABEL : label.trim();
     if (!lbl) return;
 
@@ -262,7 +262,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
                 type="text"
                 inputMode="decimal"
                 autoFocus
-                placeholder="10"
+                placeholder="10 ou -400,99"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 onKeyDown={(e) => {

@@ -65,7 +65,7 @@ export type BudgetExpense = {
   id: string;
   date: string; // YYYY-MM-DD
   label: string;
-  amountCents: number; // positive number = spending
+  amountCents: number; // positive = spending, negative = incoming money
 };
 
 export type MonthBudgetState = {

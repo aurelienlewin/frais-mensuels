@@ -16,6 +16,12 @@ function isFuelBudget(name: string) {
 }
 const FUEL_EXPENSE_LABEL = 'Essence';
 
+function formatExpenseImpact(cents: number) {
+  if (cents < 0) return `+${formatEUR(Math.abs(cents))}`;
+  if (cents > 0) return `-${formatEUR(cents)}`;
+  return formatEUR(0);
+}
+
 function FormulaHint({ label, text }: { label: string; text: string }) {
   return (
     <span className="group relative inline-flex">
@@ -36,7 +42,7 @@ function FormulaHint({ label, text }: { label: string; text: string }) {
 
 export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state } = useStoreState();
-  const [budgetsOpen, setBudgetsOpen] = useState(false);
+  const [budgetsOpen, setBudgetsOpen] = useState(true);
   const [addBudgetOpen, setAddBudgetOpen] = useState(false);
   const budgets = useMemo(
     () => budgetsForMonth(state, ym),
@@ -566,7 +572,7 @@ function BudgetCard({
                 expenseCount > 0 ? 'border-rose-300/25 bg-rose-500/12 text-rose-100' : 'border-white/15 bg-white/7 text-slate-300',
               )}
             >
-              {expenseCount} dép. • -{formatEUR(budget.spentCents)}
+              {expenseCount} dép. • {formatExpenseImpact(budget.spentCents)}
             </div>
           </div>
           <span
@@ -583,9 +589,9 @@ function BudgetCard({
             className="rounded-b-2xl border border-amber-200/30 border-t-0 bg-[linear-gradient(140deg,rgba(46,33,6,0.9),rgba(68,48,8,0.68))] p-3 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]"
           >
             <div className="fm-card-soft grid gap-2 p-3">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
                 <input
-                  className="fm-input h-9 px-3 text-sm"
+                  className="fm-input h-10 px-3 text-sm sm:h-9"
                   type="date"
                   value={date}
                   min={minDate}
@@ -595,7 +601,7 @@ function BudgetCard({
                   aria-label="Date"
                 />
                 <input
-                  className="fm-input h-9 px-3 text-sm"
+                  className="fm-input col-span-2 h-10 px-3 text-sm sm:col-span-1 sm:h-9"
                   placeholder={defaultLabelPlaceholder}
                   value={isFuel ? FUEL_EXPENSE_LABEL : label}
                   disabled={!canEdit || isFuel}
@@ -606,8 +612,8 @@ function BudgetCard({
                   aria-label="Libellé"
                 />
                 <input
-                  className="fm-input h-9 px-3 text-sm"
-                  placeholder="10"
+                  className="fm-input h-10 px-3 text-sm sm:h-9"
+                  placeholder="10 ou -400,99"
                   inputMode="decimal"
                   type="text"
                   value={amount}
@@ -617,13 +623,13 @@ function BudgetCard({
                 />
                 <button
                   className={cx(
-                    'fm-btn-ghost h-9 px-3 text-sm',
+                    'fm-btn-ghost col-span-2 h-10 px-3 text-sm sm:col-span-1 sm:h-9',
                     !canEdit && 'opacity-50',
                   )}
                   disabled={!canEdit}
                   onClick={() => {
                     const amt = parseEuroAmount(amount);
-                    if (amt === null || amt <= 0) return;
+                    if (amt === null || amt === 0) return;
                     const lbl = isFuel ? FUEL_EXPENSE_LABEL : label.trim();
                     if (!isFuel && !lbl) return;
 
@@ -640,16 +646,21 @@ function BudgetCard({
                   Ajouter
                 </button>
               </div>
-              <div className="text-xs text-slate-400">Les montants sont des dépenses (ex: 10€ = -10€).</div>
+              <div className="text-xs text-slate-400">Dépense: 10€ = -10€. Entrée d’argent: -400,99€ = +400,99€.</div>
             </div>
 
             <div className="mt-3 space-y-2 sm:hidden">
               {sortedExpenses.map((e) => (
                 <div
                   key={e.id}
-                  className="fm-card-soft border-l-2 border-l-rose-300/55 bg-[linear-gradient(140deg,rgba(44,18,26,0.36),rgba(22,22,24,0.56))] p-3"
+                  className={cx(
+                    'fm-card-soft border-l-2 p-3',
+                    e.amountCents < 0
+                      ? 'border-l-emerald-300/60 bg-[linear-gradient(140deg,rgba(12,48,36,0.34),rgba(22,22,24,0.56))]'
+                      : 'border-l-rose-300/55 bg-[linear-gradient(140deg,rgba(44,18,26,0.36),rgba(22,22,24,0.56))]',
+                  )}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                     {canEdit ? (
                       <InlineTextInput
                         ariaLabel="Date de dépense"
@@ -681,7 +692,7 @@ function BudgetCard({
                     ) : null}
                   </div>
 
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-2 grid gap-2">
                     <div className="min-w-0 flex-1 text-sm text-slate-100">
                       {canEdit && !isFuel ? (
                         <InlineTextInput
@@ -700,17 +711,16 @@ function BudgetCard({
                       )}
                     </div>
 
-                    <div className="flex-none text-right font-semibold tabular-nums text-rose-100">
+                    <div className={cx('font-semibold tabular-nums', e.amountCents < 0 ? 'text-emerald-100' : 'text-rose-100')}>
                       {canEdit ? (
                         <InlineNumberInput
                           ariaLabel="Montant de dépense (euros)"
                           value={centsToEuros(e.amountCents)}
                           step={0.01}
-                          min={0}
                           suffix="€"
                           disabled={!canEdit}
-                          className="ml-auto w-[120px] max-[360px]:w-[104px]"
-                          inputClassName="h-8 rounded-lg px-2 text-[13px]"
+                          className="w-full"
+                          inputClassName="h-9 rounded-lg px-2 text-[14px]"
                           onCommit={(euros) => {
                             const cents = eurosToCents(euros);
                             if (cents === e.amountCents) return;
@@ -724,7 +734,7 @@ function BudgetCard({
                           }}
                         />
                       ) : (
-                        <>-{formatEUR(e.amountCents)}</>
+                        <>{formatExpenseImpact(e.amountCents)}</>
                       )}
                     </div>
                   </div>
@@ -782,13 +792,12 @@ function BudgetCard({
                           isFuel ? FUEL_EXPENSE_LABEL : e.label
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right font-medium tabular-nums text-slate-100">
+                      <td className={cx('px-3 py-2 text-right font-medium tabular-nums', e.amountCents < 0 ? 'text-emerald-100' : 'text-slate-100')}>
                         {canEdit ? (
                           <InlineNumberInput
                             ariaLabel="Montant de dépense (euros)"
                             value={centsToEuros(e.amountCents)}
                             step={0.01}
-                            min={0}
                             suffix="€"
                             disabled={!canEdit}
                             className="ml-auto w-[120px]"
@@ -806,7 +815,7 @@ function BudgetCard({
                             }}
                           />
                         ) : (
-                          <>-{formatEUR(e.amountCents)}</>
+                          <>{formatExpenseImpact(e.amountCents)}</>
                         )}
                       </td>
                       <td className="px-3 py-2 text-right">
