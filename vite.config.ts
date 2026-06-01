@@ -107,13 +107,20 @@ export default defineConfig(({ command, mode }) => {
     define: {
       __APP_BUILD_ID__: JSON.stringify(buildId),
     },
-    esbuild:
-      command === 'build'
-        ? {
-            drop: ['console', 'debugger'],
-          }
-        : undefined,
     build: {
+      rolldownOptions: {
+        output:
+          command === 'build'
+            ? {
+                minify: {
+                  compress: {
+                    dropConsole: true,
+                    dropDebugger: true,
+                  },
+                },
+              }
+            : undefined,
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {
