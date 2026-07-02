@@ -26,7 +26,10 @@ function pickDefaultSavingsTargetAccountId(
 
 export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state, dispatch } = useStoreState();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(min-width: 640px)').matches;
+  });
   const canEdit = !archived;
   const rows = useMemo(
     () => chargesForMonth(state, ym),

@@ -55,8 +55,14 @@ export function SummaryPanel({ ym }: { ym: YM }) {
   }, [charges]);
   const [salaryDraft, setSalaryDraft] = useState(() => String(centsToEuros(totals.salaryCents)));
   const [salaryEditing, setSalaryEditing] = useState(false);
-  const [totalsOpen, setTotalsOpen] = useState(false);
-  const [accountSummaryOpen, setAccountSummaryOpen] = useState(false);
+  const [totalsOpen, setTotalsOpen] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(min-width: 640px)').matches;
+  });
+  const [accountSummaryOpen, setAccountSummaryOpen] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(min-width: 640px)').matches;
+  });
   const archived = state.months[ym]?.archived ?? false;
 
   useEffect(() => {
