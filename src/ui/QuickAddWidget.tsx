@@ -38,7 +38,6 @@ function prefersReducedMotion() {
 export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state, dispatch } = useStoreState();
   const [open, setOpen] = useState<Mode | null>(null);
-  const [chooserOpen, setChooserOpen] = useState(false);
   const [showTop, setShowTop] = useState(false);
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [label, setLabel] = useState('');
@@ -62,7 +61,6 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
   useEffect(() => {
     if (!open) return;
-    setChooserOpen(false);
     prevActiveRef.current = (document.activeElement as HTMLElement | null) ?? null;
     setAmount('');
     if (open === 'essence') setLabel(FUEL_EXPENSE_LABEL);
@@ -75,17 +73,6 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
       prevActiveRef.current = null;
     };
   }, [open, inferred, activeBudgets]);
-
-  useEffect(() => {
-    if (!chooserOpen || open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.preventDefault();
-      setChooserOpen(false);
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [chooserOpen, open]);
 
   useEffect(() => {
     let raf = 0;
@@ -176,15 +163,6 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
       className={cx(position, 'flex flex-col items-end gap-2 transition-transform duration-200 ease-out')}
       style={open && keyboardInset > 0 ? { transform: `translateY(-${keyboardInset}px)` } : undefined}
     >
-      {chooserOpen && !open ? (
-        <div
-          className="fixed inset-0"
-          aria-hidden="true"
-          onClick={() => setChooserOpen(false)}
-          onTouchStart={() => setChooserOpen(false)}
-        />
-      ) : null}
-
       {showTop && !open ? (
         <button
           type="button"
@@ -330,93 +308,46 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
         </div>
       ) : null}
 
-      <div className={cx('flex flex-col items-end gap-2 sm:hidden', disabledAll && 'opacity-60')}>
-        {chooserOpen && !open ? (
-          <div className="motion-pop grid w-full max-w-[320px] gap-2 self-end">
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 rounded-full border border-white/15 bg-ink-950/95 px-4 py-3 text-left text-sm text-slate-100 shadow-[0_16px_50px_-32px_rgba(0,0,0,0.9)] backdrop-blur"
-              onClick={() => {
-                if (disabledAll) return;
-                setChooserOpen(false);
-                setOpen('perso');
-              }}
-              disabled={disabledAll}
-              aria-label="Ajouter une dépense perso"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200/25 bg-emerald-400/12 text-base text-emerald-100">
-                +
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-semibold">Perso</span>
-                <span className="block truncate text-[11px] text-slate-400">Ajouter une dépense perso</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 rounded-full border border-white/15 bg-ink-950/95 px-4 py-3 text-left text-sm text-slate-100 shadow-[0_16px_50px_-32px_rgba(0,0,0,0.9)] backdrop-blur"
-              onClick={() => {
-                if (disabledAll) return;
-                setChooserOpen(false);
-                setOpen('essence');
-              }}
-              disabled={disabledAll}
-              aria-label="Ajouter un plein d’essence"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-200/25 bg-sky-400/12 text-base text-sky-100">
-                ⛽
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-semibold">Essence</span>
-                <span className="block truncate text-[11px] text-slate-400">Ajouter un plein d’essence</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              className={cx(
-                'flex w-full items-center gap-3 rounded-full border border-white/15 bg-ink-950/95 px-4 py-3 text-left text-sm text-slate-100 shadow-[0_16px_50px_-32px_rgba(0,0,0,0.9)] backdrop-blur',
-                !showTop && 'opacity-50',
-              )}
-              onClick={() => {
-                if (!showTop) return;
-                const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
-                window.scrollTo({ top: 0, behavior });
-                setChooserOpen(false);
-              }}
-              aria-label="Retour en haut"
-              disabled={!showTop}
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/7 text-base text-slate-100">
-                ↑
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-semibold">Haut</span>
-                <span className="block truncate text-[11px] text-slate-400">Revenir en haut de la page</span>
-              </span>
-            </button>
-          </div>
-        ) : null}
-
+      <div className={cx('motion-pop grid w-full grid-cols-[1fr_1fr_auto] items-center gap-2 sm:hidden', disabledAll && 'opacity-60')}>
+        <button
+          type="button"
+          className="min-h-12 rounded-full border border-emerald-200/25 bg-emerald-400/16 px-4 text-sm font-semibold text-emerald-50 shadow-[0_18px_60px_-38px_rgba(0,0,0,0.95)] backdrop-blur transition-colors active:bg-emerald-400/24 disabled:opacity-50 max-[360px]:px-3"
+          onClick={() => {
+            if (disabledAll) return;
+            setOpen('perso');
+          }}
+          disabled={disabledAll}
+          aria-label="Ajouter une dépense perso"
+        >
+          + Perso
+        </button>
+        <button
+          type="button"
+          className="min-h-12 rounded-full border border-sky-200/25 bg-sky-400/16 px-4 text-sm font-semibold text-sky-50 shadow-[0_18px_60px_-38px_rgba(0,0,0,0.95)] backdrop-blur transition-colors active:bg-sky-400/24 disabled:opacity-50 max-[360px]:px-3"
+          onClick={() => {
+            if (disabledAll) return;
+            setOpen('essence');
+          }}
+          disabled={disabledAll}
+          aria-label="Ajouter un plein d’essence"
+        >
+          Essence
+        </button>
         <button
           type="button"
           className={cx(
-            'motion-hover motion-pop flex h-12 w-12 touch-manipulation items-center justify-center rounded-full border bg-ink-950/95 text-slate-100 shadow-[0_20px_70px_-42px_rgba(0,0,0,0.95)] backdrop-blur transition-colors max-[360px]:h-11 max-[360px]:w-11',
-            disabledAll ? 'border-white/10 bg-white/5 text-slate-400' : 'border-slate-200/35 hover:bg-ink-950/90',
+            'flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-ink-950/90 text-base font-semibold text-slate-100 shadow-[0_18px_60px_-38px_rgba(0,0,0,0.95)] backdrop-blur transition-colors active:bg-white/12',
+            !showTop && 'opacity-45',
           )}
           onClick={() => {
-            if (disabledAll) return;
-            if (open) {
-              setOpen(null);
-              setChooserOpen(false);
-              return;
-            }
-            setChooserOpen((v) => !v);
+            if (!showTop) return;
+            const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
+            window.scrollTo({ top: 0, behavior });
           }}
-          aria-label={open ? 'Fermer' : chooserOpen ? 'Fermer le menu' : 'Ouvrir le menu ajout rapide'}
-          aria-expanded={chooserOpen}
-          disabled={disabledAll}
+          aria-label="Retour en haut"
+          disabled={!showTop}
         >
-          <span className={cx('text-2xl leading-none transition-transform duration-150', (chooserOpen || open) && 'rotate-45')}>+</span>
+          ↑
         </button>
       </div>
 
