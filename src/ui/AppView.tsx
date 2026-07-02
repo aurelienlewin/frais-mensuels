@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { monthLabelFr, monthLabelShortFr, ymAdd, ymFromDate, type YM } from '../lib/date';
-import { centsToEuros, formatEUR } from '../lib/money';
+import { centsToEuros } from '../lib/money';
 import { useStore } from '../state/store';
 import { budgetsForMonth, chargesForMonth, totalsByAccount, totalsForMonth } from '../state/selectors';
 import { ChargesTable } from './ChargesTable';
@@ -26,81 +26,6 @@ function csvLine(values: Array<string | number>) {
 
 function toEuroCsv(cents: number) {
   return centsToEuros(cents).toFixed(2);
-}
-
-function MobileMonthGlance({
-  month,
-  remainingCents,
-  spentCents,
-  pendingCount,
-  budgets,
-}: {
-  month: string;
-  remainingCents: number;
-  spentCents: number;
-  pendingCount: number;
-  budgets: Array<{ id: string; name: string; fundingCents: number; spentCents: number; remainingToFundCents: number }>;
-}) {
-  const topBudgets = [...budgets]
-    .sort((a, b) => {
-      const aRatio = a.fundingCents > 0 ? a.spentCents / a.fundingCents : a.spentCents > 0 ? 1 : 0;
-      const bRatio = b.fundingCents > 0 ? b.spentCents / b.fundingCents : b.spentCents > 0 ? 1 : 0;
-      if ((a.remainingToFundCents < 0) !== (b.remainingToFundCents < 0)) return a.remainingToFundCents < 0 ? -1 : 1;
-      return bRatio - aRatio;
-    })
-    .slice(0, 3);
-  const totalFundingCents = budgets.reduce((acc, b) => acc + Math.max(0, b.fundingCents), 0);
-  const spentRatio = totalFundingCents > 0 ? Math.min(1, Math.max(0, spentCents / totalFundingCents)) : spentCents > 0 ? 1 : 0;
-
-  return (
-    <section className="mb-4 sm:hidden">
-      <div className="fm-panel overflow-hidden p-4 max-[360px]:p-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="truncate text-xs font-semibold uppercase tracking-wide text-slate-400">{month}</div>
-            <div className={cx('mt-1 text-3xl font-semibold tabular-nums tracking-tight', remainingCents < 0 ? 'text-rose-100' : 'text-emerald-100')}>
-              {formatEUR(remainingCents)}
-            </div>
-            <div className="mt-1 text-xs text-slate-400">Reste après enveloppes</div>
-          </div>
-          <div
-            className={cx(
-              'rounded-2xl border px-3 py-2 text-right text-xs font-semibold tabular-nums',
-              pendingCount > 0 ? 'border-amber-200/30 bg-amber-400/12 text-amber-100' : 'border-emerald-200/30 bg-emerald-400/12 text-emerald-100',
-            )}
-          >
-            <div>{pendingCount > 0 ? pendingCount : 'OK'}</div>
-            <div className="mt-0.5 text-[10px] font-medium text-slate-300">{pendingCount > 0 ? 'à virer' : 'viré'}</div>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <span className="text-slate-400">Dépenses enveloppes</span>
-            <span className="font-semibold tabular-nums text-slate-100">
-              {formatEUR(spentCents)} / {formatEUR(totalFundingCents)}
-            </span>
-          </div>
-          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
-            <div className={cx('h-full rounded-full', spentRatio >= 1 ? 'bg-rose-400/75' : 'bg-emerald-400/75')} style={{ width: `${Math.round(spentRatio * 100)}%` }} />
-          </div>
-        </div>
-
-        {topBudgets.length > 0 ? (
-          <div className="mt-4 grid gap-2">
-            {topBudgets.map((b) => (
-              <div key={b.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-white/10 bg-ink-950/30 px-3 py-2">
-                <div className="min-w-0 truncate text-sm font-medium text-slate-100">{b.name}</div>
-                <div className={cx('text-sm font-semibold tabular-nums', b.remainingToFundCents < 0 ? 'text-rose-100' : 'text-emerald-100')}>
-                  {formatEUR(b.remainingToFundCents)}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </section>
-  );
 }
 
 export function AppView({
@@ -1000,15 +925,10 @@ export function AppView({
           tabIndex={-1}
           className="mx-auto max-w-6xl pt-6 pb-24 max-[360px]:pt-4 max-[360px]:pb-20 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]"
         >
-          <MobileMonthGlance
-            month={monthLabelFr(ym)}
-            remainingCents={reportTotals.resteAVivreApresEnveloppesCents}
-            spentCents={reportTotals.totalBudgetSpentCents}
-            pendingCount={reportTotals.pendingCount}
-            budgets={reportBudgets}
-          />
           <div className="grid gap-4 max-[360px]:gap-3 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
-            <SummaryPanel ym={ym} />
+            <div className="hidden sm:block">
+              <SummaryPanel ym={ym} />
+            </div>
             <div className="flex flex-col gap-6 max-[360px]:gap-4">
               <div className="order-1 lg:order-3">
                 <BudgetsPanel ym={ym} archived={archived} />
@@ -1016,7 +936,7 @@ export function AppView({
               <div className="order-2 lg:order-1">
                 <ChargesTable ym={ym} archived={archived} />
               </div>
-              <div className="order-3 lg:order-2">
+              <div className="hidden lg:order-2 sm:block">
                 <SavingsPanel ym={ym} archived={archived} />
               </div>
             </div>
