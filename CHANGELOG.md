@@ -6,6 +6,9 @@ The format is based on Keep a Changelog and this project follows semantic-style 
 
 ## [Unreleased]
 
+### Fixed
+- (2026-09-23): Fixed a production build failure (`TS2688: Cannot find type definition file for 'vite/client'`) introduced by the TypeScript 7 upgrade. `tsconfig.json` declared `"types": ["vite/client"]` globally in `compilerOptions`, which is redundant (`src/vite-env.d.ts` already scopes the same ambient types to `src/` via a triple-slash reference) and leaked into Vercel's isolated per-function build of `api/*.ts`, which never imports `vite` (a devDependency) and therefore couldn't resolve it. Removed the redundant global `types` entry; `api/` functions no longer have any reason to resolve `vite/client`. Verified locally that `npm run typecheck` and `npm run build` are unaffected, and that an isolated compile scoped to `api/` alone no longer references `vite/client`.
+
 ### Performance
 - (2026-09-23): `AppView` already computed the month's resolved charges/budgets once via `useMemo`, but its four child panels (`SummaryPanel`, `BudgetsPanel`, `ChargesTable`, `SavingsPanel`) each independently re-ran the same `chargesForMonth`/`budgetsForMonth` selectors from scratch on every state change instead of receiving the already-computed result. `budgetsForMonth` in particular walks every month's budget history to resolve carry-over chains, so this meant that single computation ran up to 5 times on every edit. The parent now passes the resolved rows down as props; no visual or behavioral change (verified via `typecheck`, `build`, and a `preview` smoke check).
 
@@ -20,4 +23,4 @@ The format is based on Keep a Changelog and this project follows semantic-style 
 - None at this time. `npm outdated` and `npm audit` are both clean after this batch.
 
 ### Known gaps (pre-existing, not introduced by this update)
-- `tsconfig.json` only covers `src/`; the Vercel serverless functions under `api/` are not typechecked by `npm run typecheck` (they're transpiled independently by Vercel at deploy time, and this repo has no `@types/node` to typecheck them locally). Out of scope for this dependency refresh.
+- `tsconfig.json` only covers `src/`; the Vercel serverless functions under `api/` are not typechecked by `npm run typecheck` (they're transpiled independently by Vercel at deploy time, and this repo has no `@types/node` to typecheck them locally). This is what allowed the `vite/client` leak above to go unnoticed until a production deploy. Still out of scope to fully close (would need a dedicated `api/tsconfig.json` and `@types/node`), but worth revisiting.
