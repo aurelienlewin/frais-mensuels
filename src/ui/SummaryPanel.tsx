@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { centsToEuros, eurosToCents, formatEUR, parseEuroAmount } from '../lib/money';
-import { budgetsForMonth, chargesForMonth, totalsByAccount, totalsForMonth } from '../state/selectors';
+import { totalsByAccount, totalsForMonth, type BudgetResolved, type ChargeResolved } from '../state/selectors';
 import { useStoreState } from '../state/store';
 import type { YM } from '../lib/date';
 import { cx } from './cx';
@@ -8,16 +8,8 @@ import { DonutChart, type DonutSegment } from './components/DonutChart';
 import { InlineTextInput } from './components/InlineInput';
 import type { Account } from '../state/types';
 
-export function SummaryPanel({ ym }: { ym: YM }) {
+export function SummaryPanel({ ym, charges, budgets }: { ym: YM; charges: ChargeResolved[]; budgets: BudgetResolved[] }) {
   const { state, dispatch } = useStoreState();
-  const charges = useMemo(
-    () => chargesForMonth(state, ym),
-    [state.accounts, state.budgets, state.charges, state.months, ym],
-  );
-  const budgets = useMemo(
-    () => budgetsForMonth(state, ym),
-    [state.accounts, state.budgets, state.months, ym],
-  );
   const totals = useMemo(
     () => totalsForMonth(state, ym, { charges, budgets }),
     [budgets, charges, state.months, state.salaryCents, ym],

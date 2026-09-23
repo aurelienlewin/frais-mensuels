@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { daysInMonth, pad2, type YM } from '../lib/date';
 import { centsToEuros, eurosToCents, formatEUR, parseEuroAmount } from '../lib/money';
-import { budgetsForMonth } from '../state/selectors';
+import type { BudgetResolved } from '../state/selectors';
 import { useStoreState } from '../state/store';
 import { cx } from './cx';
 import { InlineNumberInput, InlineTextInput } from './components/InlineInput';
@@ -40,14 +40,10 @@ function FormulaHint({ label, text }: { label: string; text: string }) {
   );
 }
 
-export function BudgetsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
+export function BudgetsPanel({ ym, archived, budgets }: { ym: YM; archived: boolean; budgets: BudgetResolved[] }) {
   const { state } = useStoreState();
   const [budgetsOpen, setBudgetsOpen] = useState(true);
   const [addBudgetOpen, setAddBudgetOpen] = useState(false);
-  const budgets = useMemo(
-    () => budgetsForMonth(state, ym),
-    [state.accounts, state.budgets, state.months, ym],
-  );
   const modelById = useMemo(() => new Map(state.budgets.map((b) => [b.id, b])), [state.budgets]);
 
   return (
@@ -306,7 +302,7 @@ function BudgetCard({
   archived,
 }: {
   ym: YM;
-  budget: ReturnType<typeof budgetsForMonth>[number];
+  budget: BudgetResolved;
   model: ReturnType<typeof useStoreState>['state']['budgets'][number] | null;
   archived: boolean;
 }) {

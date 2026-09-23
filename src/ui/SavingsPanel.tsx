@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { centsToEuros, eurosToCents, formatEUR } from '../lib/money';
-import { chargesForMonth, pickAutoSavingsChargeForMonth } from '../state/selectors';
+import { pickAutoSavingsChargeForMonth, type ChargeResolved } from '../state/selectors';
 import { useStoreState } from '../state/store';
 import type { Charge } from '../state/types';
 import type { YM } from '../lib/date';
@@ -24,17 +24,13 @@ function pickDefaultSavingsTargetAccountId(
   return (keywordMatch ?? active[0])?.id ?? null;
 }
 
-export function SavingsPanel({ ym, archived }: { ym: YM; archived: boolean }) {
+export function SavingsPanel({ ym, archived, charges: rows }: { ym: YM; archived: boolean; charges: ChargeResolved[] }) {
   const { state, dispatch } = useStoreState();
   const [open, setOpen] = useState(() => {
     if (typeof window === 'undefined') return true;
     return window.matchMedia('(min-width: 640px)').matches;
   });
   const canEdit = !archived;
-  const rows = useMemo(
-    () => chargesForMonth(state, ym),
-    [state.accounts, state.budgets, state.charges, state.months, ym],
-  );
   const savings = useMemo(() => pickAutoSavingsChargeForMonth(state, rows), [rows, state.charges]);
   const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
   const activePersoAccounts = useMemo(() => activeAccounts.filter((a) => a.kind === 'perso'), [activeAccounts]);

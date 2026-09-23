@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEventHandler } from 'react';
 import { centsToEuros, eurosToCents, formatEUR } from '../lib/money';
-import { chargesForMonth, pickAutoSavingsChargeForMonth } from '../state/selectors';
+import { pickAutoSavingsChargeForMonth, type ChargeResolved } from '../state/selectors';
 import { useStoreState } from '../state/store';
 import { pad2, ymFromDate, type YM } from '../lib/date';
 import type { Charge, ChargeScope } from '../state/types';
@@ -12,12 +12,8 @@ function normalizeSearch(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-export function ChargesTable({ ym, archived }: { ym: YM; archived: boolean }) {
+export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; archived: boolean; charges: ChargeResolved[] }) {
   const { state, dispatch } = useStoreState();
-  const monthRows = useMemo(
-    () => chargesForMonth(state, ym),
-    [state.accounts, state.budgets, state.charges, state.months, ym],
-  );
   const autoSavings = useMemo(() => pickAutoSavingsChargeForMonth(state, monthRows), [monthRows, state.charges]);
   const rows = useMemo(
     () => monthRows.filter((r) => r.id !== autoSavings?.row.id),

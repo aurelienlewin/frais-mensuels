@@ -6,6 +6,9 @@ The format is based on Keep a Changelog and this project follows semantic-style 
 
 ## [Unreleased]
 
+### Performance
+- (2026-09-23): `AppView` already computed the month's resolved charges/budgets once via `useMemo`, but its four child panels (`SummaryPanel`, `BudgetsPanel`, `ChargesTable`, `SavingsPanel`) each independently re-ran the same `chargesForMonth`/`budgetsForMonth` selectors from scratch on every state change instead of receiving the already-computed result. `budgetsForMonth` in particular walks every month's budget history to resolve carry-over chains, so this meant that single computation ran up to 5 times on every edit. The parent now passes the resolved rows down as props; no visual or behavioral change (verified via `typecheck`, `build`, and a `preview` smoke check).
+
 ### Security
 - (2026-09-23): Updated `postcss`, `autoprefixer`, `vite`, and `@vitejs/plugin-react` to their latest compatible releases, which transitively resolved 4 npm audit findings (3 high, 1 moderate): `browserslist` unbounded memory growth / prototype-write crash, `nanoid` infinite loop on invalid size, `postcss` source-map path traversal, and `baseline-browser-mapping` denial of service. `npm audit` is now clean.
 

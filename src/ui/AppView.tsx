@@ -927,17 +927,17 @@ export function AppView({
         >
           <div className="grid gap-4 max-[360px]:gap-3 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
             <div className="hidden sm:block">
-              <SummaryPanel ym={ym} />
+              <SummaryPanel ym={ym} charges={reportCharges} budgets={reportBudgets} />
             </div>
             <div className="flex flex-col gap-6 max-[360px]:gap-4">
               <div className="order-1 lg:order-3">
-                <BudgetsPanel ym={ym} archived={archived} />
+                <BudgetsPanel ym={ym} archived={archived} budgets={reportBudgets} />
               </div>
               <div className="order-2 lg:order-1">
-                <ChargesTable ym={ym} archived={archived} />
+                <ChargesTable ym={ym} archived={archived} charges={reportCharges} />
               </div>
               <div className="hidden lg:order-2 sm:block">
-                <SavingsPanel ym={ym} archived={archived} />
+                <SavingsPanel ym={ym} archived={archived} charges={reportCharges} />
               </div>
             </div>
           </div>
