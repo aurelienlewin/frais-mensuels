@@ -35,7 +35,7 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - React 19.3 + React DOM 19.3
 - Vite 8 + `@vitejs/plugin-react` 6
 - Tailwind CSS 4.3 (PostCSS via `@tailwindcss/postcss`)
-- TypeScript 6.0
+- TypeScript 7.0
 
 Configuration Tailwind: approche CSS-first (`@import "tailwindcss"`, `@source`, `@theme` dans `src/styles.css`, sans `tailwind.config` JS).
 Conventions UI: composants utilitaires Tailwind v4 dans `@layer components` (`fm-panel`, `fm-card`, `fm-input`, `fm-btn-*`, `fm-stat-*`) pour harmoniser Résumé, Enveloppes et formulaires.
