@@ -54,7 +54,7 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
   const updateCharge = (chargeId: string, patch: Partial<Omit<Charge, 'id' | 'active'>>) => {
     if (!canEdit) return;
     if (chargesById.has(chargeId)) {
-      dispatch({ type: 'UPDATE_CHARGE', chargeId, patch });
+      dispatch({ type: 'UPDATE_CHARGE', chargeId, patch, ym });
       return;
     }
     dispatch({ type: 'UPDATE_MONTH_CHARGE', ym, chargeId, patch });

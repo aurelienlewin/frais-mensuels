@@ -28,7 +28,7 @@ export type Action =
   | { type: 'UPDATE_BUDGET'; budgetId: string; patch: Partial<Omit<Budget, 'id'>> }
   | { type: 'REMOVE_BUDGET'; ym: MonthData['ym']; budgetId: string }
   | { type: 'ADD_CHARGE'; charge: Omit<Charge, 'id' | 'sortOrder'> }
-  | { type: 'UPDATE_CHARGE'; chargeId: string; patch: Partial<Omit<Charge, 'id'>> }
+  | { type: 'UPDATE_CHARGE'; chargeId: string; patch: Partial<Omit<Charge, 'id'>>; ym?: MonthData['ym'] }
   | { type: 'REORDER_CHARGES'; scope: Charge['scope']; orderedIds: string[] }
   | { type: 'REMOVE_CHARGE'; chargeId: string };
 
@@ -597,8 +597,44 @@ export function reducer(state: AppState, action: Action): AppState {
             .reduce((acc, c) => Math.max(acc, c.sortOrder), 0);
           return { ...action.patch, sortOrder: max + 10 };
         })();
+
+        // Editing the amount from a given month must only affect that month onward.
+        // Months before it keep whichever amount was in effect for them, locked in as
+        // an explicit per-month override before the new global amount takes effect.
+        let nextMonths = state.months;
+        if (current && action.ym && typeof patch.amountCents === 'number' && patch.amountCents !== current.amountCents) {
+          const prevAmountCents = current.amountCents;
+          const today = todayIsoLocal();
+          const updated = { ...state.months };
+          let monthsChanged = false;
+          for (const [key, month] of Object.entries(state.months)) {
+            if (key >= action.ym) continue;
+            if (month.archived) continue;
+            const existing = month.charges[action.chargeId];
+            if (existing?.snapshot || existing?.removed) continue;
+            if (typeof existing?.amountOverrideCents === 'number') continue;
+            const monthYm = key as MonthData['ym'];
+            const defaultPaid = !existing && current.payment === 'auto' && dueDateIso(monthYm, current.dayOfMonth) <= today;
+            updated[monthYm] = {
+              ...month,
+              charges: {
+                ...month.charges,
+                [action.chargeId]: {
+                  paid: existing?.paid ?? defaultPaid,
+                  snapshot: existing?.snapshot,
+                  removed: existing?.removed,
+                  amountOverrideCents: prevAmountCents,
+                },
+              },
+            };
+            monthsChanged = true;
+          }
+          if (monthsChanged) nextMonths = updated;
+        }
+
         return {
           ...state,
+          months: nextMonths,
           charges: state.charges.map((c) => (c.id === action.chargeId ? { ...c, ...patch } : c)),
         };
       }
