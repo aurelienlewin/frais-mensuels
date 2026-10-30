@@ -669,7 +669,7 @@ export function AppView({
         <header
           data-app-header="1"
           className={cx(
-            'sticky top-0 z-30 border-b border-white/10 bg-ink-950/75 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150',
+            'sticky top-0 z-30 border-b border-white/10 bg-ink-950/92 pt-[env(safe-area-inset-top)]',
             compact && 'short:static',
           )}
         >

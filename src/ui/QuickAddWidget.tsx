@@ -171,7 +171,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
       {showTop && !open ? (
         <button
           type="button"
-          className="motion-hover motion-pop flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-ink-950/85 text-[12px] font-semibold text-slate-200 shadow-[0_16px_50px_-36px_rgba(0,0,0,0.9)] backdrop-blur transition-colors hover:bg-ink-950/95"
+          className="motion-hover motion-pop flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-ink-950/85 text-[12px] font-semibold text-slate-200 shadow-[0_16px_50px_-36px_rgba(0,0,0,0.9)] transition-colors hover:bg-ink-950/95"
           onClick={() => {
             const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
             window.scrollTo({ top: 0, behavior });
@@ -351,7 +351,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
           {!open ? (
             <button
               type="button"
-              className="flex h-13 w-13 items-center justify-center rounded-full border border-emerald-200/30 bg-emerald-400/25 text-2xl font-semibold leading-none text-emerald-50 shadow-[0_18px_60px_-30px_rgba(0,0,0,0.95)] backdrop-blur transition-transform active:scale-95 disabled:opacity-50"
+              className="flex h-13 w-13 items-center justify-center rounded-full border border-emerald-200/30 bg-emerald-400/25 text-2xl font-semibold leading-none text-emerald-50 shadow-[0_18px_60px_-30px_rgba(0,0,0,0.95)] transition-transform active:scale-95 disabled:opacity-50"
               onClick={() => setFabOpen((v) => !v)}
               disabled={disabledAll}
               aria-expanded={fabOpen}

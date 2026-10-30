@@ -18,8 +18,9 @@
 
 @layer components {
   /* Frosted glass: soft top-left sheen, hairline edge, specular top highlight. */
+  /* No backdrop-filter on anything that scrolls: re-blurring the page behind it every frame makes scrolling heavy. */
   .fm-panel {
-    @apply rounded-[1.75rem] border border-white/12 bg-ink-950/55 backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_24px_60px_-34px_rgba(0,0,0,0.9)];
+    @apply rounded-[1.75rem] border border-white/12 bg-ink-950/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_24px_60px_-34px_rgba(0,0,0,0.9)];
     background-image: linear-gradient(155deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.015) 38%, rgba(255, 255, 255, 0) 70%);
   }
 
@@ -264,6 +265,12 @@ body::after {
     transform: translateY(-1px);
   }
 
+  /* Big panels must not move on hover: it repaints a huge layer while the pointer crosses them during scroll. */
+  .fm-panel.motion-hover:hover,
+  .fm-panel.motion-hover:active {
+    transform: none;
+  }
+
   .motion-hover:active {
     transform: translateY(0);
   }
@@ -303,10 +310,6 @@ body::after {
   transition: none;
 }
 
-.fm-lite-effects .fm-panel {
-  backdrop-filter: none;
-}
-
 .fm-lite-effects .fm-panel,
 .fm-lite-effects .shadow-\[0_20px_120px_-60px_rgba\(0\,0\,0\,0\.9\)\],
 .fm-lite-effects .shadow-\[0_20px_80px_-40px_rgba\(0\,0\,0\,0\.9\)\],
@@ -321,14 +324,6 @@ body::after {
 .fm-defer-render {
   content-visibility: auto;
   contain-intrinsic-size: auto 22rem;
-}
-
-/* Phones: full-size backdrop blur on big panels is the main GPU cost; use a more opaque tint instead. */
-@media (max-width: 959px) {
-  .fm-panel {
-    backdrop-filter: none;
-    background-color: rgba(16, 17, 19, 0.78);
-  }
 }
 
 @media (min-width: 768px) {

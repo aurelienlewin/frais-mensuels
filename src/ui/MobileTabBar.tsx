@@ -66,7 +66,7 @@ export function MobileTabBar({
       data-tour="tabs"
       className={cx(
         // Floating glass dock (portrait) / floating rail (landscape).
-        'fixed z-40 flex rounded-[1.75rem] border border-white/15 bg-ink-950/70 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_20px_50px_-20px_rgba(0,0,0,0.95)] backdrop-blur-2xl backdrop-saturate-150',
+        'fixed z-40 flex rounded-[1.75rem] border border-white/15 bg-ink-950/90 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_20px_50px_-20px_rgba(0,0,0,0.95)]',
         'inset-x-3 bottom-[calc(0.5rem+env(safe-area-inset-bottom))]',
         'short:inset-x-auto short:bottom-2 short:left-[calc(0.5rem+env(safe-area-inset-left))] short:top-2 short:w-[4.25rem] short:flex-col short:justify-center',
       )}

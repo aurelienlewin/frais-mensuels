@@ -223,7 +223,7 @@ function ChargeMobileCard({
   return (
     <div
       className={cx(
-        'rounded-2xl border p-2.5 shadow-[0_12px_40px_-32px_rgba(0,0,0,0.85)] backdrop-blur',
+        'rounded-2xl border p-2.5 shadow-[0_12px_40px_-32px_rgba(0,0,0,0.85)]',
         tint,
         paidFx,
         highlight && 'ring-2 ring-slate-200/30 ring-inset',
