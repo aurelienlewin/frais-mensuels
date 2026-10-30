@@ -6,7 +6,15 @@
   --color-ink-950: #101113;
   --ease-bg-crossfade: cubic-bezier(0.2, 0.8, 0.2, 1);
   --duration-bg-crossfade: 520ms;
+  /*
+   * Desktop layout starts at 960px, not Tailwind's 640px `sm`: an iPhone in landscape is 844-932px wide
+   * and must keep the mobile (tabbed, compact-header) layout. Keep in sync with COMPACT_QUERY in lib/useCompact.ts.
+   */
+  --breakpoint-desk: 60rem;
 }
+
+/* Landscape phones: very little vertical room, so chrome has to shrink. */
+@custom-variant short (@media (max-height: 520px));
 
 @layer components {
   .fm-panel {
@@ -184,7 +192,7 @@ body::after {
 }
 
 /* Prevent iOS Safari auto-zoom on small inputs (requires >=16px). */
-@media (max-width: 640px) {
+@media (max-width: 959px) {
   input:not([type='checkbox']):not([type='radio']):not([type='date']),
   select,
   textarea {

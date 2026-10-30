@@ -6,6 +6,9 @@ The format is based on Keep a Changelog and this project follows semantic-style 
 
 ## [Unreleased]
 
+### Changed
+- (2026-10-30): Reworked the mobile UX mobile-first. The desktop/mobile switch moved from Tailwind's 640px `sm` to a 960px `desk` breakpoint (`--breakpoint-desk`, mirrored by `lib/useCompact.ts`), so phones in landscape (iPhone 14: 844x390) now get the mobile layout instead of the desktop one. Below it: a single-row 53px header (month prev/next, month sheet, menu) that scrolls away in landscape instead of the ~170px sticky one; a bottom tab bar (left rail in landscape) switching between Enveloppes, Charges, Comptes and Résumé, with a badge for pending transfers; the per-account sums, which were unreachable on phones, now have their own Comptes tab; a single floating quick-add button replacing the full-width bar; the quick-add dialog collapses to one row in landscape; the menu scrolls when taller than the screen. The guided tour switches tabs to find its anchors. Removed the per-panel "Replier/Voir" mobile toggles, now redundant.
+
 ### Security
 - Node.js restricted to `^24.22.1 || ^26.12.1` (Volta pin 26.12.1), the releases fixing the Brotli decoder RCE CVE-2026-111497 (Node2Shell / HTTP2Shell). Dependencies updated within their semver ranges.
 

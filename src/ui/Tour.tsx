@@ -6,6 +6,7 @@ export type TourStep = {
   title: string;
   body: ReactNode;
   anchor?: string; // matches [data-tour="<anchor>"]
+  onEnter?: () => void; // e.g. switch the mobile tab so the anchor is mounted
 };
 
 function prefersReducedMotion() {
@@ -90,33 +91,51 @@ export function Tour({
   }, [open]);
 
   useEffect(() => {
+    if (open) step?.onEnter?.();
+  }, [idx, open]);
+
+  useEffect(() => {
     if (!open) return;
     if (!anchorSelector) {
       setAnchorRect(null);
       return;
     }
 
-    const el = document.querySelector<HTMLElement>(anchorSelector);
-    if (!el) {
-      setAnchorRect(null);
-      return;
-    }
+    let raf = 0;
+    let tries = 0;
+    let detach: (() => void) | undefined;
 
-    const update = () => setAnchorRect(el.getBoundingClientRect());
-    update();
+    // The anchor may mount a frame or two late (e.g. after `onEnter` switched the mobile tab).
+    const attach = () => {
+      const el = document.querySelector<HTMLElement>(anchorSelector);
+      if (!el) {
+        setAnchorRect(null);
+        if (tries++ < 20) raf = window.requestAnimationFrame(attach);
+        return;
+      }
 
-    const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
-    try {
-      el.scrollIntoView({ block: 'center', inline: 'nearest', behavior });
-    } catch {
-      // ignore
-    }
+      const update = () => setAnchorRect(el.getBoundingClientRect());
+      update();
 
-    window.addEventListener('resize', update);
-    window.addEventListener('scroll', update, true);
+      const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
+      try {
+        el.scrollIntoView({ block: 'center', inline: 'nearest', behavior });
+      } catch {
+        // ignore
+      }
+
+      window.addEventListener('resize', update);
+      window.addEventListener('scroll', update, true);
+      detach = () => {
+        window.removeEventListener('resize', update);
+        window.removeEventListener('scroll', update, true);
+      };
+    };
+    attach();
+
     return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('scroll', update, true);
+      if (raf) window.cancelAnimationFrame(raf);
+      detach?.();
     };
   }, [anchorSelector, idx, open]);
 

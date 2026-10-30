@@ -51,26 +51,13 @@ export function BudgetsPanel({ ym, archived, budgets }: { ym: YM; archived: bool
       data-tour="budgets"
       className="fm-panel motion-hover motion-pop overflow-hidden"
     >
-      <div className="border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
+      <div className="border-b border-white/15 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 desk:px-6 desk:py-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm text-slate-300">Enveloppes</div>
             <h2 className="mt-1 text-xl font-semibold tracking-tight text-shadow-2xs">Budgets & dépenses</h2>
           </div>
-          <button
-            type="button"
-            className="fm-mobile-section-toggle sm:hidden"
-            onClick={() => setBudgetsOpen((v) => !v)}
-            aria-expanded={budgetsOpen}
-            aria-label={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
-            title={budgetsOpen ? 'Masquer les enveloppes' : 'Afficher les enveloppes'}
-          >
-            <span>{budgetsOpen ? 'Replier' : 'Voir'} enveloppes</span>
-            <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-              {budgetsOpen ? '▴' : '▾'}
-            </span>
-          </button>
-          <div className="hidden items-center gap-2 sm:flex">
+          <div className="hidden items-center gap-2 desk:flex">
             <button
               type="button"
               className={cx('fm-btn-soft h-9 rounded-xl px-3 text-xs', archived && 'opacity-50')}
@@ -93,7 +80,7 @@ export function BudgetsPanel({ ym, archived, budgets }: { ym: YM; archived: bool
             </button>
           </div>
         </div>
-        <div className="mt-3 sm:hidden">
+        <div className="mt-3 desk:hidden">
           <button
             type="button"
             className={cx('fm-btn-soft min-h-10 w-full rounded-xl px-3 text-xs pointer-coarse:min-h-11', archived && 'opacity-50')}
@@ -105,7 +92,7 @@ export function BudgetsPanel({ ym, archived, budgets }: { ym: YM; archived: bool
         </div>
       </div>
 
-      <div className={cx('space-y-6 p-4 max-[360px]:space-y-4 max-[360px]:p-3 sm:p-6', !budgetsOpen && 'hidden')}>
+      <div className={cx('space-y-6 p-4 max-[360px]:space-y-4 max-[360px]:p-3 desk:p-6', !budgetsOpen && 'hidden')}>
         {budgets.map((b) => (
           <BudgetCard key={b.id} ym={ym} budget={b} model={modelById.get(b.id) ?? null} archived={archived} />
         ))}
@@ -142,7 +129,7 @@ function AddBudgetModal({
         aria-label="Fermer la modale nouvelle enveloppe"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-xl rounded-2xl border border-white/15 bg-ink-900/95 p-4 shadow-[0_28px_70px_-36px_rgba(0,0,0,0.9)] sm:p-5">
+      <div className="relative z-10 w-full max-w-xl rounded-2xl border border-white/15 bg-ink-900/95 p-4 shadow-[0_28px_70px_-36px_rgba(0,0,0,0.9)] desk:p-5">
         <div className="flex items-center justify-between gap-3">
           <div className="text-base font-semibold text-slate-100">Nouvelle enveloppe</div>
           <button
@@ -188,7 +175,7 @@ function AddBudgetForm({ ym, disabled, onCreated }: { ym: YM; disabled: boolean;
 
   return (
     <div className={cx(disabled && 'opacity-70')}>
-      <div className="grid gap-2 sm:grid-cols-[1fr_140px]">
+      <div className="grid gap-2 desk:grid-cols-[1fr_140px]">
         <input
           className="fm-input h-10 rounded-2xl px-4 text-sm"
           placeholder="ex: Budget perso"
@@ -199,7 +186,7 @@ function AddBudgetForm({ ym, disabled, onCreated }: { ym: YM; disabled: boolean;
         />
         <div className="relative">
           <input
-            className="fm-input h-10 rounded-2xl px-4 pr-10 text-base sm:text-sm"
+            className="fm-input h-10 rounded-2xl px-4 pr-10 text-base desk:text-sm"
             placeholder="0"
             inputMode="decimal"
             type="text"
@@ -212,7 +199,7 @@ function AddBudgetForm({ ym, disabled, onCreated }: { ym: YM; disabled: boolean;
         </div>
       </div>
 
-      <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_140px_140px]">
+      <div className="mt-2 grid gap-2 desk:grid-cols-[1fr_140px_140px]">
         <select
           className="fm-input-select h-10 rounded-2xl px-4 text-sm"
           value={accountId}
@@ -367,7 +354,7 @@ function BudgetCard({
         </div>
 
         <div className="fm-card-soft p-3">
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
+          <div className="grid gap-3 desk:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] desk:items-end">
             <div className="min-w-0">
               <div className="text-xs text-slate-400">Montant réservé</div>
               <div className="mt-1">
@@ -451,7 +438,7 @@ function BudgetCard({
         </div>
 
         {canToggleCarryHandling || canToggleCurrentDebtHandling ? (
-          <div className={cx('grid gap-2', canToggleCarryHandling && canToggleCurrentDebtHandling && 'sm:grid-cols-2')}>
+          <div className={cx('grid gap-2', canToggleCarryHandling && canToggleCurrentDebtHandling && 'desk:grid-cols-2')}>
             {canToggleCarryHandling ? (
               <div className="rounded-lg border border-white/10 bg-white/5 p-2">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Entrant (mois précédent)</div>
@@ -585,9 +572,9 @@ function BudgetCard({
             className="rounded-b-2xl border border-amber-200/30 border-t-0 bg-[linear-gradient(140deg,rgba(46,33,6,0.9),rgba(68,48,8,0.68))] p-3 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]"
           >
             <div className="fm-card-soft grid gap-2 p-3">
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-[140px_1fr_140px_96px]">
+              <div className="grid grid-cols-2 gap-2 desk:grid-cols-[140px_1fr_140px_96px]">
                 <input
-                  className="fm-input h-10 px-3 text-sm sm:h-9"
+                  className="fm-input h-10 px-3 text-sm desk:h-9"
                   type="date"
                   value={date}
                   min={minDate}
@@ -597,7 +584,7 @@ function BudgetCard({
                   aria-label="Date"
                 />
                 <input
-                  className="fm-input col-span-2 h-10 px-3 text-sm sm:col-span-1 sm:h-9"
+                  className="fm-input col-span-2 h-10 px-3 text-sm desk:col-span-1 desk:h-9"
                   placeholder={defaultLabelPlaceholder}
                   value={isFuel ? FUEL_EXPENSE_LABEL : label}
                   disabled={!canEdit || isFuel}
@@ -608,7 +595,7 @@ function BudgetCard({
                   aria-label="Libellé"
                 />
                 <input
-                  className="fm-input h-10 px-3 text-sm sm:h-9"
+                  className="fm-input h-10 px-3 text-sm desk:h-9"
                   placeholder="10 ou -400,99"
                   inputMode="decimal"
                   type="text"
@@ -619,7 +606,7 @@ function BudgetCard({
                 />
                 <button
                   className={cx(
-                    'fm-btn-ghost col-span-2 h-10 px-3 text-sm sm:col-span-1 sm:h-9',
+                    'fm-btn-ghost col-span-2 h-10 px-3 text-sm desk:col-span-1 desk:h-9',
                     !canEdit && 'opacity-50',
                   )}
                   disabled={!canEdit}
@@ -645,7 +632,7 @@ function BudgetCard({
               <div className="text-xs text-slate-400">Dépense: 10€ = -10€. Entrée d’argent: -400,99€ = +400,99€.</div>
             </div>
 
-            <div className="mt-3 space-y-2 sm:hidden">
+            <div className="mt-3 space-y-2 desk:hidden">
               {sortedExpenses.map((e) => (
                 <div
                   key={e.id}
@@ -739,7 +726,7 @@ function BudgetCard({
               {sortedExpenses.length === 0 ? <div className="py-4 text-center text-sm text-slate-400">Aucune dépense.</div> : null}
             </div>
 
-            <div className="fm-card mt-3 hidden overflow-hidden sm:block">
+            <div className="fm-card mt-3 hidden overflow-hidden desk:block">
               <table className="min-w-full">
                 <thead className="bg-ink-950/50 text-left text-xs text-slate-400">
                   <tr>
@@ -847,7 +834,7 @@ function BudgetCard({
       <div className="mt-6">
         <div className="min-w-0">
           <div className="rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]">
-            <div className="grid gap-1 sm:grid-cols-[minmax(0,1.35fr)_minmax(0,0.8fr)_minmax(0,0.95fr)]">
+            <div className="grid gap-1 desk:grid-cols-[minmax(0,1.35fr)_minmax(0,0.8fr)_minmax(0,0.95fr)]">
               <div className="min-w-0 rounded-xl border border-white/10 bg-ink-950/25 px-2 py-1">
                 <div className="truncate text-[10px] font-medium uppercase tracking-wide text-slate-400">Compte</div>
                 {canEdit ? (
@@ -939,7 +926,7 @@ function BudgetCard({
         {canDelete ? (
           <button
             type="button"
-            className="fm-btn-ghost mt-2 h-10 w-full rounded-2xl px-4 text-xs font-semibold text-rose-100 hover:bg-rose-400/15 sm:h-9"
+            className="fm-btn-ghost mt-2 h-10 w-full rounded-2xl px-4 text-xs font-semibold text-rose-100 hover:bg-rose-400/15 desk:h-9"
             onClick={() => {
               if (!model) return;
               const ok = window.confirm(

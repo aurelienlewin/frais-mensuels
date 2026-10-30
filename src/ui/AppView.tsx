@@ -13,6 +13,8 @@ import { AccountsSetupPrompt, EssentialBudgetsSetupPrompt } from './OnboardingSe
 import { cx } from './cx';
 import type { AuthUser } from '../lib/authApi';
 import { kickDynamicBackground } from '../lib/backgroundClient';
+import { useCompact } from '../lib/useCompact';
+import { MobileTabBar, type MobileTab } from './MobileTabBar';
 
 function csvCell(value: string | number) {
   const s = String(value);
@@ -28,6 +30,48 @@ function toEuroCsv(cents: number) {
   return centsToEuros(cents).toFixed(2);
 }
 
+function BrandMark({ className }: { className?: string }) {
+  return (
+      <svg
+        className={className}
+        viewBox="0 0 64 64"
+        fill="none"
+        role="img"
+        aria-label="Frais mensuels"
+      >
+        <defs>
+          <linearGradient id="fm-a" x1="12" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#67e8f9" />
+            <stop offset="0.4" stopColor="#c084fc" />
+            <stop offset="1" stopColor="#fbbf24" />
+          </linearGradient>
+          <linearGradient id="fm-b" x1="24" y1="12" x2="52" y2="42" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#34d399" />
+            <stop offset="1" stopColor="#60a5fa" stopOpacity="0.95" />
+          </linearGradient>
+        </defs>
+        <rect x="8" y="8" width="48" height="48" rx="14" fill="url(#fm-a)" opacity="0.2" />
+        <path
+          d="M20 14.5c0-2.485 2.015-4.5 4.5-4.5H42c2.761 0 5 2.239 5 5s-2.239 5-5 5H30v8h10.5c2.761 0 5 2.239 5 5s-2.239 5-5 5H30v11.5c0 2.485-2.015 4.5-4.5 4.5s-4.5-2.015-4.5-4.5V14.5Z"
+          fill="url(#fm-a)"
+        />
+        <path
+          d="M32.5 26.5H43c3.59 0 6.5 2.91 6.5 6.5s-2.91 6.5-6.5 6.5H33.5a3.5 3.5 0 0 1-3.5-3.5V30a3.5 3.5 0 0 1 2.97-3.465c.34-.06.68-.035 1.03-.035Z"
+          fill="url(#fm-b)"
+          opacity="0.92"
+        />
+        <path
+          d="M27.25 15.5h14.5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5h-9.25c-3.5 0-5.25 1.7-5.25 4.7"
+          stroke="#e2e8f0"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.65"
+        />
+      </svg>
+  );
+}
+
 export function AppView({
   initialYm,
   user,
@@ -41,7 +85,25 @@ export function AppView({
 }) {
   const { saving, state, dispatch, exportJson, importJson, reset, cloud } = useStore();
   const [ym, setYm] = useState<YM>(initialYm);
+  const compact = useCompact();
   const [monthsNavOpen, setMonthsNavOpen] = useState(false);
+  const [tab, setTabState] = useState<MobileTab>(() => {
+    try {
+      const saved = window.sessionStorage.getItem('fm:tab');
+      if (saved === 'budgets' || saved === 'charges' || saved === 'accounts' || saved === 'summary') return saved;
+    } catch {
+      // ignore
+    }
+    return 'budgets';
+  });
+  const setTab = (next: MobileTab) => {
+    setTabState(next);
+    try {
+      window.sessionStorage.setItem('fm:tab', next);
+    } catch {
+      // ignore
+    }
+  };
   const [online, setOnline] = useState<boolean>(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
   const [toast, setToast] = useState<{ id: string; message: string; tone: 'success' | 'error' } | null>(null);
   const [tourOpen, setTourOpen] = useState(false);
@@ -79,6 +141,7 @@ export function AppView({
       },
       {
         id: 'setup-accounts',
+        onEnter: () => setTab('charges'),
         title: 'Configurer tes comptes',
         anchor: 'charges',
         body: (
@@ -91,6 +154,7 @@ export function AppView({
       },
       {
         id: 'charges',
+        onEnter: () => setTab('charges'),
         title: 'Charges mensuelles',
         anchor: 'charges',
         body: (
@@ -109,6 +173,7 @@ export function AppView({
       },
       {
         id: 'add',
+        onEnter: () => setTab('charges'),
         title: 'Ajouter une charge',
         anchor: 'add-charge',
         body: (
@@ -126,6 +191,7 @@ export function AppView({
       },
       {
         id: 'setup-budgets',
+        onEnter: () => setTab('budgets'),
         title: 'Créer tes enveloppes',
         anchor: 'budgets',
         body: (
@@ -137,6 +203,7 @@ export function AppView({
       },
       {
         id: 'budgets',
+        onEnter: () => setTab('budgets'),
         title: 'Enveloppes (budgets)',
         anchor: 'budgets',
         body: (
@@ -165,6 +232,7 @@ export function AppView({
       },
       {
         id: 'summary',
+        onEnter: () => setTab('accounts'),
         title: 'Résumé & reste à vivre',
         anchor: 'summary',
         body: (
@@ -314,8 +382,375 @@ export function AppView({
     return () => window.clearTimeout(t);
   }, [state.ui?.tourDismissed, tourOpen]);
 
+  const monthButtons = visibleMonths.map((m) => {
+      const selected = m === ym;
+      const disabled = isMonthDisabled(m);
+      const isArchived = state.months[m]?.archived ?? false;
+      const idx = visibleMonths.indexOf(m);
+      return (
+        <button
+          key={m}
+          ref={(el) => {
+            monthButtonRefs.current[m] = el;
+          }}
+          className={cx(
+            'flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm capitalize transition max-[360px]:gap-1.5 max-[360px]:px-2.5 max-[360px]:py-1 max-[360px]:text-xs desk:w-auto desk:justify-start',
+            selected ? 'border-white/30 bg-white/12 text-slate-100' : 'border-white/15 bg-white/7 text-slate-200',
+            disabled ? 'cursor-not-allowed opacity-50' : !selected && 'hover:bg-white/10',
+          )}
+          onClick={() => {
+            if (disabled) return;
+            setYm(m);
+            setMonthsNavOpen(false);
+          }}
+          aria-current={selected ? 'page' : undefined}
+          type="button"
+          disabled={disabled}
+          title={disabled ? 'Aucune donnée pour ce mois.' : undefined}
+          onKeyDown={(e) => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+            e.preventDefault();
+  
+            const pickIndex = (start: number, step: number) => {
+              for (let i = start; i >= 0 && i < visibleMonths.length; i += step) {
+                const candidate = visibleMonths[i]!;
+                if (!isMonthDisabled(candidate)) return i;
+              }
+              return null;
+            };
+  
+            const currentIdx = idx;
+            const nextIdx = (() => {
+              if (e.key === 'Home') return pickIndex(0, 1);
+              if (e.key === 'End') return pickIndex(visibleMonths.length - 1, -1);
+              const step = e.key === 'ArrowLeft' ? -1 : 1;
+              return pickIndex(currentIdx + step, step);
+            })();
+            if (nextIdx === null) return;
+  
+            const nextYm = visibleMonths[nextIdx]!;
+            monthButtonRefs.current[nextYm]?.focus();
+            if (nextYm !== ym) setYm(nextYm);
+          }}
+        >
+          {monthLabelShortFr(m)}
+          {isArchived ? (
+            <>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-300/80" aria-hidden="true" />
+              <span className="sr-only"> (archivé)</span>
+            </>
+          ) : null}
+        </button>
+      );
+    });
+
+  const menuNode = (
+    <details
+      ref={menuRef}
+      className="relative flex-shrink-0"
+      onKeyDown={(e) => {
+        if (e.key !== 'Escape') return;
+        menuRef.current?.removeAttribute('open');
+        (menuRef.current?.querySelector('summary') as HTMLElement | null)?.focus();
+      }}
+    >
+      <summary
+        aria-label="Menu"
+        className="list-none inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5"
+        data-tour="menu"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          role="img"
+          aria-hidden="true"
+          className="h-5 w-5 text-slate-100"
+        >
+          <path
+            d="M4 7.5h16M4 12h16M4 16.5h16"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </summary>
+      <div
+        className="absolute right-0 z-20 mt-2 max-h-[calc(100dvh_-_5rem)] w-[min(320px,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)] desk:left-auto desk:right-0 desk:translate-x-0 desk:w-[280px]"
+        style={{ maxWidth: 'calc(100vw - 1.5rem - env(safe-area-inset-right))' }}
+      >
+          <div className="px-3 py-2 text-xs text-slate-400">
+            Connecté: <span className="font-mono text-slate-200">{user.email}</span>
+          </div>
+          {sessionUnverified ? (
+            <div className="px-3 pb-2 text-[11px] text-amber-200">
+              Session locale (non vérifiée). Reconnexion automatique dès que possible.
+            </div>
+          ) : null}
+
+          <button
+            className={cx(
+              'w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10',
+              (!online || cloud.status === 'syncing') && 'opacity-50 hover:bg-transparent',
+            )}
+            disabled={!online || cloud.status === 'syncing'}
+            onClick={() => {
+              cloud.syncNow();
+              menuRef.current?.removeAttribute('open');
+            }}
+            type="button"
+          >
+            Synchroniser (cloud){cloud.status === 'syncing' ? '…' : ''}
+          </button>
+
+          <button
+            className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+            onClick={() => {
+              setTourOpen(true);
+              menuRef.current?.removeAttribute('open');
+            }}
+            type="button"
+          >
+            Guide (tour)
+          </button>
+
+          <button
+            className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+            onClick={() => {
+              void kickDynamicBackground({ force: true });
+              showToast('Fond mis à jour', 'success');
+              menuRef.current?.removeAttribute('open');
+            }}
+            type="button"
+          >
+            Nouveau fond (random)
+          </button>
+
+          <div className="block px-3 pb-2 pt-1 text-[11px] text-slate-400 desk:hidden">
+            <div className="font-semibold uppercase tracking-wide text-slate-500">Actions</div>
+          </div>
+
+          <button
+            className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10 desk:hidden"
+            onClick={() => {
+              if (!archived) {
+                const ok = window.confirm('Archiver ce mois ? Les montants seront figés (modifiable en réouvrant).');
+                if (!ok) return;
+                dispatch({ type: 'ARCHIVE_MONTH', ym });
+              } else {
+                const ok = window.confirm('Réouvrir ce mois (désarchiver) ?');
+                if (!ok) return;
+                dispatch({ type: 'UNARCHIVE_MONTH', ym });
+              }
+              menuRef.current?.removeAttribute('open');
+            }}
+            type="button"
+          >
+            {archived ? 'Réouvrir le mois' : 'Archiver le mois'}
+          </button>
+
+          <div className="px-3 pb-2 pt-2 text-[11px] text-slate-400 desk:hidden">
+            <div className="font-semibold uppercase tracking-wide text-slate-500">Historique</div>
+          </div>
+          <div className="px-3 pb-2 desk:hidden">
+            <select
+              className={cx(
+                'h-10 w-full rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10',
+                archivedMonths.length === 0 && 'opacity-60 hover:bg-white/7',
+              )}
+              defaultValue=""
+              disabled={archivedMonths.length === 0}
+              onChange={(e) => {
+                const next = e.target.value as YM;
+                if (next) setYm(next);
+                e.target.value = '';
+                menuRef.current?.removeAttribute('open');
+              }}
+              aria-label="Historique (mois archivés)"
+            >
+              <option value="" disabled>
+                {archivedMonths.length === 0 ? 'Aucun mois archivé' : 'Choisir…'}
+              </option>
+              {archivedMonths.map((m) => (
+                <option key={m} value={m}>
+                  {monthLabelFr(m)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-rose-400/10"
+            onClick={async () => {
+              await onLogout();
+              menuRef.current?.removeAttribute('open');
+            }}
+            type="button"
+          >
+            Se déconnecter
+          </button>
+
+          <div className="my-1 h-px bg-white/10" />
+          <button
+            className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+            onClick={() => {
+          const json = exportJson();
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `fraismensuels-${ym}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          menuRef.current?.removeAttribute('open');
+        }}
+        type="button"
+      >
+        Exporter (JSON)
+      </button>
+
+      <button
+        className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+        onClick={() => {
+          const month = monthLabelFr(ym);
+          const lines: string[] = [];
+
+          lines.push(csvLine(['Mois', month, ym]));
+          lines.push('');
+
+          lines.push('Synthèse');
+          lines.push(csvLine(['Champ', 'Montant (€)']));
+          lines.push(csvLine(['Charges à provisionner (pour moi)', toEuroCsv(reportTotals.totalPourMoiCents)]));
+          lines.push(csvLine(['Enveloppes cibles (ma part)', toEuroCsv(reportTotals.totalBudgetsBaseCents)]));
+          lines.push(csvLine(['Impact reliquat entrant (enveloppes)', toEuroCsv(reportTotals.totalBudgetsCarryOverCents)]));
+          lines.push(csvLine(['Enveloppes à virer (ma part)', toEuroCsv(reportTotals.totalBudgetsCents)]));
+          lines.push(csvLine(['Total à provisionner ce mois', toEuroCsv(reportTotals.totalProvisionCents)]));
+          lines.push(csvLine(['Reste à vivre (après enveloppes)', toEuroCsv(reportTotals.resteAVivreApresEnveloppesCents)]));
+          lines.push('');
+
+          lines.push('Enveloppes');
+          lines.push(
+            csvLine([
+              'Enveloppe',
+              'Montant cible (€)',
+              'Impact reliquat entrant sur à virer (€)',
+              'À virer (€)',
+              'Dépensé (€)',
+              'Reste du mois (€)',
+              'Dette reportée fin mois (€)',
+            ]),
+          );
+          for (const b of reportBudgets) {
+            lines.push(
+              csvLine([
+                b.name,
+                toEuroCsv(b.amountCents),
+                toEuroCsv(b.fundingCents - b.amountCents),
+                toEuroCsv(b.fundingCents),
+                toEuroCsv(b.spentCents),
+                toEuroCsv(b.remainingToFundCents),
+                toEuroCsv(b.carryForwardDebtCents),
+              ]),
+            );
+          }
+          lines.push('');
+
+          lines.push('Par compte');
+          lines.push(
+            csvLine([
+              'Compte',
+              'Charges à provisionner (€)',
+              'Enveloppes cibles (€)',
+              'Impact reliquat (€)',
+              'Enveloppes à virer (€)',
+              'Total à approvisionner (€)',
+            ]),
+          );
+          for (const a of reportByAccount) {
+            lines.push(
+              csvLine([
+                a.accountName,
+                toEuroCsv(a.chargesTotalCents),
+                toEuroCsv(a.budgetsBaseCents),
+                toEuroCsv(a.budgetsCarryOverCents),
+                toEuroCsv(a.budgetsCents),
+                toEuroCsv(a.totalCents),
+              ]),
+            );
+          }
+
+          const csv = `${lines.join('\n')}\n`;
+          const blob = new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `fraismensuels-rapport-${ym}.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+          menuRef.current?.removeAttribute('open');
+        }}
+        type="button"
+      >
+        Exporter (rapport CSV)
+      </button>
+
+      <button
+        type="button"
+        className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+        onClick={() => importInputRef.current?.click()}
+      >
+        Importer (JSON)
+      </button>
+      <input
+        ref={importInputRef}
+        type="file"
+        accept="application/json"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          try {
+            const raw = await file.text();
+            importJson(raw);
+          } catch {
+            window.alert('Import impossible: JSON invalide.');
+          } finally {
+            e.target.value = '';
+            menuRef.current?.removeAttribute('open');
+          }
+        }}
+      />
+
+      <button
+        className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-rose-400/10"
+        onClick={() => {
+          const ok = window.confirm(
+            "Réinitialiser avec les données d'exemple ?\n\nAttention : toutes tes saisies actuelles (charges, budgets, dépenses) seront supprimées."
+          );
+          if (!ok) return;
+          reset();
+          menuRef.current?.removeAttribute('open');
+        }}
+        type="button"
+      >
+        Réinitialiser (exemple)
+      </button>
+      </div>
+    </details>
+  );
+
+  const goToTab = (next: MobileTab) => {
+    setTab(next);
+    setMonthsNavOpen(false);
+    window.scrollTo({ top: 0 });
+  };
+
+  const prevYm = ymAdd(ym, -1);
+  const prevDisabled = isMonthDisabled(prevYm);
+  const navBtn =
+    'flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-white/15 bg-white/7 text-base text-slate-100 transition-colors active:bg-white/15 pointer-coarse:h-11 pointer-coarse:w-11';
+
   return (
-    <div className="min-h-dvh">
+    <div className={cx('min-h-dvh', compact && 'short:pl-[calc(4.5rem+env(safe-area-inset-left))]')}>
       <Tour
         open={tourOpen}
         steps={tourSteps}
@@ -353,594 +788,313 @@ export function AppView({
       </a>
         <header
           data-app-header="1"
-          className="sticky top-0 z-30 border-b border-white/15 bg-ink-950/95 pt-[env(safe-area-inset-top)]"
+          className={cx(
+            'sticky top-0 z-30 border-b border-white/15 bg-ink-950/95 pt-[env(safe-area-inset-top)]',
+            compact && 'short:static',
+          )}
         >
-        <div className="relative mx-auto max-w-6xl py-2 max-[360px]:py-1.5 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:py-4 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]">
+        <div
+          className={
+            compact
+              ? 'relative mx-auto max-w-6xl py-1.5 pl-3 pr-[calc(0.75rem+env(safe-area-inset-right))]'
+              : 'relative mx-auto max-w-6xl py-2 max-[360px]:py-1.5 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] desk:py-4 desk:pl-[calc(1.5rem_+_env(safe-area-inset-left))] desk:pr-[calc(1.5rem_+_env(safe-area-inset-right))]'
+          }
+        >
           <div className="sr-only" aria-live="polite">
             {statusText} {!online ? 'Mode hors ligne.' : ''} {archived ? 'Mois archivé.' : ''}
           </div>
-          <div className="grid items-start gap-2.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-4">
-            <div className="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3">
-              <div className="group relative flex min-w-0 items-center gap-2 overflow-hidden rounded-2xl border border-white/12 bg-[radial-gradient(120%_130%_at_0%_0%,rgba(56,189,248,0.24),rgba(15,23,42,0.02)_48%),linear-gradient(135deg,rgba(255,255,255,0.11),rgba(255,255,255,0.03))] px-2 py-1.5 shadow-[0_18px_58px_-30px_rgba(0,0,0,0.9)] max-[520px]:shrink sm:gap-3 sm:px-3 sm:py-2">
-                <div
-                  className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_100%_0%,rgba(148,163,184,0.26),rgba(15,23,42,0)_62%)] opacity-70 transition duration-700 group-hover:opacity-95"
-                  aria-hidden="true"
-                />
-                <div className="relative">
-                  <div
-                    className="pointer-events-none absolute -inset-4 -z-10 bg-[conic-gradient(at_30%_30%,rgba(16,185,129,0.35),rgba(56,189,248,0.4),rgba(236,72,153,0.4),rgba(16,185,129,0.35))] opacity-60 blur-[14px] transition duration-700 group-hover:scale-110 group-hover:opacity-90 sm:opacity-80 sm:blur-2xl"
-                    aria-hidden="true"
-                  />
-                  <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-ink-950 ring-1 ring-white/12 sm:h-12 sm:w-12 sm:ring-white/15">
-                    <div className="absolute inset-px rounded-[14px] bg-gradient-to-br from-white/10 via-white/5 to-white/0" />
-                    <svg
-                      className="relative h-7 w-7 text-white drop-shadow-[0_12px_34px_rgba(0,0,0,0.45)] sm:h-9 sm:w-9"
-                      viewBox="0 0 64 64"
-                      fill="none"
-                      role="img"
-                      aria-label="Frais mensuels"
-                    >
-                      <defs>
-                        <linearGradient id="fm-a" x1="12" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
-                          <stop stopColor="#67e8f9" />
-                          <stop offset="0.4" stopColor="#c084fc" />
-                          <stop offset="1" stopColor="#fbbf24" />
-                        </linearGradient>
-                        <linearGradient id="fm-b" x1="24" y1="12" x2="52" y2="42" gradientUnits="userSpaceOnUse">
-                          <stop stopColor="#34d399" />
-                          <stop offset="1" stopColor="#60a5fa" stopOpacity="0.95" />
-                        </linearGradient>
-                      </defs>
-                      <rect x="8" y="8" width="48" height="48" rx="14" fill="url(#fm-a)" opacity="0.2" />
-                      <path
-                        d="M20 14.5c0-2.485 2.015-4.5 4.5-4.5H42c2.761 0 5 2.239 5 5s-2.239 5-5 5H30v8h10.5c2.761 0 5 2.239 5 5s-2.239 5-5 5H30v11.5c0 2.485-2.015 4.5-4.5 4.5s-4.5-2.015-4.5-4.5V14.5Z"
-                        fill="url(#fm-a)"
-                      />
-                      <path
-                        d="M32.5 26.5H43c3.59 0 6.5 2.91 6.5 6.5s-2.91 6.5-6.5 6.5H33.5a3.5 3.5 0 0 1-3.5-3.5V30a3.5 3.5 0 0 1 2.97-3.465c.34-.06.68-.035 1.03-.035Z"
-                        fill="url(#fm-b)"
-                        opacity="0.92"
-                      />
-                      <path
-                        d="M27.25 15.5h14.5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5h-9.25c-3.5 0-5.25 1.7-5.25 4.7"
-                        stroke="#e2e8f0"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        opacity="0.65"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className="text-[10px] uppercase tracking-[0.3em] text-slate-300/90 text-shadow-2xs sm:text-[11px] sm:tracking-[0.32em]">Tableau privé</div>
-                    <span className="hidden h-4 w-px bg-white/12 sm:block" aria-hidden="true" />
-                    <span className="hidden rounded-full border border-cyan-200/25 bg-cyan-400/12 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-cyan-100/90 sm:inline-flex">
-                      Live
+          {compact ? (
+            <>
+              <h1 className="sr-only">Frais mensuels</h1>
+              <div className="flex items-center gap-2">
+                <BrandMark className="h-8 w-8 flex-none text-white" />
+                <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5">
+                  <button
+                    type="button"
+                    className={cx(navBtn, prevDisabled && 'opacity-40')}
+                    onClick={() => setYm(prevYm)}
+                    aria-label="Mois précédent"
+                    disabled={prevDisabled}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className="flex h-10 min-w-0 max-w-[15rem] flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/7 px-3 text-sm font-semibold capitalize text-slate-50 transition-colors active:bg-white/15 pointer-coarse:h-11"
+                    onClick={() => setMonthsNavOpen((v) => !v)}
+                    aria-expanded={monthsNavOpen}
+                    aria-controls="month-nav"
+                  >
+                    <span className="truncate">{monthLabelFr(ym)}</span>
+                    {archived ? (
+                      <span className="flex-none rounded-full bg-white/12 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-200">
+                        Archivé
+                      </span>
+                    ) : null}
+                    <span aria-hidden="true" className="flex-none text-[10px] text-slate-400">
+                      {monthsNavOpen ? '▴' : '▾'}
                     </span>
-                  </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <h1 className="text-[15px] font-semibold leading-tight tracking-tight text-slate-50 text-shadow-2xs sm:text-lg">
-                      <span className="bg-gradient-to-r from-cyan-200 via-slate-200 to-amber-200 bg-clip-text text-transparent">Frais</span>{' '}
-                      mensuels
-                    </h1>
-                    <span className="hidden rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100/90 shadow-[0_10px_28px_-18px_rgba(16,185,129,0.9)] max-[520px]:hidden sm:inline-flex sm:px-2.5 sm:py-1 sm:text-[11px] sm:tracking-[0.18em]">
-                      Actif
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="h-4 min-w-[120px] text-xs text-slate-400 max-[360px]:hidden" aria-hidden="true">
-                {saving.status === 'saving' ? 'Sauvegarde…' : saving.status === 'error' ? 'Sauvegarde en erreur' : ''}
-              </div>
-              <div className="flex flex-none items-center gap-2">
-                <div
-                  className={cx(
-                    'rounded-full px-3 py-1 text-xs',
-                    online ? 'invisible bg-rose-400/10 text-rose-200' : 'bg-rose-400/10 text-rose-200',
-                  )}
-                  aria-hidden={online}
-                >
-                  Offline
-                </div>
-                <div
-                  className={cx(
-                    'rounded-full px-3 py-1 text-xs',
-                    archived ? 'bg-white/10 text-slate-200' : 'invisible bg-white/10 text-slate-200',
-                  )}
-                  aria-hidden={!archived}
-                >
-                  Archivé
-                </div>
-              </div>
-            </div>
-
-            <div className="flex min-w-0 flex-wrap items-center justify-end-safe gap-2 max-[360px]:w-full sm:justify-end">
-              <div className="flex min-w-0 items-center gap-1.5 truncate sm:hidden">
-                <div className="min-w-0 rounded-full border border-white/12 bg-white/7 px-3 py-1.5 text-xs font-semibold text-slate-200 wrap-anywhere">
-                  {monthLabelFr(ym)}
-                </div>
-              </div>
-
-              <div className="hidden items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)] sm:flex">
-                <button
-                  className="rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/12 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5"
-                  onClick={() => setYm(todayYm)}
-                  type="button"
-                >
-                  <span className="max-[360px]:hidden">Aujourd’hui</span>
-                  <span className="hidden max-[360px]:inline">Ajd</span>
-                </button>
-                <span className="h-6 w-px bg-white/12" aria-hidden="true" />
-                {(() => {
-                  const prevYm = ymAdd(ym, -1);
-                  const disabled = isMonthDisabled(prevYm);
-                  return (
-                    <button
-                      className={cx(
-                        'rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5',
-                        disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-white/12',
-                      )}
-                      onClick={() => setYm(prevYm)}
-                      aria-label="Mois précédent"
-                      type="button"
-                      disabled={disabled}
-                      title={disabled ? 'Aucune donnée pour ce mois.' : undefined}
-                    >
-                      ←
-                    </button>
-                  );
-                })()}
-                <button
-                  className="rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/12 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5"
-                  onClick={() => setYm((v) => ymAdd(v, 1))}
-                  aria-label="Mois suivant"
-                  type="button"
-                >
-                  →
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]">
-                <select
-                  className={cx(
-                    'hidden h-10 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10 sm:block',
-                    archivedMonths.length === 0 && 'opacity-50',
-                  )}
-                  defaultValue=""
-                  disabled={archivedMonths.length === 0}
-                  onChange={(e) => {
-                    const next = e.target.value as YM;
-                    if (next) setYm(next);
-                    e.target.value = '';
-                  }}
-                  aria-label="Historique (mois archivés)"
-                >
-                  <option value="" disabled>
-                    Historique…
-                  </option>
-                  {archivedMonths.map((m) => (
-                    <option key={m} value={m}>
-                      {monthLabelFr(m)}
-                    </option>
-                  ))}
-                </select>
-
-                <details
-                  ref={menuRef}
-                  className="relative flex-shrink-0"
-                  onKeyDown={(e) => {
-                    if (e.key !== 'Escape') return;
-                    menuRef.current?.removeAttribute('open');
-                    (menuRef.current?.querySelector('summary') as HTMLElement | null)?.focus();
-                  }}
-                >
-                  <summary
-                    aria-label="Menu"
-                    className="list-none inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/10 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5"
-                    data-tour="menu"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      role="img"
-                      aria-hidden="true"
-                      className="h-5 w-5 text-slate-100"
-                    >
-                      <path
-                        d="M4 7.5h16M4 12h16M4 16.5h16"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </summary>
-                  <div
-                    className="absolute right-0 z-20 mt-2 w-[min(320px,calc(100vw-1.5rem))] rounded-2xl border border-white/15 bg-ink-950/95 p-2 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)] sm:left-auto sm:right-0 sm:translate-x-0 sm:w-[280px]"
-                    style={{ maxWidth: 'calc(100vw - 1.5rem - env(safe-area-inset-right))' }}
-                  >
-                      <div className="px-3 py-2 text-xs text-slate-400">
-                        Connecté: <span className="font-mono text-slate-200">{user.email}</span>
-                      </div>
-                      {sessionUnverified ? (
-                        <div className="px-3 pb-2 text-[11px] text-amber-200">
-                          Session locale (non vérifiée). Reconnexion automatique dès que possible.
-                        </div>
-                      ) : null}
-
-                      <button
-                        className={cx(
-                          'w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10',
-                          (!online || cloud.status === 'syncing') && 'opacity-50 hover:bg-transparent',
-                        )}
-                        disabled={!online || cloud.status === 'syncing'}
-                        onClick={() => {
-                          cloud.syncNow();
-                          menuRef.current?.removeAttribute('open');
-                        }}
-                        type="button"
-                      >
-                        Synchroniser (cloud){cloud.status === 'syncing' ? '…' : ''}
-                      </button>
-
-                      <button
-                        className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
-                        onClick={() => {
-                          setTourOpen(true);
-                          menuRef.current?.removeAttribute('open');
-                        }}
-                        type="button"
-                      >
-                        Guide (tour)
-                      </button>
-
-                      <button
-                        className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
-                        onClick={() => {
-                          void kickDynamicBackground({ force: true });
-                          showToast('Fond mis à jour', 'success');
-                          menuRef.current?.removeAttribute('open');
-                        }}
-                        type="button"
-                      >
-                        Nouveau fond (random)
-                      </button>
-
-                      <div className="block px-3 pb-2 pt-1 text-[11px] text-slate-400 sm:hidden">
-                        <div className="font-semibold uppercase tracking-wide text-slate-500">Actions</div>
-                      </div>
-
-                      <button
-                        className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10 sm:hidden"
-                        onClick={() => {
-                          if (!archived) {
-                            const ok = window.confirm('Archiver ce mois ? Les montants seront figés (modifiable en réouvrant).');
-                            if (!ok) return;
-                            dispatch({ type: 'ARCHIVE_MONTH', ym });
-                          } else {
-                            const ok = window.confirm('Réouvrir ce mois (désarchiver) ?');
-                            if (!ok) return;
-                            dispatch({ type: 'UNARCHIVE_MONTH', ym });
-                          }
-                          menuRef.current?.removeAttribute('open');
-                        }}
-                        type="button"
-                      >
-                        {archived ? 'Réouvrir le mois' : 'Archiver le mois'}
-                      </button>
-
-                      <div className="px-3 pb-2 pt-2 text-[11px] text-slate-400 sm:hidden">
-                        <div className="font-semibold uppercase tracking-wide text-slate-500">Historique</div>
-                      </div>
-                      <div className="px-3 pb-2 sm:hidden">
-                        <select
-                          className={cx(
-                            'h-10 w-full rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10',
-                            archivedMonths.length === 0 && 'opacity-60 hover:bg-white/7',
-                          )}
-                          defaultValue=""
-                          disabled={archivedMonths.length === 0}
-                          onChange={(e) => {
-                            const next = e.target.value as YM;
-                            if (next) setYm(next);
-                            e.target.value = '';
-                            menuRef.current?.removeAttribute('open');
-                          }}
-                          aria-label="Historique (mois archivés)"
-                        >
-                          <option value="" disabled>
-                            {archivedMonths.length === 0 ? 'Aucun mois archivé' : 'Choisir…'}
-                          </option>
-                          {archivedMonths.map((m) => (
-                            <option key={m} value={m}>
-                              {monthLabelFr(m)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <button
-                        className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-rose-400/10"
-                        onClick={async () => {
-                          await onLogout();
-                          menuRef.current?.removeAttribute('open');
-                        }}
-                        type="button"
-                      >
-                        Se déconnecter
-                      </button>
-
-                      <div className="my-1 h-px bg-white/10" />
-                      <button
-                        className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
-                        onClick={() => {
-                      const json = exportJson();
-                      const blob = new Blob([json], { type: 'application/json' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `fraismensuels-${ym}.json`;
-                      a.click();
-                      URL.revokeObjectURL(url);
-                      menuRef.current?.removeAttribute('open');
-                    }}
-                    type="button"
-                  >
-                    Exporter (JSON)
                   </button>
-
-                  <button
-                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
-                    onClick={() => {
-                      const month = monthLabelFr(ym);
-                      const lines: string[] = [];
-
-                      lines.push(csvLine(['Mois', month, ym]));
-                      lines.push('');
-
-                      lines.push('Synthèse');
-                      lines.push(csvLine(['Champ', 'Montant (€)']));
-                      lines.push(csvLine(['Charges à provisionner (pour moi)', toEuroCsv(reportTotals.totalPourMoiCents)]));
-                      lines.push(csvLine(['Enveloppes cibles (ma part)', toEuroCsv(reportTotals.totalBudgetsBaseCents)]));
-                      lines.push(csvLine(['Impact reliquat entrant (enveloppes)', toEuroCsv(reportTotals.totalBudgetsCarryOverCents)]));
-                      lines.push(csvLine(['Enveloppes à virer (ma part)', toEuroCsv(reportTotals.totalBudgetsCents)]));
-                      lines.push(csvLine(['Total à provisionner ce mois', toEuroCsv(reportTotals.totalProvisionCents)]));
-                      lines.push(csvLine(['Reste à vivre (après enveloppes)', toEuroCsv(reportTotals.resteAVivreApresEnveloppesCents)]));
-                      lines.push('');
-
-                      lines.push('Enveloppes');
-                      lines.push(
-                        csvLine([
-                          'Enveloppe',
-                          'Montant cible (€)',
-                          'Impact reliquat entrant sur à virer (€)',
-                          'À virer (€)',
-                          'Dépensé (€)',
-                          'Reste du mois (€)',
-                          'Dette reportée fin mois (€)',
-                        ]),
-                      );
-                      for (const b of reportBudgets) {
-                        lines.push(
-                          csvLine([
-                            b.name,
-                            toEuroCsv(b.amountCents),
-                            toEuroCsv(b.fundingCents - b.amountCents),
-                            toEuroCsv(b.fundingCents),
-                            toEuroCsv(b.spentCents),
-                            toEuroCsv(b.remainingToFundCents),
-                            toEuroCsv(b.carryForwardDebtCents),
-                          ]),
-                        );
-                      }
-                      lines.push('');
-
-                      lines.push('Par compte');
-                      lines.push(
-                        csvLine([
-                          'Compte',
-                          'Charges à provisionner (€)',
-                          'Enveloppes cibles (€)',
-                          'Impact reliquat (€)',
-                          'Enveloppes à virer (€)',
-                          'Total à approvisionner (€)',
-                        ]),
-                      );
-                      for (const a of reportByAccount) {
-                        lines.push(
-                          csvLine([
-                            a.accountName,
-                            toEuroCsv(a.chargesTotalCents),
-                            toEuroCsv(a.budgetsBaseCents),
-                            toEuroCsv(a.budgetsCarryOverCents),
-                            toEuroCsv(a.budgetsCents),
-                            toEuroCsv(a.totalCents),
-                          ]),
-                        );
-                      }
-
-                      const csv = `${lines.join('\n')}\n`;
-                      const blob = new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8;' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `fraismensuels-rapport-${ym}.csv`;
-                      a.click();
-                      URL.revokeObjectURL(url);
-                      menuRef.current?.removeAttribute('open');
-                    }}
-                    type="button"
-                  >
-                    Exporter (rapport CSV)
+                  <button type="button" className={navBtn} onClick={() => setYm((v) => ymAdd(v, 1))} aria-label="Mois suivant">
+                    ›
                   </button>
-
-                  <button
-                    type="button"
-                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
-                    onClick={() => importInputRef.current?.click()}
-                  >
-                    Importer (JSON)
-                  </button>
-                  <input
-                    ref={importInputRef}
-                    type="file"
-                    accept="application/json"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      try {
-                        const raw = await file.text();
-                        importJson(raw);
-                      } catch {
-                        window.alert('Import impossible: JSON invalide.');
-                      } finally {
-                        e.target.value = '';
-                        menuRef.current?.removeAttribute('open');
-                      }
-                    }}
-                  />
-
-                  <button
-                    className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm text-rose-200 hover:bg-rose-400/10"
-                    onClick={() => {
-                      const ok = window.confirm(
-                        "Réinitialiser avec les données d'exemple ?\n\nAttention : toutes tes saisies actuelles (charges, budgets, dépenses) seront supprimées."
-                      );
-                      if (!ok) return;
-                      reset();
-                      menuRef.current?.removeAttribute('open');
-                    }}
-                    type="button"
-                  >
-                    Réinitialiser (exemple)
-                  </button>
-                  </div>
-                </details>
-
-                <button
-                  className="hidden rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/10 pointer-coarse:px-3.5 pointer-coarse:py-2.5 sm:inline-flex"
-                  onClick={() => {
-                    if (!archived) {
-                      const ok = window.confirm('Archiver ce mois ? Les montants seront figés (modifiable en réouvrant).');
-                      if (!ok) return;
-                      dispatch({ type: 'ARCHIVE_MONTH', ym });
-                      return;
-                    }
-                    const ok = window.confirm('Réouvrir ce mois (désarchiver) ?');
-                    if (!ok) return;
-                    dispatch({ type: 'UNARCHIVE_MONTH', ym });
-                  }}
-                  type="button"
-                >
-                  {archived ? 'Réouvrir' : 'Archiver'}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <nav
-            id="month-nav"
-            className={cx(
-              'mt-3 grid grid-cols-4 gap-2 pb-1 sm:mt-4 sm:flex sm:flex-wrap sm:items-center sm:gap-2',
-              !monthsNavOpen && 'hidden',
-              'hidden sm:flex',
-            )}
-            aria-label="Navigation par mois"
-          >
-            {visibleMonths.map((m) => {
-              const selected = m === ym;
-              const disabled = isMonthDisabled(m);
-              const isArchived = state.months[m]?.archived ?? false;
-              const idx = visibleMonths.indexOf(m);
-              return (
-                <button
-                  key={m}
-                  ref={(el) => {
-                    monthButtonRefs.current[m] = el;
-                  }}
-                  className={cx(
-                    'flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm capitalize transition max-[360px]:gap-1.5 max-[360px]:px-2.5 max-[360px]:py-1 max-[360px]:text-xs sm:w-auto sm:justify-start',
-                    selected ? 'border-white/30 bg-white/12 text-slate-100' : 'border-white/15 bg-white/7 text-slate-200',
-                    disabled ? 'cursor-not-allowed opacity-50' : !selected && 'hover:bg-white/10',
-                  )}
-                  onClick={() => {
-                    if (disabled) return;
-                    setYm(m);
-                    setMonthsNavOpen(false);
-                  }}
-                  aria-current={selected ? 'page' : undefined}
-                  type="button"
-                  disabled={disabled}
-                  title={disabled ? 'Aucune donnée pour ce mois.' : undefined}
-                  onKeyDown={(e) => {
-                    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
-                    e.preventDefault();
-
-                    const pickIndex = (start: number, step: number) => {
-                      for (let i = start; i >= 0 && i < visibleMonths.length; i += step) {
-                        const candidate = visibleMonths[i]!;
-                        if (!isMonthDisabled(candidate)) return i;
-                      }
-                      return null;
-                    };
-
-                    const currentIdx = idx;
-                    const nextIdx = (() => {
-                      if (e.key === 'Home') return pickIndex(0, 1);
-                      if (e.key === 'End') return pickIndex(visibleMonths.length - 1, -1);
-                      const step = e.key === 'ArrowLeft' ? -1 : 1;
-                      return pickIndex(currentIdx + step, step);
-                    })();
-                    if (nextIdx === null) return;
-
-                    const nextYm = visibleMonths[nextIdx]!;
-                    monthButtonRefs.current[nextYm]?.focus();
-                    if (nextYm !== ym) setYm(nextYm);
-                  }}
-                >
-                  {monthLabelShortFr(m)}
-                  {isArchived ? (
-                    <>
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-300/80" aria-hidden="true" />
-                      <span className="sr-only"> (archivé)</span>
-                    </>
+                </div>
+                <div className="flex flex-none items-center gap-2">
+                  {!online ? (
+                    <span className="rounded-full bg-rose-400/15 px-2 py-1 text-[10px] font-semibold text-rose-100">Hors ligne</span>
                   ) : null}
-                </button>
-              );
-            })}
-          </nav>
-          <div className={cx('hidden text-xs text-slate-400 max-[360px]:text-[11px]', !monthsNavOpen && 'hidden', 'sm:block')}>
-            <span className="max-[360px]:hidden">
-              Fenêtre: 3 mois avant / 3 mois après (et le mois sélectionné s’il est hors fenêtre).
-            </span>
-            <span className="hidden max-[360px]:inline">Fenêtre: ±3 mois.</span>
-          </div>
+                  {saving.status !== 'idle' ? (
+                    <span
+                      aria-hidden="true"
+                      className={cx('h-2 w-2 rounded-full', saving.status === 'error' ? 'bg-rose-400' : 'animate-pulse bg-amber-300')}
+                    />
+                  ) : null}
+                  {menuNode}
+                </div>
+              </div>
+
+              {monthsNavOpen ? (
+                <>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    className="fixed inset-0 -z-10 cursor-default"
+                    onClick={() => setMonthsNavOpen(false)}
+                  />
+                  <div
+                    id="month-nav"
+                    className="absolute inset-x-0 top-full border-b border-white/15 bg-ink-950/98 py-3 pl-3 pr-[calc(0.75rem+env(safe-area-inset-right))] shadow-[0_20px_80px_-40px_rgba(0,0,0,0.95)]"
+                  >
+                    <nav aria-label="Navigation par mois" className="grid grid-cols-4 gap-2 short:grid-cols-7">
+                      {monthButtons}
+                    </nav>
+                    <button
+                      type="button"
+                      className="fm-btn-ghost mt-3 h-10 w-full px-3 text-sm pointer-coarse:h-11"
+                      onClick={() => {
+                        setYm(todayYm);
+                        setMonthsNavOpen(false);
+                      }}
+                    >
+                      Aujourd’hui
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <div className="grid items-start gap-2.5 desk:grid-cols-[minmax(0,1fr)_auto] desk:gap-4">
+                <div className="flex min-w-0 flex-wrap items-center gap-2.5 desk:gap-3">
+                  <div className="group relative flex min-w-0 items-center gap-2 overflow-hidden rounded-2xl border border-white/12 bg-[radial-gradient(120%_130%_at_0%_0%,rgba(56,189,248,0.24),rgba(15,23,42,0.02)_48%),linear-gradient(135deg,rgba(255,255,255,0.11),rgba(255,255,255,0.03))] px-2 py-1.5 shadow-[0_18px_58px_-30px_rgba(0,0,0,0.9)] max-[520px]:shrink desk:gap-3 desk:px-3 desk:py-2">
+                    <div
+                      className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_100%_0%,rgba(148,163,184,0.26),rgba(15,23,42,0)_62%)] opacity-70 transition duration-700 group-hover:opacity-95"
+                      aria-hidden="true"
+                    />
+                    <div className="relative">
+                      <div
+                        className="pointer-events-none absolute -inset-4 -z-10 bg-[conic-gradient(at_30%_30%,rgba(16,185,129,0.35),rgba(56,189,248,0.4),rgba(236,72,153,0.4),rgba(16,185,129,0.35))] opacity-60 blur-[14px] transition duration-700 group-hover:scale-110 group-hover:opacity-90 desk:opacity-80 desk:blur-2xl"
+                        aria-hidden="true"
+                      />
+                      <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-ink-950 ring-1 ring-white/12 desk:h-12 desk:w-12 desk:ring-white/15">
+                        <div className="absolute inset-px rounded-[14px] bg-gradient-to-br from-white/10 via-white/5 to-white/0" />
+                        <BrandMark className="relative h-7 w-7 text-white drop-shadow-[0_12px_34px_rgba(0,0,0,0.45)] desk:h-9 desk:w-9" />
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="text-[10px] uppercase tracking-[0.3em] text-slate-300/90 text-shadow-2xs desk:text-[11px] desk:tracking-[0.32em]">Tableau privé</div>
+                        <span className="hidden h-4 w-px bg-white/12 desk:block" aria-hidden="true" />
+                        <span className="hidden rounded-full border border-cyan-200/25 bg-cyan-400/12 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-cyan-100/90 desk:inline-flex">
+                          Live
+                        </span>
+                      </div>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 desk:gap-2">
+                        <h1 className="text-[15px] font-semibold leading-tight tracking-tight text-slate-50 text-shadow-2xs desk:text-lg">
+                          <span className="bg-gradient-to-r from-cyan-200 via-slate-200 to-amber-200 bg-clip-text text-transparent">Frais</span>{' '}
+                          mensuels
+                        </h1>
+                        <span className="hidden rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100/90 shadow-[0_10px_28px_-18px_rgba(16,185,129,0.9)] max-[520px]:hidden desk:inline-flex desk:px-2.5 desk:py-1 desk:text-[11px] desk:tracking-[0.18em]">
+                          Actif
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="h-4 min-w-[120px] text-xs text-slate-400 max-[360px]:hidden" aria-hidden="true">
+                    {saving.status === 'saving' ? 'Sauvegarde…' : saving.status === 'error' ? 'Sauvegarde en erreur' : ''}
+                  </div>
+                  <div className="flex flex-none items-center gap-2">
+                    <div
+                      className={cx(
+                        'rounded-full px-3 py-1 text-xs',
+                        online ? 'invisible bg-rose-400/10 text-rose-200' : 'bg-rose-400/10 text-rose-200',
+                      )}
+                      aria-hidden={online}
+                    >
+                      Offline
+                    </div>
+                    <div
+                      className={cx(
+                        'rounded-full px-3 py-1 text-xs',
+                        archived ? 'bg-white/10 text-slate-200' : 'invisible bg-white/10 text-slate-200',
+                      )}
+                      aria-hidden={!archived}
+                    >
+                      Archivé
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex min-w-0 flex-wrap items-center justify-end-safe gap-2 max-[360px]:w-full desk:justify-end">
+                  <div className="flex min-w-0 items-center gap-1.5 truncate desk:hidden">
+                    <div className="min-w-0 rounded-full border border-white/12 bg-white/7 px-3 py-1.5 text-xs font-semibold text-slate-200 wrap-anywhere">
+                      {monthLabelFr(ym)}
+                    </div>
+                  </div>
+
+                  <div className="hidden items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)] desk:flex">
+                    <button
+                      className="rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/12 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5"
+                      onClick={() => setYm(todayYm)}
+                      type="button"
+                    >
+                      <span className="max-[360px]:hidden">Aujourd’hui</span>
+                      <span className="hidden max-[360px]:inline">Ajd</span>
+                    </button>
+                    <span className="h-6 w-px bg-white/12" aria-hidden="true" />
+                    {(() => {
+                      const prevYm = ymAdd(ym, -1);
+                      const disabled = isMonthDisabled(prevYm);
+                      return (
+                        <button
+                          className={cx(
+                            'rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5',
+                            disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-white/12',
+                          )}
+                          onClick={() => setYm(prevYm)}
+                          aria-label="Mois précédent"
+                          type="button"
+                          disabled={disabled}
+                          title={disabled ? 'Aucune donnée pour ce mois.' : undefined}
+                        >
+                          ←
+                        </button>
+                      );
+                    })()}
+                    <button
+                      className="rounded-xl px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/12 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs pointer-coarse:px-3.5 pointer-coarse:py-2.5"
+                      onClick={() => setYm((v) => ymAdd(v, 1))}
+                      aria-label="Mois suivant"
+                      type="button"
+                    >
+                      →
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1 rounded-2xl border border-white/15 bg-[linear-gradient(140deg,rgba(18,18,20,0.88),rgba(39,39,42,0.62))] p-1 shadow-[0_14px_34px_-24px_rgba(0,0,0,0.82)]">
+                    <select
+                      className={cx(
+                        'hidden h-10 rounded-xl border border-white/15 bg-white/7 px-3 text-sm text-slate-100 outline-none transition-colors hover:bg-white/10 desk:block',
+                        archivedMonths.length === 0 && 'opacity-50',
+                      )}
+                      defaultValue=""
+                      disabled={archivedMonths.length === 0}
+                      onChange={(e) => {
+                        const next = e.target.value as YM;
+                        if (next) setYm(next);
+                        e.target.value = '';
+                      }}
+                      aria-label="Historique (mois archivés)"
+                    >
+                      <option value="" disabled>
+                        Historique…
+                      </option>
+                      {archivedMonths.map((m) => (
+                        <option key={m} value={m}>
+                          {monthLabelFr(m)}
+                        </option>
+                      ))}
+                    </select>
+
+                    {menuNode}
+
+                    <button
+                      className="hidden rounded-xl border border-white/15 bg-white/7 px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-white/10 pointer-coarse:px-3.5 pointer-coarse:py-2.5 desk:inline-flex"
+                      onClick={() => {
+                        if (!archived) {
+                          const ok = window.confirm('Archiver ce mois ? Les montants seront figés (modifiable en réouvrant).');
+                          if (!ok) return;
+                          dispatch({ type: 'ARCHIVE_MONTH', ym });
+                          return;
+                        }
+                        const ok = window.confirm('Réouvrir ce mois (désarchiver) ?');
+                        if (!ok) return;
+                        dispatch({ type: 'UNARCHIVE_MONTH', ym });
+                      }}
+                      type="button"
+                    >
+                      {archived ? 'Réouvrir' : 'Archiver'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <nav
+                id="month-nav"
+                className="mt-4 flex flex-wrap items-center gap-2 pb-1"
+                aria-label="Navigation par mois"
+              >
+                {monthButtons}
+              </nav>
+              <div className="text-xs text-slate-400">
+                Fenêtre: 3 mois avant / 3 mois après (et le mois sélectionné s’il est hors fenêtre).
+              </div>
+
+            </>
+          )}
         </div>
         </header>
 
         <main
           id="main"
           tabIndex={-1}
-          className="mx-auto max-w-6xl pt-6 pb-24 max-[360px]:pt-4 max-[360px]:pb-20 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:pt-10 sm:pb-10 sm:pl-[calc(1.5rem_+_env(safe-area-inset-left))] sm:pr-[calc(1.5rem_+_env(safe-area-inset-right))]"
+          className={
+            compact
+              ? 'mx-auto max-w-6xl pb-[calc(9rem+env(safe-area-inset-bottom))] pl-3 pr-[calc(0.75rem+env(safe-area-inset-right))] pt-3 short:pb-24'
+              : 'mx-auto max-w-6xl pt-6 pb-24 max-[360px]:pt-4 max-[360px]:pb-20 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] desk:pt-10 desk:pb-10 desk:pl-[calc(1.5rem_+_env(safe-area-inset-left))] desk:pr-[calc(1.5rem_+_env(safe-area-inset-right))]'
+          }
         >
-          <div className="grid gap-4 max-[360px]:gap-3 sm:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
-            <div className="hidden sm:block">
-              <SummaryPanel ym={ym} charges={reportCharges} budgets={reportBudgets} />
+          {compact ? (
+            <div key={tab} className="flex flex-col gap-4">
+              {tab === 'budgets' ? <BudgetsPanel ym={ym} archived={archived} budgets={reportBudgets} /> : null}
+              {tab === 'charges' ? <ChargesTable ym={ym} archived={archived} charges={reportCharges} /> : null}
+              {tab === 'accounts' ? <SummaryPanel ym={ym} charges={reportCharges} budgets={reportBudgets} view="accounts" /> : null}
+              {tab === 'summary' ? (
+                <>
+                  <SummaryPanel ym={ym} charges={reportCharges} budgets={reportBudgets} view="totals" />
+                  <SavingsPanel ym={ym} archived={archived} charges={reportCharges} />
+                </>
+              ) : null}
             </div>
-            <div className="flex flex-col gap-6 max-[360px]:gap-4">
-              <div className="order-1 lg:order-3">
-                <BudgetsPanel ym={ym} archived={archived} budgets={reportBudgets} />
+          ) : (
+            <div className="grid gap-4 max-[360px]:gap-3 desk:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
+              <div className="hidden desk:block">
+                <SummaryPanel ym={ym} charges={reportCharges} budgets={reportBudgets} />
               </div>
-              <div className="order-2 lg:order-1">
-                <ChargesTable ym={ym} archived={archived} charges={reportCharges} />
-              </div>
-              <div className="hidden lg:order-2 sm:block">
-                <SavingsPanel ym={ym} archived={archived} charges={reportCharges} />
+              <div className="flex flex-col gap-6 max-[360px]:gap-4">
+                <div className="order-1 lg:order-3">
+                  <BudgetsPanel ym={ym} archived={archived} budgets={reportBudgets} />
+                </div>
+                <div className="order-2 lg:order-1">
+                  <ChargesTable ym={ym} archived={archived} charges={reportCharges} />
+                </div>
+                <div className="hidden lg:order-2 desk:block">
+                  <SavingsPanel ym={ym} archived={archived} charges={reportCharges} />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
         <footer className="mt-10 text-center text-[11px] text-slate-400">
           Données synchronisées via{' '}
@@ -957,6 +1111,7 @@ export function AppView({
         </footer>
       </main>
 
+      {compact ? <MobileTabBar tab={tab} onChange={goToTab} pendingCount={reportTotals.pendingCount} /> : null}
       <QuickAddWidget ym={ym} archived={archived} />
     </div>
   );

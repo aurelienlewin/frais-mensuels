@@ -5,6 +5,7 @@ import { useStoreState } from '../state/store';
 import { pad2, ymFromDate, type YM } from '../lib/date';
 import type { Charge, ChargeScope } from '../state/types';
 import { cx } from './cx';
+import { useCompact } from '../lib/useCompact';
 import { InlineNumberInput, InlineTextInput } from './components/InlineInput';
 import { ChargeMobileList } from './charges/ChargeMobileList';
 
@@ -26,23 +27,14 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
   const monthChargeStateById = state.months[ym]?.charges ?? {};
   const tableRef = useRef<HTMLTableElement | null>(null);
   const mobileRef = useRef<HTMLDivElement | null>(null);
-  const [isTableUp, setIsTableUp] = useState<boolean>(() => {
-    try {
-      return window.matchMedia('(min-width: 768px)').matches;
-    } catch {
-      return true;
-    }
-  });
+  const isTableUp = !useCompact();
   const prevRowIdsRef = useRef<string[]>([]);
   const pendingFocusColRef = useRef<string | null>(null);
   const pendingFocusCellRef = useRef<{ chargeId: string; col: string } | null>(null);
   const [dragging, setDragging] = useState<{ id: string; scope: ChargeScope } | null>(null);
   const [dragOver, setDragOver] = useState<{ id: string; pos: 'before' | 'after' } | null>(null);
   const [filter, setFilter] = useState('');
-  const [chargesOpen, setChargesOpen] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.matchMedia('(min-width: 640px)').matches;
-  });
+  const [chargesOpen, setChargesOpen] = useState(true);
   const filterNorm = useMemo(() => normalizeSearch(filter.trim()), [filter]);
   const isFiltering = filterNorm.length > 0;
   const [flashRowId, setFlashRowId] = useState<string | null>(null);
@@ -72,18 +64,6 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
     dispatch({ type: 'REMOVE_MONTH_CHARGE', ym, chargeId });
   };
   const reorderableIds = (scope: ChargeScope) => rows.filter((r) => r.scope === scope && chargesById.has(r.id)).map((r) => r.id);
-
-  useEffect(() => {
-    try {
-      const mq = window.matchMedia('(min-width: 768px)');
-      setIsTableUp(mq.matches);
-      const onChange = (e: MediaQueryListEvent) => setIsTableUp(e.matches);
-      mq.addEventListener('change', onChange);
-      return () => mq.removeEventListener('change', onChange);
-    } catch {
-      return;
-    }
-  }, []);
 
   useEffect(() => {
     const prev = prevRowIdsRef.current;
@@ -241,7 +221,7 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
       data-tour="charges"
       className="fm-panel motion-hover motion-pop overflow-hidden"
     >
-          <div className="relative border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
+          <div className="relative border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 desk:px-6 desk:py-5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-sm text-slate-300">Charges</h2>
@@ -250,21 +230,7 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
                   {isFiltering ? <span className="ml-2 text-sm font-medium text-slate-400">/ {rows.length}</span> : null}
                 </div>
               </div>
-              <button
-                type="button"
-                className="fm-mobile-section-toggle sm:hidden"
-                onClick={() => setChargesOpen((v) => !v)}
-                aria-expanded={chargesOpen}
-                aria-label={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
-                title={chargesOpen ? 'Masquer les charges' : 'Afficher les charges'}
-              >
-                <span>{chargesOpen ? 'Replier' : 'Voir'} charges</span>
-                <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-                  {chargesOpen ? '▴' : '▾'}
-                </span>
-              </button>
-
-              <div className="hidden min-w-0 items-center justify-end gap-2 sm:flex">
+              <div className="hidden min-w-0 items-center justify-end gap-2 desk:flex">
                 <button
                   data-tour="add-charge"
                   className={cx(
@@ -302,7 +268,7 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
               </div>
             </div>
 
-            <div className="mt-3 sm:hidden">
+            <div className="mt-3 desk:hidden">
               {chargesOpen ? (
                 <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 max-[360px]:gap-1.5">
                   <button
@@ -403,10 +369,10 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
             </caption>
                   <thead className="bg-ink-950/95">
               <tr className="text-left text-xs text-slate-400">
-                <Th className="w-[76px] sm:w-[88px]">Viré</Th>
+                <Th className="w-[76px] desk:w-[88px]">Viré</Th>
                 <Th>Libellé</Th>
-                <Th className="hidden w-[120px] text-right sm:table-cell">Montant</Th>
-                <Th className="hidden w-[120px] text-right sm:table-cell">Ma part</Th>
+                <Th className="hidden w-[120px] text-right desk:table-cell">Montant</Th>
+                <Th className="hidden w-[120px] text-right desk:table-cell">Ma part</Th>
                 <Th className="w-[56px]" ariaHidden />
               </tr>
             </thead>
@@ -493,7 +459,7 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
                     setDragOver(null);
                   }}
                 >
-                  <Td className={cx('w-[76px] sm:w-[88px]', leftAccent)}>
+                  <Td className={cx('w-[76px] desk:w-[88px]', leftAccent)}>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
@@ -553,7 +519,7 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
                     </div>
                   </Td>
                   <Td>
-                    <div className="min-w-0 sm:min-w-[240px]">
+                    <div className="min-w-0 desk:min-w-[240px]">
                           <InlineTextInput
                             ariaLabel="Libellé"
                             value={r.name}
@@ -800,7 +766,7 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
                             )}
                           </div>
 
-                          <div className="sm:hidden">
+                          <div className="desk:hidden">
                             <div
                               className={cx(
                                 'fm-inline-panel grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-2 py-1',
@@ -828,7 +794,7 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
                         </div>
                       </div>
                     </Td>
-                  <Td className="hidden text-right sm:table-cell">
+                  <Td className="hidden text-right desk:table-cell">
                     <InlineNumberInput
                       ariaLabel="Montant (euros)"
                       value={centsToEuros(r.amountCents)}
@@ -842,7 +808,7 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
                         inputProps={{ 'data-grid': 'charges', 'data-charge-id': r.id, 'data-col': '7' }}
                       />
                     </Td>
-                  <Td className="hidden text-right sm:table-cell">
+                  <Td className="hidden text-right desk:table-cell">
                     <div className="text-[13px] font-semibold tabular-nums text-slate-100">{formatEUR(r.myShareCents)}</div>
                   </Td>
                   <Td className="text-right">
@@ -898,9 +864,9 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
         )
       : null}
 
-      <div className="border-t border-white/15 px-4 py-4 text-xs text-slate-400 max-[360px]:px-3 max-[360px]:py-3 sm:px-6">
-        <span className="sm:hidden">Astuce: ↑/↓ pour réordonner, coche Viré quand le virement d&apos;approvisionnement est fait.</span>
-        <span className="hidden sm:inline">
+      <div className="border-t border-white/15 px-4 py-4 text-xs text-slate-400 max-[360px]:px-3 max-[360px]:py-3 desk:px-6">
+        <span className="desk:hidden">Astuce: ↑/↓ pour réordonner, coche Viré quand le virement d&apos;approvisionnement est fait.</span>
+        <span className="hidden desk:inline">
           Astuce: Entrée pour valider + descendre (Shift+Entrée remonte), Échap pour annuler, glisser ⋮⋮ pour réordonner.
         </span>
       </div>

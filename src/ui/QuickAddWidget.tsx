@@ -3,6 +3,7 @@ import { pad2, ymFromDate, type YM } from '../lib/date';
 import { eurosToCents, parseEuroAmount } from '../lib/money';
 import { useStoreState } from '../state/store';
 import { cx } from './cx';
+import { useCompact } from '../lib/useCompact';
 
 type Mode = 'perso' | 'essence';
 const FUEL_EXPENSE_LABEL = 'Essence';
@@ -37,7 +38,9 @@ function prefersReducedMotion() {
 
 export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) {
   const { state, dispatch } = useStoreState();
+  const compact = useCompact();
   const [open, setOpen] = useState<Mode | null>(null);
+  const [fabOpen, setFabOpen] = useState(false);
   const [showTop, setShowTop] = useState(false);
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [label, setLabel] = useState('');
@@ -154,8 +157,10 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
   };
 
   const disabledAll = !canEdit || activeBudgets.length === 0;
-  const position =
-    'fixed z-50 left-0 right-0 bottom-[calc(1rem_+_env(safe-area-inset-bottom))] pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:bottom-[calc(0.75rem_+_env(safe-area-inset-bottom))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] sm:left-auto sm:right-6 sm:bottom-6 sm:pl-0 sm:pr-0';
+  // Compact: float above the bottom tab bar (portrait) or bottom-right next to the left rail (landscape).
+  const position = compact
+    ? 'fixed z-50 left-0 right-0 bottom-[calc(4.5rem+0.75rem+env(safe-area-inset-bottom))] pl-3 pr-[calc(0.75rem+env(safe-area-inset-right))] short:bottom-[calc(0.75rem+env(safe-area-inset-bottom))] short:left-[calc(4.5rem+env(safe-area-inset-left))]'
+    : 'fixed z-50 desk:left-auto desk:right-6 desk:bottom-6';
 
   return (
     <div
@@ -184,7 +189,10 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
           role="dialog"
           aria-modal="true"
           aria-label={open === 'perso' ? 'Ajout rapide (dépense perso)' : 'Ajout rapide (plein d’essence)'}
-          className="w-full max-w-[420px] self-center rounded-3xl border border-white/15 bg-ink-950/95 p-4 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]"
+          className={cx(
+            'w-full max-w-[420px] self-center rounded-3xl border border-white/15 bg-ink-950/95 p-4 shadow-[0_20px_80px_-40px_rgba(0,0,0,0.9)]',
+            compact && 'short:max-w-[560px] short:p-3',
+          )}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               e.preventDefault();
@@ -216,7 +224,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
             }
           }}
         >
-          <div className="flex items-start justify-between gap-3">
+          <div className={cx('flex items-start justify-between gap-3', compact && 'short:hidden')}>
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ajout rapide</div>
               <div className="mt-1 text-sm font-semibold text-slate-100">
@@ -233,10 +241,10 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
             </button>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-[120px_1fr]">
+          <div className={cx('mt-4 grid gap-2 desk:grid-cols-[120px_1fr]', compact && 'short:mt-0 short:grid-cols-[7rem_1fr]')}>
             <div className="relative">
               <input
-                className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm"
+                className="fm-input h-10 rounded-2xl px-4 text-base desk:text-sm"
                 type="text"
                 inputMode="decimal"
                 autoFocus
@@ -253,7 +261,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
 
             <input
               ref={labelRef}
-              className="fm-input h-10 rounded-2xl px-4 text-base sm:text-sm disabled:opacity-90"
+              className="fm-input h-10 rounded-2xl px-4 text-base desk:text-sm disabled:opacity-90"
               placeholder={open === 'perso' ? 'ex: resto' : FUEL_EXPENSE_LABEL}
               value={open === 'essence' ? FUEL_EXPENSE_LABEL : label}
               disabled={open === 'essence'}
@@ -266,12 +274,12 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
           </div>
 
           {!inferred[open] ? (
-            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_140px]">
+            <div className="mt-3 grid gap-2 desk:grid-cols-[1fr_140px]">
               <div className="text-xs text-slate-400">
                 Aucun budget correspondant trouvé. Choisis une enveloppe cible pour cet ajout.
               </div>
               <select
-                className="fm-input-select h-10 rounded-2xl px-3 text-base sm:h-9 sm:text-xs"
+                className="fm-input-select h-10 rounded-2xl px-3 text-base desk:h-9 desk:text-xs"
                 value={budgetId}
                 onChange={(e) => setBudgetId(e.target.value)}
                 aria-label="Budget cible"
@@ -288,7 +296,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
             </div>
           ) : null}
 
-          <div className="mt-4 flex items-center justify-end gap-2">
+          <div className={cx('mt-4 flex items-center justify-end gap-2', compact && 'short:mt-2')}>
             <button
               type="button"
               className="rounded-2xl border border-white/15 bg-white/7 px-4 py-2 text-sm text-slate-200 transition-colors hover:bg-white/10"
@@ -308,52 +316,58 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
         </div>
       ) : null}
 
-      <div className={cx('motion-pop grid w-full grid-cols-[1fr_1fr_auto] items-center gap-2 sm:hidden', disabledAll && 'opacity-60')}>
-        <button
-          type="button"
-          className="min-h-12 rounded-full border border-emerald-200/25 bg-emerald-400/16 px-4 text-sm font-semibold text-emerald-50 shadow-[0_18px_60px_-38px_rgba(0,0,0,0.95)] backdrop-blur transition-colors active:bg-emerald-400/24 disabled:opacity-50 max-[360px]:px-3"
-          onClick={() => {
-            if (disabledAll) return;
-            setOpen('perso');
-          }}
-          disabled={disabledAll}
-          aria-label="Ajouter une dépense perso"
-        >
-          + Perso
-        </button>
-        <button
-          type="button"
-          className="min-h-12 rounded-full border border-sky-200/25 bg-sky-400/16 px-4 text-sm font-semibold text-sky-50 shadow-[0_18px_60px_-38px_rgba(0,0,0,0.95)] backdrop-blur transition-colors active:bg-sky-400/24 disabled:opacity-50 max-[360px]:px-3"
-          onClick={() => {
-            if (disabledAll) return;
-            setOpen('essence');
-          }}
-          disabled={disabledAll}
-          aria-label="Ajouter un plein d’essence"
-        >
-          Essence
-        </button>
-        <button
-          type="button"
-          className={cx(
-            'flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-ink-950/90 text-base font-semibold text-slate-100 shadow-[0_18px_60px_-38px_rgba(0,0,0,0.95)] backdrop-blur transition-colors active:bg-white/12',
-            !showTop && 'opacity-45',
-          )}
-          onClick={() => {
-            if (!showTop) return;
-            const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
-            window.scrollTo({ top: 0, behavior });
-          }}
-          aria-label="Retour en haut"
-          disabled={!showTop}
-        >
-          ↑
-        </button>
-      </div>
+      {compact ? (
+        <div className={cx('flex flex-col items-end gap-2', disabledAll && 'opacity-60')}>
+          {fabOpen && !open ? (
+            <div className="motion-pop flex flex-col items-end gap-2">
+              <button
+                type="button"
+                className="min-h-11 rounded-full border border-sky-200/30 bg-ink-950/95 px-4 text-sm font-semibold text-sky-50 shadow-[0_18px_60px_-38px_rgba(0,0,0,0.95)] active:bg-sky-400/24 disabled:opacity-50"
+                onClick={() => {
+                  if (disabledAll) return;
+                  setFabOpen(false);
+                  setOpen('essence');
+                }}
+                disabled={disabledAll}
+                aria-label="Ajouter un plein d’essence"
+              >
+                ⛽ Essence
+              </button>
+              <button
+                type="button"
+                className="min-h-11 rounded-full border border-emerald-200/30 bg-ink-950/95 px-4 text-sm font-semibold text-emerald-50 shadow-[0_18px_60px_-38px_rgba(0,0,0,0.95)] active:bg-emerald-400/24 disabled:opacity-50"
+                onClick={() => {
+                  if (disabledAll) return;
+                  setFabOpen(false);
+                  setOpen('perso');
+                }}
+                disabled={disabledAll}
+                aria-label="Ajouter une dépense perso"
+              >
+                + Perso
+              </button>
+            </div>
+          ) : null}
+          {!open ? (
+            <button
+              type="button"
+              className="flex h-13 w-13 items-center justify-center rounded-full border border-emerald-200/30 bg-emerald-400/25 text-2xl font-semibold leading-none text-emerald-50 shadow-[0_18px_60px_-30px_rgba(0,0,0,0.95)] backdrop-blur transition-transform active:scale-95 disabled:opacity-50"
+              onClick={() => setFabOpen((v) => !v)}
+              disabled={disabledAll}
+              aria-expanded={fabOpen}
+              aria-label={fabOpen ? 'Fermer l’ajout rapide' : 'Ajout rapide'}
+            >
+              <span aria-hidden="true" className={cx('transition-transform', fabOpen && 'rotate-45')}>
+                +
+              </span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div
         className={cx(
-          'motion-hover motion-pop hidden items-center gap-2 rounded-full border border-white/15 bg-ink-950/80 px-3 py-2 shadow-[0_10px_30px_-24px_rgba(0,0,0,0.85)] sm:flex',
+          'motion-hover motion-pop hidden items-center gap-2 rounded-full border border-white/15 bg-ink-950/80 px-3 py-2 shadow-[0_10px_30px_-24px_rgba(0,0,0,0.85)] desk:flex',
           disabledAll && 'opacity-60',
         )}
       >

@@ -26,10 +26,7 @@ function pickDefaultSavingsTargetAccountId(
 
 export function SavingsPanel({ ym, archived, charges: rows }: { ym: YM; archived: boolean; charges: ChargeResolved[] }) {
   const { state, dispatch } = useStoreState();
-  const [open, setOpen] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.matchMedia('(min-width: 640px)').matches;
-  });
+  const [open, setOpen] = useState(true);
   const canEdit = !archived;
   const savings = useMemo(() => pickAutoSavingsChargeForMonth(state, rows), [rows, state.charges]);
   const activeAccounts = useMemo(() => state.accounts.filter((a) => a.active), [state.accounts]);
@@ -81,7 +78,7 @@ export function SavingsPanel({ ym, archived, charges: rows }: { ym: YM; archived
 
   return (
     <section className="fm-panel motion-hover motion-pop overflow-hidden">
-      <div className="relative border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
+      <div className="relative border-b border-white/15 bg-ink-950/75 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 desk:px-6 desk:py-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm text-slate-300">Épargne</h2>
@@ -98,20 +95,7 @@ export function SavingsPanel({ ym, archived, charges: rows }: { ym: YM; archived
               <div className="mt-1 text-xs text-slate-400">Crée une charge "Virement épargne" pour activer ce panneau.</div>
             )}
           </div>
-          <button
-            type="button"
-            className="fm-mobile-section-toggle sm:hidden"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-label={open ? "Masquer le panneau Épargne" : "Afficher le panneau Épargne"}
-            title={open ? "Masquer le panneau Épargne" : "Afficher le panneau Épargne"}
-          >
-            <span>{open ? 'Replier' : 'Voir'} épargne</span>
-            <span aria-hidden="true" className="fm-mobile-section-toggle-icon">
-              {open ? '▴' : '▾'}
-            </span>
-          </button>
-          <div className="hidden items-center gap-2 sm:flex">
+          <div className="hidden items-center gap-2 desk:flex">
             <button
               type="button"
               className="fm-btn-ghost h-10 w-10 items-center justify-center text-sm text-slate-200"
@@ -153,7 +137,7 @@ export function SavingsPanel({ ym, archived, charges: rows }: { ym: YM; archived
       </div>
 
       {open ? (
-        <div className="space-y-3 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 sm:px-6 sm:py-5">
+        <div className="space-y-3 px-4 py-4 max-[360px]:px-3 max-[360px]:py-3 desk:px-6 desk:py-5">
           {!hasSavings ? (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <div className="text-sm text-slate-200">Aucune charge épargne détectée.</div>
@@ -191,7 +175,7 @@ export function SavingsPanel({ ym, archived, charges: rows }: { ym: YM; archived
                 <StatRow label="Total épargne du mois" value={formatEUR(totalCents)} strong valueClassName="text-emerald-200" />
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 desk:grid-cols-2">
                 <label className="grid gap-1">
                   <div className="text-xs text-slate-400">Montant plancher</div>
                   <InlineNumberInput
