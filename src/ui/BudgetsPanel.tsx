@@ -41,10 +41,20 @@ function FormulaHint({ label, text }: { label: string; text: string }) {
 }
 
 export function BudgetsPanel({ ym, archived, budgets }: { ym: YM; archived: boolean; budgets: BudgetResolved[] }) {
-  const { state } = useStoreState();
+  const { state, dispatch } = useStoreState();
   const [budgetsOpen, setBudgetsOpen] = useState(true);
   const [addBudgetOpen, setAddBudgetOpen] = useState(false);
   const modelById = useMemo(() => new Map(state.budgets.map((b) => [b.id, b])), [state.budgets]);
+
+  // "Start fresh": ignore (or re-apply) the incoming reliquats of every envelope that has one this month.
+  const withIncoming = budgets.filter((b) => b.carryOverSourceTotalCents > 0);
+  const pendingIncoming = withIncoming.filter((b) => !b.carryOverHandled);
+  const allIgnored = withIncoming.length > 0 && pendingIncoming.length === 0;
+  const incomingDebtCents = pendingIncoming.reduce((acc, b) => acc + b.carryOverSourceDebtCents, 0);
+  const incomingCreditCents = pendingIncoming.reduce((acc, b) => acc + b.carryOverSourceCreditCents, 0);
+  const setAllCarryHandled = (handled: boolean) => {
+    for (const b of withIncoming) dispatch({ type: 'SET_BUDGET_CARRY_HANDLED', ym, budgetId: b.id, handled });
+  };
 
   return (
     <section
@@ -93,6 +103,31 @@ export function BudgetsPanel({ ym, archived, budgets }: { ym: YM; archived: bool
       </div>
 
       <div className={cx('space-y-6 p-4 max-[360px]:space-y-4 max-[360px]:p-3 desk:p-6', !budgetsOpen && 'hidden')}>
+        {withIncoming.length > 0 && !archived ? (
+          <div className="fm-card flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <div className="min-w-0 text-xs text-slate-300">
+              {allIgnored ? (
+                <>Reliquats du mois précédent ignorés : tu repars de zéro.</>
+              ) : (
+                <>
+                  Reliquats du mois précédent :{' '}
+                  {incomingDebtCents > 0 ? <span className="font-semibold tabular-nums text-rose-100">dette {formatEUR(incomingDebtCents)}</span> : null}
+                  {incomingDebtCents > 0 && incomingCreditCents > 0 ? ' · ' : null}
+                  {incomingCreditCents > 0 ? (
+                    <span className="font-semibold tabular-nums text-emerald-100">crédit {formatEUR(incomingCreditCents)}</span>
+                  ) : null}
+                </>
+              )}
+            </div>
+            <button
+              type="button"
+              className={cx(allIgnored ? 'fm-btn-ghost' : 'fm-btn-soft', 'h-10 flex-none px-4 text-xs pointer-coarse:h-11')}
+              onClick={() => setAllCarryHandled(!allIgnored)}
+            >
+              {allIgnored ? 'Réappliquer les reliquats' : 'Repartir de zéro'}
+            </button>
+          </div>
+        ) : null}
         {budgets.map((b) => (
           <BudgetCard key={b.id} ym={ym} budget={b} model={modelById.get(b.id) ?? null} archived={archived} />
         ))}

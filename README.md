@@ -23,7 +23,9 @@ Webapp pour saisir, suivre et archiver des charges mensuelles (perso + commun), 
 - Cartes "Par compte" optimisées lecture rapide: total mis en avant + lignes métriques alignées (charges, virées, enveloppes, impact reliquat).
 - Transparence calculs: bloc repliable "Détails du calcul" dans Totaux et info-bulle sur "Reste du mois" des enveloppes.
 - UI mobile/lecture: boutons de sections renforcés et pills plus lisibles via utilitaires Tailwind v4 récents (`pointer-coarse`, `text-shadow-*`, `wrap-break-word` / `wrap-anywhere`).
-- UI mobile/collapsible: les boutons `Voir/Replier` des panneaux (Résumé, Charges, Épargne, Enveloppes) sont alignés au même emplacement (en-tête, côté droit). Exception volontaire: `Charges` affiche `+ Ajouter / + Ponctuelle` en barre segmentée quand le panneau est replié.
+- Mobile-first (< 960px, iPhone paysage inclus): en-tête compact sur une ligne (mois précédent/suivant, feuille de choix du mois, menu), navigation par onglets `Enveloppes / Charges / Comptes / Résumé` (dock flottant en portrait, rail à gauche en paysage, badge des virements restants), onglet `Comptes` dédié aux sommes par compte, bouton flottant `+` pour l'ajout rapide. Dès 960px: mise en page bureau avec colonne Résumé collante sous l'en-tête.
+- Style: verre dépoli (blur + reflets), chiffres tabulaires, transitions View Transitions entre onglets (désactivées si `prefers-reduced-motion`).
+- Repartir de zéro: sur un mois, le bouton `Repartir de zéro` (panneau Enveloppes) ignore d'un coup les reliquats entrants de toutes les enveloppes (dette et crédit); `Réappliquer les reliquats` annule. Équivaut à cocher « Traiter le reliquat entrant » sur chaque enveloppe.
 - Ajout rapide mobile (iOS Safari): la modale se repositionne au-dessus du clavier (Visual Viewport) pour rester visible pendant la saisie.
 - Archivage d'un mois: gel des charges et budgets, lecture seule.
 - Données locales (IndexedDB) + sync best-effort dans Redis (Vercel KV / Upstash).
@@ -118,6 +120,7 @@ Si vous voyez `KV_NOT_CONFIGURED`, créez un `.env.local` non commité:
 - Budget récurrent: visible tous les mois (tant qu’actif).
 - Budget ponctuel: visible uniquement sur le mois `oneOffYm` configuré.
 - Reliquat d’enveloppe: le reste d’un mois (positif ou négatif) est reporté sur le mois suivant de la même enveloppe. Un reliquat positif réduit le virement du mois suivant; un reliquat négatif alimente la dette reportée.
+- Repartir de zéro (mois): action groupée qui active « reliquat traité » sur toutes les enveloppes ayant un reliquat entrant (réversible).
 - Reliquat traité (optionnel): si activé sur un mois/enveloppe, le reliquat entrant est conservé comme information mais n’est plus appliqué dans le calcul du montant à virer pour ce mois.
 - Dette du mois traitée (optionnel): si activé sur un mois/enveloppe, la dette générée ce mois est conservée comme information mais n’est plus reportée au mois suivant.
 - Montant d’enveloppe à virer: `max(0, montant enveloppe + dette entrante - reliquat positif entrant)`.
