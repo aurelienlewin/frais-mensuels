@@ -1,6 +1,6 @@
 const SESSION_KEY = 'fm:bg:session:v2';
 
-const LOCAL_FALLBACK_URL = '/bg-snowy.jpg';
+const LOCAL_FALLBACK_URL = '/bg-snowy.v2.jpg';
 const LOCAL_FALLBACK_CSS_VARIANTS = [
   `linear-gradient(140deg, rgba(15,23,42,0.42), rgba(2,6,23,0.55)), url("${LOCAL_FALLBACK_URL}")`,
   `linear-gradient(160deg, rgba(22,78,99,0.36), rgba(15,23,42,0.54)), url("${LOCAL_FALLBACK_URL}")`,

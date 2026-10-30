@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEventHandler } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState, type KeyboardEventHandler } from 'react';
 import { centsToEuros, eurosToCents, formatEUR } from '../lib/money';
 import { pickAutoSavingsChargeForMonth, type ChargeResolved } from '../state/selectors';
 import { useStoreState } from '../state/store';
@@ -35,7 +35,9 @@ export function ChargesTable({ ym, archived, charges: monthRows }: { ym: YM; arc
   const [dragOver, setDragOver] = useState<{ id: string; pos: 'before' | 'after' } | null>(null);
   const [filter, setFilter] = useState('');
   const [chargesOpen, setChargesOpen] = useState(true);
-  const filterNorm = useMemo(() => normalizeSearch(filter.trim()), [filter]);
+  // Typing stays responsive: the (potentially long) list re-filters at lower priority.
+  const deferredFilter = useDeferredValue(filter);
+  const filterNorm = useMemo(() => normalizeSearch(deferredFilter.trim()), [deferredFilter]);
   const isFiltering = filterNorm.length > 0;
   const [flashRowId, setFlashRowId] = useState<string | null>(null);
   const flashTimerRef = useRef<number | null>(null);

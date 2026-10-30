@@ -376,7 +376,7 @@ function BudgetCard({
   const maxDate = `${ym}-${pad2(daysInMonth(ym))}`;
 
   return (
-      <div className="fm-card motion-hover p-5 max-[360px]:p-4">
+      <div className="fm-card fm-defer-render motion-hover p-5 max-[360px]:p-4">
       <div className="grid gap-4">
         <div className="min-w-0">
           <div className="text-xs text-slate-400">Enveloppe</div>

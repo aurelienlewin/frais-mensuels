@@ -4,8 +4,15 @@ import { authLogout, authMe, type AuthUser } from './lib/authApi';
 import { ymFromDate } from './lib/date';
 import { clearCachedUser, readCachedUser, writeCachedUser } from './lib/authCache';
 
-const AuthView = lazy(() => import('./ui/AuthView').then((m) => ({ default: m.AuthView })));
-const AppView = lazy(() => import('./ui/AppView').then((m) => ({ default: m.AppView })));
+const loadAuthView = () => import('./ui/AuthView').then((m) => ({ default: m.AuthView }));
+const loadAppView = () => import('./ui/AppView').then((m) => ({ default: m.AppView }));
+const AuthView = lazy(loadAuthView);
+const AppView = lazy(loadAppView);
+
+// Don't wait for /api/auth/me before fetching the screen we will most likely show (avoids a request waterfall).
+if (typeof window !== 'undefined') {
+  void (readCachedUser() ? loadAppView() : loadAuthView()).catch(() => {});
+}
 
 export default function App() {
   const initialYm = ymFromDate(new Date());

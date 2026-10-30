@@ -126,7 +126,7 @@
   --safe-area-right: env(safe-area-inset-right, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-left: env(safe-area-inset-left, 0px);
-  --bg-image-current: url('/bg-snowy.jpg');
+  --bg-image-current: url('/bg-snowy.v2.jpg');
   --bg-image-next: var(--bg-image-current);
   --bg-crossfade-opacity: 0;
   --bg-blackout-opacity: 0;
@@ -188,7 +188,7 @@ body::before {
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.72), rgba(10, 11, 12, 0.94)), var(--bg-image-current, url('/bg-snowy.jpg'));
+  background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.72), rgba(10, 11, 12, 0.94)), var(--bg-image-current, url('/bg-snowy.v2.jpg'));
 }
 
 body::after {
@@ -196,7 +196,7 @@ body::after {
   background-size: cover;
   background-repeat: no-repeat;
   background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.72), rgba(10, 11, 12, 0.94)),
-    var(--bg-image-next, var(--bg-image-current, url('/bg-snowy.jpg')));
+    var(--bg-image-next, var(--bg-image-current, url('/bg-snowy.v2.jpg')));
   opacity: var(--bg-crossfade-opacity, 0);
 }
 
@@ -285,7 +285,7 @@ body::after {
 }
 
 .fm-lite-effects body::before {
-  background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.82), rgba(10, 11, 12, 0.96)), url('/bg-snowy.jpg');
+  background-image: linear-gradient(180deg, rgba(16, 17, 19, 0.82), rgba(10, 11, 12, 0.96)), url('/bg-snowy.v2.jpg');
 }
 
 .fm-lite-effects body::after {
@@ -315,6 +315,20 @@ body::after {
 .fm-lite-effects .shadow-\[0_20px_70px_-42px_rgba\(0\,0\,0\,0\.95\)\],
 .fm-lite-effects .shadow-\[0_14px_34px_-24px_rgba\(0\,0\,0\,0\.82\)\] {
   box-shadow: none;
+}
+
+/* Skip layout/paint of off-screen cards (long envelope lists); the intrinsic size keeps the scrollbar stable. */
+.fm-defer-render {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 22rem;
+}
+
+/* Phones: full-size backdrop blur on big panels is the main GPU cost; use a more opaque tint instead. */
+@media (max-width: 959px) {
+  .fm-panel {
+    backdrop-filter: none;
+    background-color: rgba(16, 17, 19, 0.78);
+  }
 }
 
 @media (min-width: 768px) {

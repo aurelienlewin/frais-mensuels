@@ -9,6 +9,9 @@ The format is based on Keep a Changelog and this project follows semantic-style 
 ### Fixed
 - (2026-10-30): The desktop left summary panel never actually stuck: `position: sticky` was on an inner wrapper whose parent (the grid item) was only as tall as the panel, so it had no room to move, and its `top-32` offset didn't match the real header height. Sticky now sits on the grid item, offset by the measured header height (`--app-header-h` via ResizeObserver), and the panel scrolls internally when taller than the viewport.
 
+### Performance
+- (2026-10-30): Web perf pass. Background image: replaced the 570 KB `bg-snowy.jpg` with a 165 KB versioned `bg-snowy.v2.jpg` (it sits under a 72-94% dark overlay), preloaded with `fetchpriority="high"`, served `immutable` from Vercel, and no longer forced to `no-store` by the service worker (it was re-downloaded on every load). The screen chunk (`AppView` or `AuthView`) now loads in parallel with the `/api/auth/me` check instead of after it. The first-run tour and its setup prompts moved to a lazy `TourHost` chunk (`AppView` 170 -> 153 KB). Charge filtering uses `useDeferredValue` so typing stays responsive. Envelope cards use `content-visibility: auto` to skip off-screen rendering. Large-panel backdrop blur is disabled below 960px (more opaque tint instead), the main GPU cost on phones.
+
 ### Added
 - (2026-10-30): `Repartir de zéro` button in the Enveloppes panel: ignores the incoming reliquats (debt and credit) of every envelope for the current month in one tap, with `Réappliquer les reliquats` to undo. Shows the amounts at stake. Built on the existing per-envelope `carryOverHandled` flag (no state change). README updated (mobile-first layout, style, start fresh).
 

@@ -41,7 +41,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  const isAsset = url.pathname.startsWith('/assets/');
+  // Hashed build assets and the versioned background image are immutable: let the HTTP cache serve them.
+  const isAsset = url.pathname.startsWith('/assets/') || /^\/bg-[\w.-]+\.v\d+\.jpg$/.test(url.pathname);
   const accept = req.headers.get('accept') || '';
   const isHtml = req.mode === 'navigate' || accept.includes('text/html');
 
