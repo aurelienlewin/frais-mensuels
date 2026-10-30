@@ -65,9 +65,10 @@ export function MobileTabBar({
       aria-label="Sections"
       data-tour="tabs"
       className={cx(
-        'fixed z-40 flex border-white/15 bg-ink-950/95 backdrop-blur',
-        'inset-x-0 bottom-0 border-t pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]',
-        'short:inset-x-auto short:bottom-0 short:left-0 short:top-0 short:w-[calc(4.5rem+env(safe-area-inset-left))] short:flex-col short:justify-center short:border-r short:border-t-0 short:pb-0 short:pr-0',
+        // Floating glass dock (portrait) / floating rail (landscape).
+        'fixed z-40 flex rounded-[1.75rem] border border-white/15 bg-ink-950/70 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_20px_50px_-20px_rgba(0,0,0,0.95)] backdrop-blur-2xl backdrop-saturate-150',
+        'inset-x-3 bottom-[calc(0.5rem+env(safe-area-inset-bottom))]',
+        'short:inset-x-auto short:bottom-2 short:left-[calc(0.5rem+env(safe-area-inset-left))] short:top-2 short:w-[4.25rem] short:flex-col short:justify-center',
       )}
     >
       {TABS.map((t) => {
@@ -79,7 +80,7 @@ export function MobileTabBar({
             onClick={() => onChange(t.id)}
             aria-current={selected ? 'page' : undefined}
             className={cx(
-              'relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-semibold leading-tight transition-colors',
+              'relative flex min-h-14 flex-1 flex-col rounded-3xl items-center justify-center gap-0.5 px-1 text-[10px] font-semibold leading-tight transition-colors',
               'short:flex-none short:py-2',
               selected ? 'text-sky-100' : 'text-slate-400 active:text-slate-200',
             )}

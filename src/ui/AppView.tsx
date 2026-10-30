@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { monthLabelFr, monthLabelShortFr, ymAdd, ymFromDate, type YM } from '../lib/date';
 import { centsToEuros } from '../lib/money';
@@ -70,6 +71,16 @@ function BrandMark({ className }: { className?: string }) {
         />
       </svg>
   );
+}
+
+/** Cross-fade a state change with the View Transitions API when available (and motion is allowed). */
+function withTransition(update: () => void) {
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+  if (!doc.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    update();
+    return;
+  }
+  doc.startViewTransition(() => flushSync(update));
 }
 
 export function AppView({
@@ -739,8 +750,10 @@ export function AppView({
   );
 
   const goToTab = (next: MobileTab) => {
-    setTab(next);
-    setMonthsNavOpen(false);
+    withTransition(() => {
+      setTab(next);
+      setMonthsNavOpen(false);
+    });
     window.scrollTo({ top: 0 });
   };
 
@@ -750,7 +763,7 @@ export function AppView({
     'flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-white/15 bg-white/7 text-base text-slate-100 transition-colors active:bg-white/15 pointer-coarse:h-11 pointer-coarse:w-11';
 
   return (
-    <div className={cx('min-h-dvh', compact && 'short:pl-[calc(4.5rem+env(safe-area-inset-left))]')}>
+    <div className={cx('min-h-dvh', compact && 'short:pl-[calc(5rem+env(safe-area-inset-left))]')}>
       <Tour
         open={tourOpen}
         steps={tourSteps}
@@ -789,7 +802,7 @@ export function AppView({
         <header
           data-app-header="1"
           className={cx(
-            'sticky top-0 z-30 border-b border-white/15 bg-ink-950/95 pt-[env(safe-area-inset-top)]',
+            'sticky top-0 z-30 border-b border-white/10 bg-ink-950/75 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150',
             compact && 'short:static',
           )}
         >
@@ -1061,7 +1074,7 @@ export function AppView({
           tabIndex={-1}
           className={
             compact
-              ? 'mx-auto max-w-6xl pb-[calc(9rem+env(safe-area-inset-bottom))] pl-3 pr-[calc(0.75rem+env(safe-area-inset-right))] pt-3 short:pb-24'
+              ? 'mx-auto max-w-6xl pb-[calc(10rem+env(safe-area-inset-bottom))] pl-3 pr-[calc(0.75rem+env(safe-area-inset-right))] pt-3 short:pb-24'
               : 'mx-auto max-w-6xl pt-6 pb-24 max-[360px]:pt-4 max-[360px]:pb-20 pl-[calc(1rem_+_env(safe-area-inset-left))] pr-[calc(1rem_+_env(safe-area-inset-right))] max-[360px]:pl-[calc(0.75rem_+_env(safe-area-inset-left))] max-[360px]:pr-[calc(0.75rem_+_env(safe-area-inset-right))] desk:pt-10 desk:pb-10 desk:pl-[calc(1.5rem_+_env(safe-area-inset-left))] desk:pr-[calc(1.5rem_+_env(safe-area-inset-right))]'
           }
         >

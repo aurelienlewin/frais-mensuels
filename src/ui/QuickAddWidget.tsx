@@ -159,7 +159,7 @@ export function QuickAddWidget({ ym, archived }: { ym: YM; archived: boolean }) 
   const disabledAll = !canEdit || activeBudgets.length === 0;
   // Compact: float above the bottom tab bar (portrait) or bottom-right next to the left rail (landscape).
   const position = compact
-    ? 'fixed z-50 left-0 right-0 bottom-[calc(4.5rem+0.75rem+env(safe-area-inset-bottom))] pl-3 pr-[calc(0.75rem+env(safe-area-inset-right))] short:bottom-[calc(0.75rem+env(safe-area-inset-bottom))] short:left-[calc(4.5rem+env(safe-area-inset-left))]'
+    ? 'fixed z-50 left-0 right-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] pl-3 pr-[calc(0.75rem+env(safe-area-inset-right))] short:bottom-[calc(0.75rem+env(safe-area-inset-bottom))] short:left-[calc(5rem+env(safe-area-inset-left))]'
     : 'fixed z-50 desk:left-auto desk:right-6 desk:bottom-6';
 
   return (
