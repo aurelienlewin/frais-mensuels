@@ -319,7 +319,7 @@ export function SummaryPanel({
     <>
       <div
         data-tour="summary"
-        className="space-y-4 lg:sticky lg:top-32 lg:max-h-[calc(100dvh_-_8rem)] lg:overflow-auto"
+        className="space-y-4"
       >
         {view !== 'accounts' ? (
           <section className="fm-panel motion-hover motion-pop p-4 max-[360px]:p-3 desk:p-6">

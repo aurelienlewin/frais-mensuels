@@ -325,6 +325,17 @@ export function AppView({
       .sort((a, b) => (a < b ? 1 : a > b ? -1 : 0)) as YM[];
   }, [state.months]);
 
+  // Expose the real header height so sticky side content can sit right below it.
+  useEffect(() => {
+    const header = document.querySelector<HTMLElement>('[data-app-header]');
+    if (!header) return;
+    const set = () => document.documentElement.style.setProperty('--app-header-h', `${header.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(header);
+    return () => ro.disconnect();
+  }, [compact]);
+
   useEffect(() => {
     dispatch({ type: 'ENSURE_MONTH', ym });
   }, [dispatch, ym]);
@@ -1092,7 +1103,8 @@ export function AppView({
             </div>
           ) : (
             <div className="grid gap-4 max-[360px]:gap-3 desk:gap-6 lg:grid-cols-[360px_1fr] lg:items-start">
-              <div className="hidden desk:block">
+              {/* Sticky lives on the grid item (the panel's own parent is only as tall as the panel, so it could never stick). */}
+              <div className="hidden desk:block lg:sticky lg:top-[calc(var(--app-header-h,8rem)+1rem)] lg:max-h-[calc(100dvh_-_var(--app-header-h,8rem)_-_2rem)] lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-width:thin]">
                 <SummaryPanel ym={ym} charges={reportCharges} budgets={reportBudgets} />
               </div>
               <div className="flex flex-col gap-6 max-[360px]:gap-4">
