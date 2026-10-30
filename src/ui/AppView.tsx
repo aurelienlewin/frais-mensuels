@@ -83,6 +83,48 @@ function withTransition(update: () => void) {
   doc.startViewTransition(() => flushSync(update));
 }
 
+/**
+ * Brand lockup. `compact` (phones): mark only below 520px, mark + wordmark above (landscape).
+ * `full` (desktop): larger mark, wordmark with weight contrast, quiet tagline.
+ */
+function Brand({ variant }: { variant: 'compact' | 'full' }) {
+  const full = variant === 'full';
+  const Title = full ? 'h1' : 'span';
+  return (
+    <div className="group flex min-w-0 flex-none items-center gap-2.5 desk:gap-3.5">
+      <div className="relative flex-none">
+        <div
+          className="pointer-events-none absolute -inset-2 -z-10 rounded-full bg-[conic-gradient(at_30%_30%,rgba(16,185,129,0.4),rgba(56,189,248,0.45),rgba(236,72,153,0.4),rgba(16,185,129,0.4))] opacity-60 blur-xl transition duration-700 group-hover:opacity-90"
+          aria-hidden="true"
+        />
+        <div
+          className={cx(
+            'relative flex items-center justify-center overflow-hidden rounded-[0.9rem] bg-ink-950 ring-1 ring-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]',
+            full ? 'h-12 w-12 rounded-2xl' : 'h-9 w-9',
+          )}
+        >
+          <div className="absolute inset-px rounded-[inherit] bg-gradient-to-br from-white/12 via-white/4 to-transparent" />
+          <BrandMark className={cx('relative text-white', full ? 'h-9 w-9' : 'h-7 w-7')} />
+        </div>
+      </div>
+      <div className={cx('min-w-0 leading-none', !full && 'hidden min-[520px]:block')}>
+        <Title
+          className={cx(
+            'block whitespace-nowrap tracking-[-0.03em] text-shadow-2xs',
+            full ? 'text-2xl' : 'text-[17px]',
+          )}
+        >
+          <span className="bg-gradient-to-r from-cyan-200 via-sky-100 to-amber-200 bg-clip-text font-extrabold text-transparent">Frais</span>
+          <span className="ml-[0.28em] font-light text-slate-200">mensuels</span>
+        </Title>
+        {full ? (
+          <div className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.32em] text-slate-400">Tableau privé</div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function AppView({
   initialYm,
   user,
@@ -687,7 +729,7 @@ export function AppView({
             <>
               <h1 className="sr-only">Frais mensuels</h1>
               <div className="flex items-center gap-2">
-                <BrandMark className="h-8 w-8 flex-none text-white" />
+                <Brand variant="compact" />
                 <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5">
                   <button
                     type="button"
@@ -767,40 +809,7 @@ export function AppView({
             <>
               <div className="grid items-start gap-2.5 desk:grid-cols-[minmax(0,1fr)_auto] desk:gap-4">
                 <div className="flex min-w-0 flex-wrap items-center gap-2.5 desk:gap-3">
-                  <div className="group relative flex min-w-0 items-center gap-2 overflow-hidden rounded-2xl border border-white/12 bg-[radial-gradient(120%_130%_at_0%_0%,rgba(56,189,248,0.24),rgba(15,23,42,0.02)_48%),linear-gradient(135deg,rgba(255,255,255,0.11),rgba(255,255,255,0.03))] px-2 py-1.5 shadow-[0_18px_58px_-30px_rgba(0,0,0,0.9)] max-[520px]:shrink desk:gap-3 desk:px-3 desk:py-2">
-                    <div
-                      className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_100%_0%,rgba(148,163,184,0.26),rgba(15,23,42,0)_62%)] opacity-70 transition duration-700 group-hover:opacity-95"
-                      aria-hidden="true"
-                    />
-                    <div className="relative">
-                      <div
-                        className="pointer-events-none absolute -inset-4 -z-10 bg-[conic-gradient(at_30%_30%,rgba(16,185,129,0.35),rgba(56,189,248,0.4),rgba(236,72,153,0.4),rgba(16,185,129,0.35))] opacity-60 blur-[14px] transition duration-700 group-hover:scale-110 group-hover:opacity-90 desk:opacity-80 desk:blur-2xl"
-                        aria-hidden="true"
-                      />
-                      <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-ink-950 ring-1 ring-white/12 desk:h-12 desk:w-12 desk:ring-white/15">
-                        <div className="absolute inset-px rounded-[14px] bg-gradient-to-br from-white/10 via-white/5 to-white/0" />
-                        <BrandMark className="relative h-7 w-7 text-white drop-shadow-[0_12px_34px_rgba(0,0,0,0.45)] desk:h-9 desk:w-9" />
-                      </div>
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <div className="text-[10px] uppercase tracking-[0.3em] text-slate-300/90 text-shadow-2xs desk:text-[11px] desk:tracking-[0.32em]">Tableau privé</div>
-                        <span className="hidden h-4 w-px bg-white/12 desk:block" aria-hidden="true" />
-                        <span className="hidden rounded-full border border-cyan-200/25 bg-cyan-400/12 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-cyan-100/90 desk:inline-flex">
-                          Live
-                        </span>
-                      </div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 desk:gap-2">
-                        <h1 className="text-[15px] font-semibold leading-tight tracking-tight text-slate-50 text-shadow-2xs desk:text-lg">
-                          <span className="bg-gradient-to-r from-cyan-200 via-slate-200 to-amber-200 bg-clip-text text-transparent">Frais</span>{' '}
-                          mensuels
-                        </h1>
-                        <span className="hidden rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100/90 shadow-[0_10px_28px_-18px_rgba(16,185,129,0.9)] max-[520px]:hidden desk:inline-flex desk:px-2.5 desk:py-1 desk:text-[11px] desk:tracking-[0.18em]">
-                          Actif
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  <Brand variant="full" />
                   <div className="h-4 min-w-[120px] text-xs text-slate-400 max-[360px]:hidden" aria-hidden="true">
                     {saving.status === 'saving' ? 'Sauvegarde…' : saving.status === 'error' ? 'Sauvegarde en erreur' : ''}
                   </div>
