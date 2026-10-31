@@ -50,6 +50,8 @@ export function SummaryPanel({
   const chargesByAccount = useMemo(() => {
     const map = new Map<Account['id'], { ids: string[]; unpaidCount: number }>();
     for (const r of charges) {
+      // Auto-payment charges are transferred automatically: never "à virer", never bulk-markable.
+      if (r.payment === 'auto') continue;
       const key = r.destination?.kind === 'account' ? r.destination.accountId : r.accountId;
       const prev = map.get(key) ?? { ids: [], unpaidCount: 0 };
       prev.ids.push(r.id);

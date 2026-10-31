@@ -526,7 +526,7 @@ export function totalsForMonth(state: AppState, ym: YM, precomputed?: MonthCompu
   let pendingCount = 0;
 
   for (const r of rows) {
-    if (!r.paid) pendingCount += 1;
+    if (!r.paid && r.payment !== 'auto') pendingCount += 1;
 
     if (r.scope === 'commun') {
       totalCommunCents += r.amountCents;
