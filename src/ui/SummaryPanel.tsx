@@ -308,11 +308,13 @@ export function SummaryPanel({
         .map((a, index) => {
           const meta = chargesByAccount.get(a.accountId) ?? null;
           const allPaid = Boolean(meta && meta.ids.length > 0 && meta.unpaidCount === 0);
-          return { a, meta, allPaid, index };
+          const hasPending = Boolean(meta && meta.unpaidCount > 0);
+          return { a, meta, allPaid, hasPending, index };
         })
         .sort((left, right) => {
-          if (left.allPaid === right.allPaid) return left.index - right.index;
-          return left.allPaid ? 1 : -1;
+          if (left.hasPending !== right.hasPending) return left.hasPending ? -1 : 1;
+          if (left.allPaid !== right.allPaid) return left.allPaid ? 1 : -1;
+          return left.index - right.index;
         }),
     [byAccount, chargesByAccount],
   );

@@ -7,6 +7,7 @@ The format is based on Keep a Changelog and this project follows semantic-style 
 ## [Unreleased]
 
 ### Fixed
+- (2026-10-31): Per-account summary keeps accounts with charges `à virer` on top; auto-only accounts (nothing to transfer) now sit below them instead of mixing in, and fully transferred accounts stay last.
 - (2026-10-31): Auto-payment charges no longer show as `à virer`: the per-account summary cards skip them (no chip, no `Appui pour tout marquer viré`, card not clickable when only auto charges remain), and the `à virer` counters (summary badge, mobile tab) ignore them.
 - (2026-10-30): The desktop left summary panel never actually stuck: `position: sticky` was on an inner wrapper whose parent (the grid item) was only as tall as the panel, so it had no room to move, and its `top-32` offset didn't match the real header height. Sticky now sits on the grid item, offset by the measured header height (`--app-header-h` via ResizeObserver), and the panel scrolls internally when taller than the viewport.
 
